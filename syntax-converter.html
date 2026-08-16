@@ -44,7 +44,9 @@
   .copy{background:var(--brand);color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer;font-weight:600}
   .copy:hover{background:var(--brand2)} .copy.done{background:#16a34a}
   .out pre{margin:0;padding:13px 14px;white-space:pre-wrap;word-break:break-word;font-family:"SF Mono","Cascadia Code",Consolas,monospace;
-           font-size:13px;color:var(--code);background:var(--codebg);flex:1;min-height:44px}
+           font-size:13px;line-height:1.95;color:var(--code);background:var(--codebg);flex:1;min-height:44px}
+  .cvnote{margin:0;padding:9px 14px;background:#fff7ed;border-top:1px solid #f0c896;color:#9a5b00;font-size:12px;line-height:1.55}
+  .cvnote b{color:#b45309}
   .wl{margin:0;padding:9px 14px;border-top:1px dashed var(--line);background:var(--warnbg);color:var(--warn);font-size:12px;list-style:none}
   .wl li{margin:3px 0;padding-left:16px;position:relative}
   .wl li::before{content:"⚠";position:absolute;left:0}
@@ -82,6 +84,7 @@
   .hl-fld{color:#0a8f4f;font-weight:bold}
   .hl-cv{color:#d32029;font-weight:bold}
   .hl-px{color:#0f83d6;font-weight:bold}
+  .hl-cvterm{color:#8a94a0;font-weight:normal}
   .hl-bk0{color:#7c3aed}.hl-bk1{color:#ea580c}.hl-bk2{color:#a16207}
   .hl-bk3{color:#64748b}.hl-bk4{color:#c026d3}.hl-bk5{color:#0d9488}
   /* 輸入框底圖:只上色不加粗,避免粗體較寬導致游標位置偏移(輸出結果仍維持粗體) */
@@ -164,12 +167,14 @@
       <div class="note" data-zh>
         <b>[註1]</b> EBSCOhost 介面：僅 CINAHL 與 MEDLINE 可用 <code>MH ("pain+")</code> 含下位詞；其他資料庫(Academic Search Complete, PsycInfo, ERIC…)須以控制詞彙工具逐層 Explode &amp; Add。<br>
         <b>[註2]</b> 控制詞彙為單字時雙引號可省；片語在 Embase / Cochrane、或詞彙本身含 and/or 時，雙引號必須。<br>
-        <b>[註3]</b> 兩字以上詞彙(如 physical activity)務必自行指定關係(交集 / 鄰近 / 片語)，否則各庫預設邏輯不一：PubMed 交集與片語並用；Ovid 片語；Embase / Scopus 交集(且可能誤拆)；EBSCO / Cochrane / WoS 交集。希望片語檢索時務必加雙引號。
+        <b>[註3]</b> 兩字以上詞彙(如 physical activity)務必自行指定關係(交集 / 鄰近 / 片語)，否則各庫預設邏輯不一：PubMed 交集與片語並用；Ovid 片語；Embase / Scopus 交集(且可能誤拆)；EBSCO / Cochrane / WoS 交集。希望片語檢索時務必加雙引號。<br>
+        <b>[註4] 控制詞彙跨庫不通用：</b>本工具僅轉換<b>語法格式</b>(如 [mh] → exp .../ → MH(...))，<b>詞彙本身(MeSH／Emtree／CINAHL Headings)不會自動跨詞表對應</b>。輸出中含控制詞彙的行會以橘色提醒標註，請務必依各資料庫的索引詞表自行替換並確認。
       </div>
       <div class="note" data-en style="display:none">
         <b>[Note 1]</b> EBSCOhost: only CINAHL &amp; MEDLINE support <code>MH ("pain+")</code> to include narrower terms; other databases require manual Explode &amp; Add via the thesaurus.<br>
         <b>[Note 2]</b> Quotes are optional for single-word controlled terms; for phrases in Embase / Cochrane, or terms containing and/or, quotes are required.<br>
-        <b>[Note 3]</b> For multi-word concepts, always specify the relationship (intersection / proximity / phrase) yourself — database defaults differ and will otherwise produce inconsistent searches.
+        <b>[Note 3]</b> For multi-word concepts, always specify the relationship (intersection / proximity / phrase) yourself — database defaults differ and will otherwise produce inconsistent searches.<br>
+        <b>[Note 4] Controlled vocabulary is not interchangeable across databases:</b> this tool only converts the <b>syntax format</b> (e.g. [mh] → exp .../ → MH(...)); <b>the terms themselves (MeSH / Emtree / CINAHL Headings) are NOT mapped across thesauri</b>. Lines containing controlled vocabulary are flagged (amber note) — always replace and verify them against each database's own thesaurus.
       </div>
     </details>
     <details>
@@ -329,6 +334,8 @@ function tokenize(str) {
     if (c === "[") {
       var depth = 0, j = i, v = "";
       while (j < str.length) { var d = str[j]; v += d; if (d === "[") depth++; else if (d === "]") { depth--; if (depth === 0) { j++; break; } } j++; }
+      // 收下緊接在 ] 之後的後綴（如 [embase]/lim 的 /lim），使其成為單一 token
+      while (j < str.length && !isWS(str[j]) && str[j] !== "(" && str[j] !== ")" && str[j] !== "[" && str[j] !== '"' && str[j] !== "'") { v += str[j]; j++; }
       toks.push({ k: "term", v: v, phrase: false });
       i = j; continue;
     }
@@ -520,6 +527,12 @@ function parseExpression(toks, src, warn) {
   function parsePrimaryRaw() {
     var tk = peek();
     if (!tk) return null;
+    // 資料庫限定詞（如 [embase]/lim）：僅在對應資料庫保留，其餘資料庫省略（連同 AND 一併移除）
+    if (tk.k === "term" && /^\[[A-Za-z]+\]\/lim$/i.test(tk.v)) {
+      pos++;
+      var dbm = tk.v.match(/^\[([A-Za-z]+)\]\/lim$/i);
+      return { t: "dblim", db: dbm[1].toLowerCase(), raw: tk.v };
+    }
     if (tk.k === "(") {
       pos++;
       var e = parseOr();
@@ -828,6 +841,7 @@ function render(node, dst, warn, ctx) {
     case "prox":  return renderProx(node, dst, warn, ctx);
     case "mesh":  return renderMesh(node, dst, warn);
     case "sh":    return renderSh(node, dst, warn);
+    case "dblim": return (dst === node.db) ? node.raw : "";
     case "raw":   return node.value;
     default:      return "";
   }
@@ -1021,11 +1035,21 @@ if (typeof module !== "undefined" && module.exports) {
   var PROX_RE=/\b(?:ADJ\d+|NEAR\/\d+|NEXT\/\d+|NEXT|N\d+|W\/\d+|W\d+|PRE\/\d+)\b|:~\d+/g;
   var CV_RE={pubmed:/(?:"[^"]*"|[A-Za-z][\w-]*)\s*\[(?:mh|mj|mesh)(?::noexp)?\]/gi,ovid:/(?:\bexp\s+)?\*?"[^"]*"\//gi,embase:/"[^"]*"\/(?:exp(?:\/mj)?|de|mj)\b/gi,cochrane:/\[mh\b[^\[\]]*(?:\[mj\])?\]/gi,ebsco:/\b(?:MH|MM)\s*\([^)]*\)|\bMW\s+"[^"]*"/gi,wos:null,scopus:null};
   var FIELD_RE={pubmed:/\[(?:tiab|ti|tw|ab)\]/gi,ovid:/\.(?:ti|ab|kf|kw|mp|tw|nm|pt|sh|fs|xm|lg)(?:,(?:ti|ab|kf|kw|mp|tw|nm|pt|sh|fs|xm|lg))*\./gi,embase:/:(?:ti|ab|kw|de)(?:,(?:ti|ab|kw|de))*(?![a-z])/gi,cochrane:/:(?:ti|ab|kw|de)(?:,(?:ti|ab|kw|de))*(?![a-z])/gi,ebsco:/\b(?:TI|AB|KW|TX|XB)\b(?=\s*\()/gi,wos:/\b(?:TI|AB|AK|TS)=/gi,scopus:/\b(?:TITLE-ABS-KEY|TITLE-ABS|TITLE|ABS|AUTHKEY|KEY)\b(?=\s*\()/gi};
-  function hlHighlight(text, engine, semantic, brackets){
+  function hlHighlight(text, engine, semantic, brackets, cvTermGray){
     var n=text.length, cls=new Array(n), m, st, i;
     var openOf={},closeOf={}; st=[];
     for(i=0;i<n;i++){var c=text[i]; if(c==="(")st.push(i); else if(c===")"){ if(st.length){var o=st.pop(); openOf[o]=i; closeOf[i]=o;} }}
     function mk(s,e,tag){ for(var k=s;k<e;k++){ if(!cls[k]) cls[k]=tag; } }
+    // 只標「控制詞彙的詞本身」(引號內／括號內／標記前的詞)，供灰字提示替換用
+    if(cvTermGray && CV_RE[engine]){
+      CV_RE[engine].lastIndex=0; var mt;
+      while((mt=CV_RE[engine].exec(text))){
+        var ms2=mt.index, sg=mt[0], me2=ms2+sg.length, qa=sg.indexOf('"');
+        if(qa>=0){ var qb=sg.indexOf('"', qa+1); if(qb<0)qb=sg.length; mk(ms2+qa+1, ms2+qb, "cvterm"); }
+        else { var pa=sg.indexOf('('); if(pa>=0){ var pb=sg.indexOf(')', pa+1); if(pb<0)pb=sg.length; mk(ms2+pa+1, ms2+pb, "cvterm"); }
+               else { var ta=sg.search(/[\[]/); if(ta<0)ta=sg.length; mk(ms2, ms2+ta, "cvterm"); } }
+      }
+    }
     if(semantic){
       if(CV_RE[engine]){ CV_RE[engine].lastIndex=0; while((m=CV_RE[engine].exec(text))){ var ms=m.index, me=ms+m[0].length, seg=m[0], q1=seg.indexOf('"'); if(q1>=0){ var q2=seg.indexOf('"', q1+1); if(q2<0)q2=seg.length; mk(ms, ms+q1+1, "cv"); mk(ms+q2, me, "cv"); } else { var ti=seg.search(/[\[(]/); if(ti<0)ti=seg.length; mk(ms+ti, me, "cv"); } } }
       PROX_RE.lastIndex=0; while((m=PROX_RE.exec(text))) mk(m.index,m.index+m[0].length,"px");
@@ -1047,7 +1071,12 @@ if (typeof module !== "undefined" && module.exports) {
   const inWrap = inp.parentNode;
   function hlOn(){ return (cbColor&&cbColor.checked)||(cbBracket&&cbBracket.checked); }
   // 對輸出卡片的 <pre> 上色（若關閉則純文字，copy/匯出仍取 textContent＝原字串）
-  function paintPre(pre, text, engine){
+  function paintPre(pre, text, engine, grayCV){
+    if(grayCV){
+      // 詞表不同：只把「控制詞彙本身」以灰字標示（其餘上色仍依勾選）
+      pre.innerHTML=hlHighlight(text, engine, cbColor.checked, cbBracket.checked, true).html;
+      return;
+    }
     if(hlOn()){ pre.innerHTML=hlHighlight(text, engine, cbColor.checked, cbBracket.checked).html; }
     else { pre.textContent=text; }
   }
@@ -1162,15 +1191,34 @@ if (typeof module !== "undefined" && module.exports) {
       const d=tg.engine;
       const isSource=(tg.id===srcTarget);
       const txt=isSource?srcQuoted:res.results[d].text;
+      const srcVocab=TARGET_BY_ID[srcTarget].vocab;
+      // 詞表不同才需替換（如 MeSH→Emtree）；詞表相同(如 PubMed→Ovid MEDLINE→Cochrane 皆 MeSH)則不需
+      const needReplace = !isSource && !!tg.vocab && !!srcVocab && (tg.vocab!==srcVocab);
       if(!isSource) (res.results[d].warn||[]).forEach(w=>notes.add(w));
       if(!isSource && (!txt || !txt.trim())){ omitted.push(tg.label); return; }
-      exportCards.push({db:d, label:tg.label, text:txt, isSource:isSource, id:tg.id});
+      exportCards.push({db:d, label:tg.label, text:txt, isSource:isSource, id:tg.id, needReplace:needReplace});
       const card=document.createElement("div"); card.className="out";
       const h=document.createElement("h3");
       const name=document.createElement("span"); name.innerHTML=tg.label+(isSource?' <span class="srcbadge">'+(en?"start":"起始")+'</span>':'');
       const btn=document.createElement("button"); btn.className="copy"; btn.textContent="Copy";
       h.appendChild(name); h.appendChild(btn); card.appendChild(h);
-      const pre=document.createElement("pre"); paintPre(pre, txt, d); card.appendChild(pre);
+      const pre=document.createElement("pre"); paintPre(pre, txt, d, needReplace); card.appendChild(pre);
+      // 標註含控制詞彙的行（詞表不同、需自行替換確認）
+      if(needReplace && CV_RE[d]){
+        var cvLines=[];
+        String(txt).split(/\r?\n/).forEach(function(ln){
+          var mm=ln.match(/^\s*#(\d+)\s+([\s\S]*)$/); var bodytxt=mm?mm[2]:ln;
+          CV_RE[d].lastIndex=0;
+          if(CV_RE[d].test(bodytxt)) cvLines.push(mm?("#"+mm[1]):"—");
+        });
+        if(cvLines.length){
+          var cvn=document.createElement("div"); cvn.className="cvnote";
+          cvn.innerHTML = en
+            ? "⚠ <b>Controlled-vocabulary line(s): "+cvLines.join(", ")+"</b> — syntax converted, but the index terms are NOT mapped across thesauri. Replace/verify against this database’s thesaurus (MeSH / Emtree / CINAHL Headings)."
+            : "⚠ <b>含控制詞彙的行:"+cvLines.join("、")+"</b> — 語法已轉換，但索引詞未跨詞表對應，請依<b>本資料庫</b>的索引詞表(MeSH／Emtree／CINAHL Headings)自行替換並確認。";
+          card.appendChild(cvn);
+        }
+      }
       btn.onclick=()=>{ navigator.clipboard.writeText(pre.textContent).then(()=>{btn.textContent="✓ Copied";btn.classList.add("done");setTimeout(()=>{btn.textContent="Copy";btn.classList.remove("done")},1400);}); };
       // PubMed 鄰近字語法選項 + 字尾候選（半自動）
       if(d==="pubmed" && !isSource){
@@ -1185,7 +1233,7 @@ if (typeof module !== "undefined" && module.exports) {
         function collectVars(){ const V={}; Object.keys(varState).forEach(function(r){ V[r]=Array.from(varState[r]); }); return V; }
         function recompute(){
           const r2=convert(input, src, ["pubmed"], {proximityExpand:cb.checked, variants: cb.checked?collectVars():null});
-          paintPre(pre, r2.results.pubmed.text, "pubmed");
+          paintPre(pre, r2.results.pubmed.text, "pubmed", needReplace);
           const ec=exportCards.find(function(x){return x.db==="pubmed";}); if(ec) ec.text=pre.textContent;
         }
         function buildVarPanel(roots){
@@ -1215,10 +1263,10 @@ if (typeof module !== "undefined" && module.exports) {
           if(cb.checked){
             noteEl.textContent=w2.length?("⚠ "+w2[0]):""; noteEl.style.display=w2.length?"block":"none";
             if(roots.length){ buildVarPanel(roots); varPanel.style.display="block"; recompute(); }
-            else { varPanel.style.display="none"; paintPre(pre, r2.results.pubmed.text, "pubmed"); const ec=exportCards.find(function(x){return x.db==="pubmed";}); if(ec)ec.text=pre.textContent; }
+            else { varPanel.style.display="none"; paintPre(pre, r2.results.pubmed.text, "pubmed", needReplace); const ec=exportCards.find(function(x){return x.db==="pubmed";}); if(ec)ec.text=pre.textContent; }
           } else {
             varPanel.style.display="none"; noteEl.style.display="none";
-            paintPre(pre, r2.results.pubmed.text, "pubmed"); const ec=exportCards.find(function(x){return x.db==="pubmed";}); if(ec)ec.text=pre.textContent;
+            paintPre(pre, r2.results.pubmed.text, "pubmed", needReplace); const ec=exportCards.find(function(x){return x.db==="pubmed";}); if(ec)ec.text=pre.textContent;
           }
         };
       }
@@ -1232,7 +1280,7 @@ if (typeof module !== "undefined" && module.exports) {
           opt.appendChild(cb); opt.appendChild(sp); card.appendChild(opt);
           cb.onchange=()=>{
             const r2=convert(input, src, [d], {fieldExpand:cb.checked});
-            paintPre(pre, r2.results[d].text, d);
+            paintPre(pre, r2.results[d].text, d, needReplace);
             const ec=exportCards.find(x=>x.db===d); if(ec) ec.text=pre.textContent;
           };
         }
@@ -1354,34 +1402,44 @@ window.downloadWord=function(){
   const fspan=s=>"<span style=\""+msoF+"\">"+s+"</span>";
   const HLC={fld:"#0a8f4f",cv:"#d32029",px:"#0f83d6",bk0:"#7c3aed",bk1:"#ea580c",bk2:"#a16207",bk3:"#64748b",bk4:"#c026d3",bk5:"#0d9488"};
   const HL=window.__hl, sem=!!R.sem, brk=!!R.brk, colorOn=(sem||brk)&&!!HL;
-  const synCell=(text,engine)=>{
-    if(!colorOn) return fspan(esc(text));
-    const h=HL(text,engine,sem,brk).html.replace(/<span class="hl-(\w+)">/g,function(m,cl){var bd=/^(fld|cv|px)$/.test(cl)?";font-weight:bold":"";return "<span style=\"color:"+(HLC[cl]||"inherit")+bd+";"+msoF+"\">";});
+  const synCell=(text,engine,grayCV)=>{
+    if(!colorOn && !grayCV) return fspan(esc(text));
+    let h=HL(text,engine,sem,brk,grayCV).html;
+    h=h.replace(/<span class="hl-(\w+)">/g,function(m,cl){
+      if(cl==="cvterm") return "<span style=\"color:#8a94a0;"+msoF+"\">";   // 控制詞彙本身→灰字
+      var bd=/^(fld|cv|px)$/.test(cl)?";font-weight:bold":"";
+      return "<span style=\"color:"+(HLC[cl]||"inherit")+bd+";"+msoF+"\">";
+    });
     return fspan(h);
   };
-  const cDb="border:1px solid #999;padding:6px 10px;font-weight:bold;white-space:nowrap;vertical-align:top;font-size:11pt;"+msoF;
-  const cNum="border:1px solid #999;padding:6px 8px;color:#0d6e6e;font-weight:bold;white-space:nowrap;vertical-align:top;text-align:center;font-size:11pt;"+msoF;
-  const cSyn="border:1px solid #999;padding:6px 10px;font-size:11pt;vertical-align:top;"+msoF;
+  const dbNote = en ? "⚠ Replace controlled vocab per this database’s thesaurus" : "⚠ 控制詞彙需依本資料庫詞表替換";
+  const cDb="border:1px solid #999;padding:0.1cm 0.2cm;font-weight:bold;white-space:nowrap;vertical-align:top;font-size:11pt;"+msoF;
+  const cNum="border:1px solid #999;padding:0.1cm 0.2cm;color:#0d6e6e;font-weight:bold;white-space:nowrap;vertical-align:top;text-align:center;font-size:11pt;"+msoF;
+  const cSyn="border:1px solid #999;padding:0.1cm 0.2cm;font-size:11pt;vertical-align:top;"+msoF;
   let rows="";
   R.cards.forEach(function(c){
     const label=esc(c.label+(c.isSource?(en?" (start)":"（起始）"):""));
     const lines=String(c.text).split(/\r?\n/); if(!lines.length) lines.push("");
     lines.forEach(function(ln,i){
       const m=ln.match(/^\s*(#\d+)\s+([\s\S]*)$/);
-      const num=m?m[1]:""; const syn=m?m[2]:ln;
+      const num=m?m[1].replace(/^#/,""):""; const syn=m?m[2]:ln;
       let row="<tr>";
-      if(i===0) row+="<td style='"+cDb+"' rowspan='"+lines.length+"'>"+fspan(label)+"</td>";
-      row+="<td style='"+cNum+"'>"+fspan(esc(num))+"</td><td style='"+cSyn+"'>"+synCell(syn, c.db)+"</td></tr>";
+      if(i===0){
+        var dbCell=fspan(label);
+        if(c.needReplace) dbCell += "<br><span style=\"color:#b45309;font-size:9pt;"+msoF+"\">"+dbNote+"</span>";
+        row+="<td style='"+cDb+"' rowspan='"+lines.length+"'>"+dbCell+"</td>";
+      }
+      row+="<td style='"+cNum+"'>"+fspan(esc(num))+"</td><td style='"+cSyn+"'>"+synCell(syn, c.db, c.needReplace)+"</td></tr>";
       rows+=row;
     });
   });
   const title=en?"Search Syntax Conversion":"檢索語法轉換結果";
   const srcline=(en?"Starting database: ":"起始資料庫：")+TARGET_BY_ID[R.srcTarget].label;
-  const th="border:1px solid #999;padding:6px 10px;background:#0d6e6e;color:#fff;font-weight:bold;font-size:11pt;"+msoF;
+  const th="border:1px solid #999;padding:0.1cm 0.2cm;background:#0d6e6e;color:#fff;font-weight:bold;font-size:11pt;"+msoF;
   const cite=(en?"Cite this tool: ":"工具引用：")+"Fang, C.-J. (2026). SR Search Toolkit: Proximity Builder, PICO Strategy Builder, and Search Syntax Converter. Zenodo. https://doi.org/10.5281/zenodo.21960702";
   const html="<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head>"+
     "<body style=\""+msoF+"\"><h2>"+fspan(title)+"</h2><p>"+fspan(srcline)+"</p>"+
-    "<table border='1' cellspacing='0' style='border-collapse:collapse;width:100%;border:1px solid #999'><tr><td style='"+th+"'>"+fspan(en?"Database":"資料庫 Database")+"</td><td style='"+th+";text-align:center'>"+fspan("#")+"</td><td style='"+th+"'>"+fspan(en?"Search syntax":"搜尋語法 Search syntax")+"</td></tr>"+rows+"</table>"+
+    "<table border='1' cellspacing='0' style='border-collapse:collapse;width:100%;border:1px solid #999;mso-padding-alt:0.1cm 0.2cm 0.1cm 0.2cm'><tr><td style='"+th+"'>"+fspan(en?"Database":"資料庫 Database")+"</td><td style='"+th+";text-align:center'>"+fspan("#")+"</td><td style='"+th+"'>"+fspan(en?"Search syntax":"搜尋語法 Search syntax")+"</td></tr>"+rows+"</table>"+
     "<p style='margin-top:14px;font-size:9pt;color:#555'>"+fspan(esc(cite))+"</p></body></html>";
   const blob=new Blob(["\ufeff"+html],{type:"application/msword"});
   const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="search_syntax.doc"; document.body.appendChild(a); a.click(); a.remove();

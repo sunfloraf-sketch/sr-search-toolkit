@@ -1194,24 +1194,30 @@ if (typeof module !== "undefined" && module.exports) {
     if(!lastGen || !lastGen.data.length){ outs.scrollIntoView&&outs.scrollIntoView(); return; }
     var en=isEn();
     var wesc=function(x){ return String(x).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); };
-    var sem=cbColor&&cbColor.checked, brk=cbBracket&&cbBracket.checked;
-    var HLSTYLE={fld:"color:#0a8f4f;font-weight:bold",cv:"color:#d32029;font-weight:bold",px:"color:#0f83d6;font-weight:bold",bk0:"color:#7c3aed",bk1:"color:#ea580c",bk2:"color:#a16207",bk3:"color:#64748b",bk4:"color:#c026d3",bk5:"color:#0d9488"};
-    function colorize(text, eng){ var hh=hlHighlight(text, eng, sem, brk).html; return hh.replace(/<span class="hl-(\w+)">/g, function(m,cls){ return '<span style="'+(HLSTYLE[cls]||"")+'">'; }); }
-    var tdb="border:1px solid #999;padding:6px 10px;font-weight:bold;white-space:nowrap;vertical-align:top";
-    var tnum="border:1px solid #999;padding:6px 10px;font-family:Consolas,monospace;font-size:10.5pt;vertical-align:top;color:#6d28d9;white-space:nowrap";
-    var tsyn="border:1px solid #999;padding:6px 10px;font-family:Consolas,monospace;font-size:10.5pt;vertical-align:top";
-    var th="border:1px solid #999;padding:6px 10px;background:#5b21b6;color:#fff;font-weight:bold";
+    var sem=cbColor&&cbColor.checked, brk=cbBracket&&cbBracket.checked, colorOn=sem||brk;
+    var msoF="font-family:Consolas,'Microsoft JhengHei',monospace;mso-ascii-font-family:Consolas;mso-hansi-font-family:Consolas;mso-bidi-font-family:Consolas;mso-fareast-font-family:'Microsoft JhengHei'";
+    var fspan=function(s){ return "<span style=\""+msoF+"\">"+s+"</span>"; };
+    var HLC={fld:"#0a8f4f",cv:"#d32029",px:"#0f83d6",bk0:"#7c3aed",bk1:"#ea580c",bk2:"#a16207",bk3:"#64748b",bk4:"#c026d3",bk5:"#0d9488"};
+    function synCell(text, eng){
+      if(!colorOn || !text) return fspan(wesc(text||""));
+      var h=hlHighlight(text, eng, sem, brk).html.replace(/<span class="hl-(\w+)">/g, function(m,cl){var bd=/^(fld|cv|px)$/.test(cl)?";font-weight:bold":"";return "<span style=\"color:"+(HLC[cl]||"inherit")+bd+";"+msoF+"\">";});
+      return fspan(h);
+    }
+    var tdb="border:1px solid #999;padding:0.1cm 0.2cm;font-weight:bold;white-space:nowrap;vertical-align:top;font-size:11pt";
+    var tnum="border:1px solid #999;padding:0.1cm 0.2cm;vertical-align:top;color:#6d28d9;font-weight:bold;white-space:nowrap;text-align:center;font-size:11pt";
+    var tsyn="border:1px solid #999;padding:0.1cm 0.2cm;vertical-align:top;font-size:11pt";
+    var th="border:1px solid #999;padding:0.1cm 0.2cm;background:#5b21b6;color:#fff;font-weight:bold;font-size:11pt";
     var rows="";
     lastGen.data.forEach(function(c){
       var lab=wesc(c.label)+(c.isStart?(en?" (start)":"（起始）"):"");
       c.rows.forEach(function(x,i){
-        var syn=(sem||brk)&&x.text?colorize(x.text, c.engine):wesc(x.text);
-        rows+="<tr>"+(i===0?("<td rowspan='"+c.rows.length+"' style='"+tdb+"'>"+lab+"</td>"):"")+"<td style='"+tnum+"'>#"+x.n+"</td><td style='"+tsyn+"'>"+syn+"</td></tr>";
+        rows+="<tr>"+(i===0?("<td rowspan='"+c.rows.length+"' style='"+tdb+"'>"+fspan(lab)+"</td>"):"")+"<td style='"+tnum+"'>"+fspan(String(x.n))+"</td><td style='"+tsyn+"'>"+synCell(x.text, c.engine)+"</td></tr>";
       });
     });
     var title=en?"PICO Search Strategy":"PICO 檢索策略";
     var subline=(en?"Field level: ":"欄位完整度：")+wesc(lastGen.level);
-    var html="<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body style=\"font-family:'Segoe UI',Arial,sans-serif\"><h2>"+title+"</h2><p>"+subline+"</p><table style='border-collapse:collapse;width:100%'><tr><td style='"+th+"'>"+(en?"Database":"資料庫 Database")+"</td><td style='"+th+"'>#</td><td style='"+th+"'>"+(en?"Search syntax":"搜尋語法 Search syntax")+"</td></tr>"+rows+"</table></body></html>";
+    var cite=(en?"Cite this tool: ":"工具引用：")+"Fang, C.-J. (2026). SR Search Toolkit: Proximity Builder, PICO Strategy Builder, and Search Syntax Converter. Zenodo. https://doi.org/10.5281/zenodo.21960702";
+    var html="<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body style=\""+msoF+"\"><h2>"+fspan(title)+"</h2><p>"+fspan(subline)+"</p><table border='1' cellspacing='0' style='border-collapse:collapse;width:100%;border:1px solid #999;mso-padding-alt:0.1cm 0.2cm 0.1cm 0.2cm'><tr><td style='"+th+"'>"+fspan(en?"Database":"資料庫 Database")+"</td><td style='"+th+";text-align:center'>"+fspan("#")+"</td><td style='"+th+"'>"+fspan(en?"Search syntax":"搜尋語法 Search syntax")+"</td></tr>"+rows+"</table><p style='margin-top:14px;font-size:9pt;color:#555'>"+fspan(wesc(cite))+"</p></body></html>";
     var blob=new Blob(["\ufeff"+html],{type:"application/msword"});
     var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="pico_strategy.doc"; document.body.appendChild(a); a.click(); a.remove();
   };
