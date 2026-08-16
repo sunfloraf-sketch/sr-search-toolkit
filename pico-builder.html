@@ -13,7 +13,7 @@
   *{box-sizing:border-box}
   body{margin:0;font-family:-apple-system,"Segoe UI","Noto Sans TC",Roboto,Helvetica,Arial,sans-serif;
        background:var(--bg);color:var(--ink);line-height:1.5;font-size:15px}
-  header{background:linear-gradient(135deg,#4b5563,#374151);color:#fff;padding:20px 24px}
+  header{background:linear-gradient(135deg,#4b5563,#374151);color:#fff;padding:20px 24px;font-family:-apple-system,"Segoe UI","PingFang TC","Microsoft JhengHei","Noto Sans TC",Roboto,Arial,sans-serif}
   header .row{max-width:1280px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
   header h1{margin:0;font-size:20px;font-weight:650;letter-spacing:.2px}
   header p{margin:4px 0 0;font-size:13px;opacity:.92}
@@ -42,7 +42,8 @@
   table.pico textarea{width:100%;min-height:116px;resize:vertical;border:1px solid var(--line);border-radius:6px;padding:6px 7px;font-family:inherit;font-size:12.5px;line-height:1.45;color:var(--ink)}
   table.pico td.free textarea{min-height:116px;font-family:"SF Mono","Cascadia Code",Consolas,monospace;font-size:12px}
   .rmrow{border:none;background:none;color:#c0392b;cursor:pointer;font-size:15px;padding:0 2px}
-  .picotools{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+  .pico-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+  .picotools{display:flex;gap:10px;flex-wrap:wrap}
   .btn{border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer}
   .btn.ghost{background:#fff;border:1px solid var(--line);color:var(--brand2)}
   .btn.ghost:hover{background:var(--accent)}
@@ -75,23 +76,31 @@
   .note{font-size:12.5px;color:var(--mut);background:var(--codebg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-top:4px}
   .note b{color:var(--ink)}
   details{margin-top:6px} summary{cursor:pointer;font-weight:600;color:var(--brand2);font-size:14px;padding:6px 0}
+  /* ---- 統一導覽列 ---- */
+  .hbar{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .brand{text-decoration:none;color:#fff;flex-shrink:0}
+  .brand h1{margin:0;font-size:20px;font-weight:700;letter-spacing:.3px;white-space:nowrap}
+  .toolnav{display:flex;gap:8px;flex-wrap:wrap;flex:1;margin-left:4px}
+  .toolbtn{text-decoration:none;color:#fff;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.35);padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;white-space:nowrap;transition:background .15s}
+  .toolbtn:hover{background:rgba(255,255,255,.24)}
+  .toolbtn.active{background:#fff;color:#0d6e6e;border-color:#fff;box-shadow:0 1px 8px rgba(0,0,0,.2);cursor:default}
+  .subtitle{max-width:1200px;margin:10px auto 0;font-size:13px;opacity:.92;color:#fff}
   [data-en]{display:none}
   body.en [data-zh]{display:none} body.en [data-en]{display:revert}
 </style>
 </head>
 <body>
 <header>
-  <div class="row">
-    <div>
-      <h1><span data-zh>PICO 檢索策略產生器</span><span data-en>PICO Strategy Builder</span></h1>
-      <p><span data-zh>填入各概念的自由詞與控制詞彙，選欄位完整度，一鍵生成各資料庫的行號檢索策略</span><span data-en>Enter free-text &amp; controlled terms per concept, pick a field level, generate line-numbered strategies for each database</span></p>
-    </div>
-    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <a class="navbtn" href="proximity-builder.html">← <span data-zh>鄰近字組合器</span><span data-en>Proximity Builder</span></a>
-      <a class="navbtn" href="syntax-converter.html"><span data-zh>語法轉換器</span><span data-en>Syntax Converter</span> →</a>
-      <button class="navbtn" id="langBtn" onclick="toggleLang()">English</button>
-    </div>
+  <div class="hbar">
+    <a class="brand" href="index.html"><h1><span data-zh>SR 檢索工具組</span><span data-en>SR Search Toolkit</span></h1></a>
+    <nav class="toolnav">
+      <a class="toolbtn" href="proximity-builder.html"><span data-zh>鄰近字組合器</span><span data-en>Proximity Builder</span></a>
+      <a class="toolbtn active" href="pico-builder.html" aria-current="page"><span data-zh>PICO 檢索策略產生器</span><span data-en>PICO Strategy Builder</span></a>
+      <a class="toolbtn" href="syntax-converter.html"><span data-zh>資料庫檢索語法轉換器</span><span data-en>Search Syntax Converter</span></a>
+    </nav>
+    <button class="navbtn" id="langBtn" onclick="toggleLang()">English</button>
   </div>
+  <p class="subtitle"><span data-zh>填入各概念的自由詞與控制詞彙，選欄位完整度，一鍵生成各資料庫的行號檢索策略</span><span data-en>Enter free-text &amp; controlled terms per concept, pick a field level, generate line-numbered strategies for each database</span></p>
 </header>
 <main>
   <div class="panel">
@@ -117,7 +126,13 @@
   </div>
 
   <div class="panel">
-    <label class="fld" style="margin-bottom:6px"><span data-zh>PICO 概念表</span><span data-en>PICO table</span></label>
+    <div class="pico-head">
+      <label class="fld" style="margin:0"><span data-zh>PICO 概念表</span><span data-en>PICO table</span></label>
+      <div class="picotools">
+        <button class="btn ghost" id="addRow">＋ <span data-zh>新增概念</span><span data-en>Add concept</span></button>
+        <button class="ex" id="exBtn"><span data-zh>載入 GDM 範例</span><span data-en>Load GDM example</span></button>
+      </div>
+    </div>
     <div class="hint" style="margin:0 0 10px"><span data-zh>中文同義詞僅供規劃參考，不納入產出的檢索式。英文同義詞建議先用「鄰近字組合器」整理好再貼入。控制詞彙一格可放多個，<b>一行一個</b>（詞內逗號會保留，如 Diabetes, Gestational）。對應：MeSH→MEDLINE(各平台)·PubMed·Cochrane；Emtree→Embase(各平台)；CINAHL Headings→CINAHL(EBSCOhost)；WoS·Scopus 無控制詞彙。</span><span data-en>Chinese synonyms are for planning only and are not included in the output. Tidy English synonyms in the Proximity Builder first. One controlled term per line (commas inside a term are kept, e.g. Diabetes, Gestational). Mapping: MeSH→MEDLINE(all platforms)·PubMed·Cochrane; Emtree→Embase(all platforms); CINAHL Headings→CINAHL(EBSCOhost); WoS·Scopus have none.</span></div>
     <table class="pico">
       <thead>
@@ -133,10 +148,6 @@
       </thead>
       <tbody id="picoBody"></tbody>
     </table>
-    <div class="picotools">
-      <button class="btn ghost" id="addRow">＋ <span data-zh>新增概念</span><span data-en>Add concept</span></button>
-      <button class="ex" id="exBtn"><span data-zh>載入 GDM 範例</span><span data-en>Load GDM example</span></button>
-    </div>
   </div>
 
   <div class="genbar">
@@ -174,7 +185,9 @@
   <div class="foot">
     <span data-zh>此工具在您的瀏覽器本機執行，不上傳任何資料。產出的檢索策略仍請人工覆核並於資料庫實測後再使用。</span>
     <span data-en>Runs entirely in your browser; nothing is uploaded. Always human-check and test the output in each database before use.</span><br>
-    © 2026 Ching-Ju Fang · All rights reserved · v1.0
+    <span data-zh>引用建議:Fang, C.-J. (2026). <i>SR Search Toolkit: Proximity Builder, PICO Strategy Builder, and Search Syntax Converter</i>. Zenodo. <a href="https://doi.org/10.5281/zenodo.21960702" target="_blank" rel="noopener">https://doi.org/10.5281/zenodo.21960702</a></span>
+    <span data-en>Cite as: Fang, C.-J. (2026). <i>SR Search Toolkit: Proximity Builder, PICO Strategy Builder, and Search Syntax Converter</i>. Zenodo. <a href="https://doi.org/10.5281/zenodo.21960702" target="_blank" rel="noopener">https://doi.org/10.5281/zenodo.21960702</a></span><br>
+    © 2026 Ching-Ju Fang · All rights reserved · v1.0.1
   </div>
 </main>
 
@@ -1068,12 +1081,18 @@ if (typeof module !== "undefined" && module.exports) {
   levelSel.onchange = refreshLvlNote;
 
   // ---- PICO 列 ----
-  function mkCell(cls){ var td=document.createElement("td"); if(cls)td.className=cls; var ta=document.createElement("textarea"); ta.spellcheck=false; td.appendChild(ta); return {td:td, ta:ta}; }
-  function addRow(label, zh, ft, mesh, emtree, cinahl){
+  // GDM 範例資料（供「載入 GDM 範例」與空白表格的灰字預覽共用）
+  var GDM_EX = {
+    P:{ zh:"妊娠糖尿病\n姙娠期糖尿病\n孕期糖尿病", ft:"((gestation* OR pregnan* OR gravid*) NEAR/4 (diabet* OR DM))", mesh:"Diabetes, Gestational\nPregnancy in Diabetics", emtree:"maternal diabetes", cinahl:"Pregnancy in Diabetes" },
+    I:{ zh:"運動\n體能活動\n有氧運動\n阻力訓練", ft:"(exercise* OR walk* OR yoga OR aerobic OR strength OR training OR (physical NEAR/4 (activit* OR movement*)))", mesh:"Exercise\nExercise Therapy", emtree:"exercise\nkinesiotherapy\nphysical activity", cinahl:"Exercise\nTherapeutic Exercise" }
+  };
+  function mkCell(cls, ph){ var td=document.createElement("td"); if(cls)td.className=cls; var ta=document.createElement("textarea"); ta.spellcheck=false; if(ph)ta.placeholder=ph; td.appendChild(ta); return {td:td, ta:ta}; }
+  function addRow(label, zh, ft, mesh, emtree, cinahl, phs){
+    phs = phs || {};
     var tr=document.createElement("tr");
     var labTd=document.createElement("td"); labTd.className="lab";
     var labIn=document.createElement("input"); labIn.value=label||""; labIn.maxLength=4; labTd.appendChild(labIn);
-    var c0=mkCell("ref"), c1=mkCell("free"), c2=mkCell("cv"), c3=mkCell("cv"), c4=mkCell("cv");
+    var c0=mkCell("ref",phs.zh), c1=mkCell("free",phs.ft), c2=mkCell("cv",phs.mesh), c3=mkCell("cv",phs.emtree), c4=mkCell("cv",phs.cinahl);
     c0.ta.value=zh||""; c1.ta.value=ft||""; c2.ta.value=mesh||""; c3.ta.value=emtree||""; c4.ta.value=cinahl||"";
     var rmTd=document.createElement("td"); var rm=document.createElement("button"); rm.className="rmrow"; rm.textContent="✕";
     rm.onclick=function(){ tr.remove(); }; rmTd.appendChild(rm);
@@ -1082,14 +1101,14 @@ if (typeof module !== "undefined" && module.exports) {
     picoBody.appendChild(tr);
     return tr;
   }
-  function seedEmpty(){ picoBody.innerHTML=""; ["P","I","C","O"].forEach(function(l){ addRow(l); }); }
+  function seedEmpty(){ picoBody.innerHTML=""; ["P","I","C","O"].forEach(function(l){ addRow(l,"","","","","", GDM_EX[l]); }); }
   $("#addRow").onclick=function(){ addRow(""); };
 
   $("#exBtn").onclick=function(){
     srcSel.value="embase_com"; levelSel.value="L1"; refreshLvlNote();
     picoBody.innerHTML="";
-    addRow("P","妊娠糖尿病\n姙娠期糖尿病\n孕期糖尿病","((gestation* OR pregnan* OR gravid*) NEAR/4 (diabet* OR DM))","Diabetes, Gestational\nPregnancy in Diabetics","maternal diabetes","Pregnancy in Diabetes");
-    addRow("I","運動\n體能活動\n有氧運動\n阻力訓練","(exercise* OR walk* OR yoga OR aerobic OR strength OR training OR (physical NEAR/4 (activit* OR movement*)))","Exercise\nExercise Therapy","exercise\nkinesiotherapy\nphysical activity","Exercise\nTherapeutic Exercise");
+    addRow("P",GDM_EX.P.zh,GDM_EX.P.ft,GDM_EX.P.mesh,GDM_EX.P.emtree,GDM_EX.P.cinahl);
+    addRow("I",GDM_EX.I.zh,GDM_EX.I.ft,GDM_EX.I.mesh,GDM_EX.I.emtree,GDM_EX.I.cinahl);
     addRow("C","",""); addRow("O","","");
   };
 

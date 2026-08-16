@@ -2,7 +2,7 @@
 
 <!-- After you connect Zenodo and publish a release, replace the line below with the DOI badge Zenodo gives you. -->
 <!-- 連結 Zenodo、發布 release 後，把下面這行換成 Zenodo 給你的 DOI 徽章。 -->
-[![DOI](https://zenodo.org/badge/DOI/PLACEHOLDER.svg)](https://doi.org/PLACEHOLDER)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21960702.svg)](https://doi.org/10.5281/zenodo.21960702)
 
 Three independent, browser-based tools for systematic-review (SR) literature searching. Each runs entirely in your browser — nothing is uploaded — and every page links to the other two.
 
@@ -46,7 +46,7 @@ If you use this toolkit in your work, please cite it. After publishing a release
 
 如果你在研究中使用本工具，請引用。在 Zenodo 發布 release 後會取得永久 DOI，請引用該 DOI，或使用 [`CITATION.cff`](CITATION.cff) 內的資訊。
 
-> Fang, C.-J. (2026). *SR Search Toolkit: Proximity Builder, PICO Strategy Builder, and Search Syntax Converter* (Version 1.0.0) [Software]. https://doi.org/PLACEHOLDER
+> Fang, C.-J. (2026). *SR Search Toolkit: Proximity Builder, PICO Strategy Builder, and Search Syntax Converter* (Version 1.0.0) [Software]. https://doi.org/10.5281/zenodo.21960702
 
 ## License · 授權
 

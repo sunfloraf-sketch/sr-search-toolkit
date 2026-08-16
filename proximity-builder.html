@@ -8,7 +8,7 @@
   :root{--bg:#f4f6f9;--card:#fff;--ink:#1c2733;--mut:#5b6b7b;--line:#e2e8f0;--brand:#6d28d9;--brand2:#5b21b6;--accent:#f3eefe;--code:#0f172a;--codebg:#f8fafc;--warn:#b45309;--warnbg:#fff7ed}
   *{box-sizing:border-box}
   body{margin:0;font-family:-apple-system,"Segoe UI","Noto Sans TC",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;font-size:15px}
-  header{background:linear-gradient(135deg,#4b5563,#374151);color:#fff;padding:20px 24px}
+  header{background:linear-gradient(135deg,#4b5563,#374151);color:#fff;padding:20px 24px;font-family:-apple-system,"Segoe UI","PingFang TC","Microsoft JhengHei","Noto Sans TC",Roboto,Arial,sans-serif}
   header .row{max-width:1080px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
   header h1{margin:0;font-size:20px;font-weight:650}
   header p{margin:4px 0 0;font-size:13px;opacity:.9}
@@ -60,23 +60,31 @@
   .sendbtn:hover{background:#0a5757}
   .pmnote{padding:8px 14px;background:var(--warnbg);color:var(--warn);font-size:12px;border-top:1px dashed var(--line)}
   .foot{font-size:12px;color:var(--mut);margin-top:20px;text-align:center;line-height:1.7}
+  /* ---- 統一導覽列 ---- */
+  .hbar{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .brand{text-decoration:none;color:#fff;flex-shrink:0}
+  .brand h1{margin:0;font-size:20px;font-weight:700;letter-spacing:.3px;white-space:nowrap}
+  .toolnav{display:flex;gap:8px;flex-wrap:wrap;flex:1;margin-left:4px}
+  .toolbtn{text-decoration:none;color:#fff;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.35);padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;white-space:nowrap;transition:background .15s}
+  .toolbtn:hover{background:rgba(255,255,255,.24)}
+  .toolbtn.active{background:#fff;color:#0d6e6e;border-color:#fff;box-shadow:0 1px 8px rgba(0,0,0,.2);cursor:default}
+  .subtitle{max-width:1200px;margin:10px auto 0;font-size:13px;opacity:.92;color:#fff}
   [data-en]{display:none}
   body.en [data-zh]{display:none} body.en [data-en]{display:revert}
 </style>
 </head>
 <body>
 <header>
-  <div class="row">
-    <div>
-      <h1><span data-zh>鄰近字組合器</span><span data-en>Proximity Builder</span></h1>
-      <p><span data-zh>多堆同義詞 → 鄰近字片段；或貼 Before 清單自動分堆 · 可送到語法轉換器</span><span data-en>Multi-stack synonyms → proximity fragment; or auto-split a Before list · send to the converter</span></p>
-    </div>
-    <div class="toplinks">
-      <a class="navlink" href="pico-builder.html"><span data-zh>PICO 策略</span><span data-en>PICO Builder</span></a>
-      <a class="navlink" href="syntax-converter.html"><span data-zh>語法轉換器 →</span><span data-en>Syntax Converter →</span></a>
-      <button class="navlink" id="langBtn" onclick="toggleLang()">English</button>
-    </div>
+  <div class="hbar">
+    <a class="brand" href="index.html"><h1><span data-zh>SR 檢索工具組</span><span data-en>SR Search Toolkit</span></h1></a>
+    <nav class="toolnav">
+      <a class="toolbtn active" href="proximity-builder.html" aria-current="page"><span data-zh>鄰近字組合器</span><span data-en>Proximity Builder</span></a>
+      <a class="toolbtn" href="pico-builder.html"><span data-zh>PICO 檢索策略產生器</span><span data-en>PICO Strategy Builder</span></a>
+      <a class="toolbtn" href="syntax-converter.html"><span data-zh>資料庫檢索語法轉換器</span><span data-en>Search Syntax Converter</span></a>
+    </nav>
+    <button class="navlink" id="langBtn" onclick="toggleLang()">English</button>
   </div>
+  <p class="subtitle"><span data-zh>多堆同義詞 → 鄰近字片段；或貼 Before 清單自動分堆 · 可送到語法轉換器</span><span data-en>Multi-stack synonyms → proximity fragment; or auto-split a Before list · send to the converter</span></p>
 </header>
 <main>
   <div class="panel">
@@ -128,7 +136,9 @@
   <div class="foot">
     <span data-zh>此工具在瀏覽器本機執行，不上傳資料。自動分堆為輔助建議，請務必人工核對切截點與分堆。</span>
     <span data-en>Runs locally; nothing is uploaded. Auto-split is only a suggestion — always verify truncation points and grouping.</span><br>
-    © 2026 Ching-Ju Fang · All rights reserved · v1.2
+    <span data-zh>引用建議:Fang, C.-J. (2026). <i>SR Search Toolkit: Proximity Builder, PICO Strategy Builder, and Search Syntax Converter</i>. Zenodo. <a href="https://doi.org/10.5281/zenodo.21960702" target="_blank" rel="noopener">https://doi.org/10.5281/zenodo.21960702</a></span>
+    <span data-en>Cite as: Fang, C.-J. (2026). <i>SR Search Toolkit: Proximity Builder, PICO Strategy Builder, and Search Syntax Converter</i>. Zenodo. <a href="https://doi.org/10.5281/zenodo.21960702" target="_blank" rel="noopener">https://doi.org/10.5281/zenodo.21960702</a></span><br>
+    © 2026 Ching-Ju Fang · All rights reserved · v1.0.1
   </div>
 </main>
 

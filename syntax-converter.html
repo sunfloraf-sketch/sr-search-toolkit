@@ -13,7 +13,7 @@
   *{box-sizing:border-box}
   body{margin:0;font-family:-apple-system,"Segoe UI","Noto Sans TC",Roboto,Helvetica,Arial,sans-serif;
        background:var(--bg);color:var(--ink);line-height:1.5;font-size:15px}
-  header{background:linear-gradient(135deg,#4b5563,#374151);color:#fff;padding:20px 24px}
+  header{background:linear-gradient(135deg,#4b5563,#374151);color:#fff;padding:20px 24px;font-family:-apple-system,"Segoe UI","PingFang TC","Microsoft JhengHei","Noto Sans TC",Roboto,Arial,sans-serif}
   header .row{max-width:1180px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
   header h1{margin:0;font-size:20px;font-weight:650;letter-spacing:.2px}
   header p{margin:4px 0 0;font-size:13px;opacity:.9}
@@ -28,9 +28,15 @@
   select{min-width:230px;cursor:pointer}
   textarea{width:100%;min-height:96px;resize:vertical;margin-top:4px;line-height:1.55}
   .hint{font-size:12px;color:var(--mut);margin-top:6px}
-  .examples{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-  .ex{font-size:12px;background:var(--accent);color:var(--brand2);border:1px solid #cfe6e6;border-radius:16px;padding:4px 11px;cursor:pointer}
-  .ex:hover{background:#e0f0f0}
+  .examples{margin-top:14px}
+  .exhead{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+  .exlabel{font-size:12.5px;color:var(--mut);font-weight:600}
+  .exload{background:var(--brand);color:#fff;border:none;border-radius:8px;padding:6px 15px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap}
+  .exload:hover{background:var(--brand2)}
+  .expreview{background:var(--codebg);border:1px dashed var(--line);border-radius:8px;padding:10px 12px;font-family:"SF Mono","Cascadia Code",Consolas,monospace;font-size:12.5px;color:var(--code);line-height:1.6}
+  .exline{display:flex;gap:10px;white-space:pre-wrap;word-break:break-word}
+  .exn{color:var(--mut);font-weight:700;flex-shrink:0;min-width:26px}
+  .exs{flex:1}
   .grid{display:flex;flex-direction:column;gap:24px}
   .out{background:var(--card);border:1px solid var(--line);border-radius:11px;overflow:hidden;display:flex;flex-direction:column}
   .out h3{margin:0;padding:11px 14px;font-size:14px;background:var(--accent);color:var(--brand2);
@@ -59,9 +65,31 @@
   .mwwarn ul{margin:6px 0 0;padding-left:20px}
   .mwwarn li{margin:3px 0}
   .mwwarn code{background:#ffe8cc;padding:1px 5px;border-radius:4px;font-family:"SF Mono",Consolas,monospace;font-size:12px}
-  .toolbar{display:flex;justify-content:flex-end;gap:10px;margin-bottom:12px}
+  .toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
   .wordbtn{background:#2b579a;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer}
   .wordbtn:hover{background:#1e3f6f}
+  /* ---- syntax-color options + input highlight overlay ---- */
+  .coloropts{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+  .coloropts label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mut);font-weight:600;cursor:pointer}
+  .coloropts input{cursor:pointer;width:15px;height:15px}
+  .in-wrap{position:relative;margin-top:4px}
+  .in-wrap textarea{margin-top:0;position:relative;z-index:1}
+  .in-wrap.hl-active textarea{background:transparent;color:transparent;caret-color:var(--ink)}
+  #in::placeholder{color:#9aa5b1;opacity:1}
+  .in-backdrop{position:absolute;inset:0;z-index:0;margin:0;overflow:hidden;pointer-events:none;
+       font-family:inherit;font-size:14px;line-height:1.55;padding:9px 11px;border:1px solid transparent;
+       border-radius:8px;white-space:pre-wrap;overflow-wrap:break-word;word-break:break-word;color:var(--ink)}
+  .hl-fld{color:#0a8f4f;font-weight:bold}
+  .hl-cv{color:#d32029;font-weight:bold}
+  .hl-px{color:#0f83d6;font-weight:bold}
+  .hl-bk0{color:#7c3aed}.hl-bk1{color:#ea580c}.hl-bk2{color:#a16207}
+  .hl-bk3{color:#64748b}.hl-bk4{color:#c026d3}.hl-bk5{color:#0d9488}
+  /* 輸入框底圖:只上色不加粗,避免粗體較寬導致游標位置偏移(輸出結果仍維持粗體) */
+  .in-backdrop .hl-fld,.in-backdrop .hl-cv,.in-backdrop .hl-px{font-weight:normal}
+  /* 控制詞彙自動加引號提醒(緊貼輸入框,務求明顯) */
+  .quotewarn{margin-top:12px;background:#fff4e5;border:1px solid #f0a24b;border-left:5px solid #e67700;
+       border-radius:10px;padding:12px 16px;color:#7a3d00;font-size:13.5px;line-height:1.65}
+  .quotewarn code{background:#ffe8cc;padding:1px 5px;border-radius:4px;font-family:"SF Mono",Consolas,monospace;font-size:12px}
   .srcbadge{font-size:11px;background:var(--brand);color:#fff;border-radius:10px;padding:2px 8px;margin-left:8px;font-weight:600}
   .pmopt{display:flex;align-items:center;gap:7px;padding:9px 14px;border-top:1px dashed var(--line);background:#eef4ff;font-size:12.5px;color:#1e40af;cursor:pointer}
   .pmopt input{cursor:pointer;width:15px;height:15px}
@@ -77,23 +105,31 @@
   .mmwarn .mwh{font-weight:700;font-size:15px;margin-bottom:6px;color:#c0392b}
   .mmwarn p{margin:5px 0}
   .mmwarn b{color:#a01f1f}
+  /* ---- 統一導覽列 ---- */
+  .hbar{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .brand{text-decoration:none;color:#fff;flex-shrink:0}
+  .brand h1{margin:0;font-size:20px;font-weight:700;letter-spacing:.3px;white-space:nowrap}
+  .toolnav{display:flex;gap:8px;flex-wrap:wrap;flex:1;margin-left:4px}
+  .toolbtn{text-decoration:none;color:#fff;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.35);padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;white-space:nowrap;transition:background .15s}
+  .toolbtn:hover{background:rgba(255,255,255,.24)}
+  .toolbtn.active{background:#fff;color:#0d6e6e;border-color:#fff;box-shadow:0 1px 8px rgba(0,0,0,.2);cursor:default}
+  .subtitle{max-width:1200px;margin:10px auto 0;font-size:13px;opacity:.92;color:#fff}
   [data-en]{display:none}
   body.en [data-zh]{display:none} body.en [data-en]{display:revert}
 </style>
 </head>
 <body>
 <header>
-  <div class="row">
-    <div>
-      <h1><span data-zh>資料庫檢索語法轉換器</span><span data-en>Search Syntax Converter</span></h1>
-      <p><span data-zh>貼上起始資料庫搜尋策略，一秒生成 7 大資料庫/平台搜尋語法 · 任一資料庫皆可為起點</span><span data-en>Paste your starting-database search strategy, generate syntax for 7 databases/platforms in one second · any database as starting point</span></p>
-    </div>
-    <div style="display:flex;gap:10px;align-items:center">
-      <a class="langbtn" href="pico-builder.html" style="text-decoration:none"><span data-zh>PICO 策略</span><span data-en>PICO Builder</span></a>
-      <a class="langbtn" href="proximity-builder.html" style="text-decoration:none"><span data-zh>鄰近字組合器 →</span><span data-en>Proximity Builder →</span></a>
-      <button class="langbtn" id="langBtn" onclick="toggleLang()">English</button>
-    </div>
+  <div class="hbar">
+    <a class="brand" href="index.html"><h1><span data-zh>SR 檢索工具組</span><span data-en>SR Search Toolkit</span></h1></a>
+    <nav class="toolnav">
+      <a class="toolbtn" href="proximity-builder.html"><span data-zh>鄰近字組合器</span><span data-en>Proximity Builder</span></a>
+      <a class="toolbtn" href="pico-builder.html"><span data-zh>PICO 檢索策略產生器</span><span data-en>PICO Strategy Builder</span></a>
+      <a class="toolbtn active" href="syntax-converter.html" aria-current="page"><span data-zh>資料庫檢索語法轉換器</span><span data-en>Search Syntax Converter</span></a>
+    </nav>
+    <button class="langbtn" id="langBtn" onclick="toggleLang()">English</button>
   </div>
+  <p class="subtitle"><span data-zh>貼上起始資料庫搜尋策略，一秒生成 7 大資料庫/平台搜尋語法 · 任一資料庫皆可為起點</span><span data-en>Paste your starting-database search strategy, generate syntax for 7 databases/platforms in one second · any database as starting point</span></p>
 </header>
 <main>
   <div class="panel">
@@ -105,13 +141,18 @@
       <button class="swap" onclick="cycleSrc()" title="切換起始資料庫 / next">↻ <span data-zh>換起始庫</span><span data-en>next</span></button>
     </div>
     <label class="fld" style="margin-top:14px"><span data-zh>貼上檢索式 (可多行；用 #1 #2 引用行號)</span><span data-en>Paste your query (multi-line OK; reference lines with #1 #2)</span></label>
-    <textarea id="in" placeholder=""></textarea>
+    <div class="in-wrap"><div id="inhl" class="in-backdrop" aria-hidden="true"></div><textarea id="in" placeholder="" spellcheck="false"></textarea></div>
+    <div class="quotewarn" id="quoteWarn" style="display:none"></div>
     <div class="hint" data-zh>提示：兩個字以上的詞請自行決定關係(片語加雙引號、或用鄰近字 adj/near/N)，以統一各庫策略。</div>
     <div class="hint" data-en>Tip: for multi-word concepts, decide the relationship yourself (quote for phrase, or use proximity adj/near/N) so all databases stay consistent.</div>
     <div class="examples" id="examples"></div>
   </div>
 
   <div class="toolbar">
+    <div class="coloropts">
+      <label title="自由詞欄位＋外層括弧=綠、控制詞彙=紅、鄰近字=藍"><input type="checkbox" id="cbColor" checked><span data-zh>語法顏色標記</span><span data-en>Syntax colors</span></label>
+      <label title="以顏色標出成對圓括弧"><input type="checkbox" id="cbBracket"><span data-zh>成對括弧顏色</span><span data-en>Bracket pairs</span></label>
+    </div>
     <button class="wordbtn" onclick="downloadWord()"><span data-zh>⬇ 下載 Word</span><span data-en>⬇ Download Word</span></button>
   </div>
   <div class="grid" id="outs"></div>
@@ -143,7 +184,9 @@
   <div class="foot">
     <span data-zh>此工具在您的瀏覽器本機執行，不上傳任何資料。轉換結果仍請人工覆核後再執行檢索。</span>
     <span data-en>Runs entirely in your browser; nothing is uploaded. Always human-check the output before running searches.</span><br>
-    © 2026 Ching-Ju Fang · All rights reserved · v1.0
+    <span data-zh>引用建議:Fang, C.-J. (2026). <i>SR Search Toolkit: Proximity Builder, PICO Strategy Builder, and Search Syntax Converter</i>. Zenodo. <a href="https://doi.org/10.5281/zenodo.21960702" target="_blank" rel="noopener">https://doi.org/10.5281/zenodo.21960702</a></span>
+    <span data-en>Cite as: Fang, C.-J. (2026). <i>SR Search Toolkit: Proximity Builder, PICO Strategy Builder, and Search Syntax Converter</i>. Zenodo. <a href="https://doi.org/10.5281/zenodo.21960702" target="_blank" rel="noopener">https://doi.org/10.5281/zenodo.21960702</a></span><br>
+    © 2026 Ching-Ju Fang · All rights reserved · v1.0.1
   </div>
 </main>
 
@@ -722,13 +765,25 @@ function quoteControlledVocab(body, src) {
 
 function parseLine(line, src, warn) {
   var trimmed = line.trim();
+  // 1) 先剝除行首「行號標籤」（此行自己的編號）
+  //    - 帶 . 或 ) 者： "1." "1)" "#1." "S1)"
   var body = trimmed.replace(/^#?\s*S?\d+\s*[.)]\s+/i, "");
-  body = body.replace(/\s*=\s*\(/g, "=(");   // 正規化 TS = ( -> TS=(
-  // 純行號組合行（僅數字/括號/布林）：把裸數字加上 #
-  var stripped = body.replace(/[#S()]/gi, " ").replace(/\b(and|or|not)\b/gi, " ").trim();
-  if (stripped.length && /^[\d\s]+$/.test(stripped)) {
+  //    - 帶空白者：需有 # 或 S 前綴（避免誤刪 "2019 novel..." 這種裸數字開頭），
+  //      且其後不可緊接布林運算子（"#1 OR #2" 的 #1 是引用、不是標籤）。
+  //      若其後是內容或另一個行號引用（如 "#3 #1 OR #2"），則視為標籤剝除。
+  if (body === trimmed) {
+    body = trimmed.replace(/^(?:#|S)\s*\d+\s+(?=\S)/i, function (m, off, str) {
+      var rest = str.slice(m.length);
+      if (/^(?:and|or|not)\b/i.test(rest)) return m;   // 例 "#1 OR #2"：不剝
+      return "";                                        // 例 "#1 內容" / "#3 #1 OR #2"：剝
+    });
+  }
+  // 2) 純行號組合行（僅行號/布林/括號）：把裸數字補上 #（例 1 OR 2 -> #1 OR #2）
+  var comboTest = body.replace(/[#S()]/gi, " ").replace(/\b(and|or|not)\b/gi, " ").trim();
+  if (comboTest.length && /^[\d\s]+$/.test(comboTest)) {
     body = body.replace(/(^|[\s(])(\d+)/g, "$1#$2");
   }
+  body = body.replace(/\s*=\s*\(/g, "=(");   // 正規化 TS = ( -> TS=(
   body = quoteControlledVocab(body, src);
   var toks = tokenize(body);
   var ast = parseExpression(toks, src, warn);
@@ -961,6 +1016,53 @@ if (typeof module !== "undefined" && module.exports) {
   srcSel.value = "embase_com";
   let userTouched = false;
 
+  // ================= syntax highlighter (ported from PICO builder) =================
+  // 綠=自由詞欄位+外層括弧, 紅=控制詞彙, 藍=鄰近字；括弧配對 6 色
+  var PROX_RE=/\b(?:ADJ\d+|NEAR\/\d+|NEXT\/\d+|NEXT|N\d+|W\/\d+|W\d+|PRE\/\d+)\b|:~\d+/g;
+  var CV_RE={pubmed:/(?:"[^"]*"|[A-Za-z][\w-]*)\s*\[(?:mh|mj|mesh)(?::noexp)?\]/gi,ovid:/(?:\bexp\s+)?\*?"[^"]*"\//gi,embase:/"[^"]*"\/(?:exp(?:\/mj)?|de|mj)\b/gi,cochrane:/\[mh\b[^\[\]]*(?:\[mj\])?\]/gi,ebsco:/\b(?:MH|MM)\s*\([^)]*\)|\bMW\s+"[^"]*"/gi,wos:null,scopus:null};
+  var FIELD_RE={pubmed:/\[(?:tiab|ti|tw|ab)\]/gi,ovid:/\.(?:ti|ab|kf|kw|mp|tw|nm|pt|sh|fs|xm|lg)(?:,(?:ti|ab|kf|kw|mp|tw|nm|pt|sh|fs|xm|lg))*\./gi,embase:/:(?:ti|ab|kw|de)(?:,(?:ti|ab|kw|de))*(?![a-z])/gi,cochrane:/:(?:ti|ab|kw|de)(?:,(?:ti|ab|kw|de))*(?![a-z])/gi,ebsco:/\b(?:TI|AB|KW|TX|XB)\b(?=\s*\()/gi,wos:/\b(?:TI|AB|AK|TS)=/gi,scopus:/\b(?:TITLE-ABS-KEY|TITLE-ABS|TITLE|ABS|AUTHKEY|KEY)\b(?=\s*\()/gi};
+  function hlHighlight(text, engine, semantic, brackets){
+    var n=text.length, cls=new Array(n), m, st, i;
+    var openOf={},closeOf={}; st=[];
+    for(i=0;i<n;i++){var c=text[i]; if(c==="(")st.push(i); else if(c===")"){ if(st.length){var o=st.pop(); openOf[o]=i; closeOf[i]=o;} }}
+    function mk(s,e,tag){ for(var k=s;k<e;k++){ if(!cls[k]) cls[k]=tag; } }
+    if(semantic){
+      if(CV_RE[engine]){ CV_RE[engine].lastIndex=0; while((m=CV_RE[engine].exec(text))){ var ms=m.index, me=ms+m[0].length, seg=m[0], q1=seg.indexOf('"'); if(q1>=0){ var q2=seg.indexOf('"', q1+1); if(q2<0)q2=seg.length; mk(ms, ms+q1+1, "cv"); mk(ms+q2, me, "cv"); } else { var ti=seg.search(/[\[(]/); if(ti<0)ti=seg.length; mk(ms+ti, me, "cv"); } } }
+      PROX_RE.lastIndex=0; while((m=PROX_RE.exec(text))) mk(m.index,m.index+m[0].length,"px");
+      var FR=FIELD_RE[engine];
+      if(FR){ FR.lastIndex=0; while((m=FR.exec(text))){ var s=m.index,e=s+m[0].length; mk(s,e,"fld");
+        if(engine==="embase"||engine==="ovid"||engine==="cochrane"||engine==="pubmed"){ var j=s-1; while(j>=0&&text[j]===" ")j--; if(text[j]===")"&&closeOf[j]!==undefined){cls[j]="fld";cls[closeOf[j]]="fld";} }
+        else { var k2=e; while(k2<n&&text[k2]===" ")k2++; if(text[k2]==="("&&openOf[k2]!==undefined){cls[k2]="fld";cls[openOf[k2]]="fld";} }
+      } }
+    }
+    if(brackets){ var d2={}; st=[]; for(i=0;i<n;i++){var c2=text[i]; if(c2==="(")st.push(i); else if(c2===")"&&st.length){var o2=st.pop(); d2[o2]=d2[i]=st.length;}} for(i=0;i<n;i++){ if((text[i]==="("||text[i]===")") && !cls[i]) cls[i]="bk"+((d2[i]||0)%6); } }
+    var esc2=function(c){ return c==="&"?"&amp;":c==="<"?"&lt;":c===">"?"&gt;":c; };
+    var out="",cur=null;
+    for(i=0;i<n;i++){ var tg2=cls[i]||null; if(tg2!==cur){ if(cur)out+="</span>"; if(tg2)out+="<span class=\"hl-"+tg2+"\">"; cur=tg2; } out+=esc2(text[i]); }
+    if(cur)out+="</span>";
+    return {html:out};
+  }
+  var cbColor=$("#cbColor"), cbBracket=$("#cbBracket"), inhl=$("#inhl");
+  window.__hl=hlHighlight;   // 供 Word 匯出使用
+  const inWrap = inp.parentNode;
+  function hlOn(){ return (cbColor&&cbColor.checked)||(cbBracket&&cbBracket.checked); }
+  // 對輸出卡片的 <pre> 上色（若關閉則純文字，copy/匯出仍取 textContent＝原字串）
+  function paintPre(pre, text, engine){
+    if(hlOn()){ pre.innerHTML=hlHighlight(text, engine, cbColor.checked, cbBracket.checked).html; }
+    else { pre.textContent=text; }
+  }
+  // 輸入框即時上色（透明字＋底層彩色 div，捲動同步）
+  function paintInput(){
+    if(!inhl) return;
+    inWrap.classList.toggle("hl-active", hlOn() && inp.value.length>0);
+    if(hlOn()){
+      var eng=TARGET_BY_ID[srcSel.value].engine;
+      var t=inp.value; if(t.charAt(t.length-1)==="\n") t+=" ";
+      inhl.innerHTML=hlHighlight(t, eng, cbColor.checked, cbBracket.checked).html;
+    } else { inhl.innerHTML=""; }
+    inhl.scrollTop=inp.scrollTop; inhl.scrollLeft=inp.scrollLeft;
+  }
+
   const EXAMPLES = {
     pubmed:   [
       'GDM[tiab] OR ((gestation*[tiab] OR pregnan*[tiab] OR gravid*[tiab]) AND (diabet*[tiab] OR T2DM[tiab] OR NIDDM[tiab]))',
@@ -1003,17 +1105,27 @@ if (typeof module !== "undefined" && module.exports) {
 
   function refreshExamples(){
     const src = TARGET_BY_ID[srcSel.value].engine;
+    const ex = (EXAMPLES[src]||[]).slice(0,2);
     exWrap.innerHTML="";
-    (EXAMPLES[src]||[]).forEach(t=>{
-      const b=document.createElement("button"); b.className="ex"; b.textContent=t;
-      b.onclick=()=>{ userTouched=true; inp.value=t; run(); };
-      exWrap.appendChild(b);
-    });
+    const loadText = ex.map(function(t,i){ return "#"+(i+1)+" "+t; }).join("\n");
+    // 灰色預覽：把範例放進輸入框的 placeholder（像鄰近字組合器的灰字預載）
+    inp.placeholder = loadText;
+    if(!ex.length) return;
+    // 一行說明 + 載入範例按鈕
+    const head=document.createElement("div"); head.className="exhead";
+    const lab=document.createElement("span"); lab.className="exlabel";
+    lab.innerHTML='<span data-zh>輸入框中的灰字為範例預覽（#1／#2）：</span><span data-en>The grey text in the box is an example preview (#1 / #2):</span>';
+    const load=document.createElement("button"); load.type="button"; load.className="exload";
+    load.innerHTML='<span data-zh>⬇ 載入範例</span><span data-en>⬇ Load example</span>';
+    head.appendChild(lab); head.appendChild(load); exWrap.appendChild(head);
+    // 真實載入：把兩行(含 #1／#2 行號)放進輸入框並轉換
+    load.onclick=function(){ userTouched=true; inp.value=loadText; run(); paintInput(); inp.focus(); };
   }
 
   function run(){
     const srcTarget=srcSel.value, src=TARGET_BY_ID[srcTarget].engine, input=inp.value.trim();
     outs.innerHTML="";
+    var _qw0=document.getElementById("quoteWarn"); if(_qw0) _qw0.style.display="none";
     const oldN=document.getElementById("runNotes"); if(oldN) oldN.remove();
     const oldW=document.getElementById("mwWarn"); if(oldW) oldW.remove();
     if(!input){ window.__lastResult=null; return; }
@@ -1027,11 +1139,29 @@ if (typeof module !== "undefined" && module.exports) {
     const notes=new Set(); rawWarn.forEach(w=>{ if(w!=="__MULTIWORD__") notes.add(w); });
     const omitted=[]; const exportCards=[];
 
-    // 依選單順序輸出全部資料庫（含來源庫，保留其位置與原輸入內容）
+    // 起始資料庫：自動為控制詞彙補上雙引號（非破壞性，只影響顯示與匯出，不改動輸入框）
+    const srcQuoted = input.split(/\r?\n/).map(function(l){ return quoteControlledVocab(l, src); }).join("\n");
+    // 單字控制詞彙也會靜默補引號；只有「多字詞」被補引號時才顯示警示
+    var warnQuote=false;
+    if(srcQuoted!==input){
+      var _origQ={}; (input.match(/"[^"]*"/g)||[]).forEach(function(q){ _origQ[q]=(_origQ[q]||0)+1; });
+      var _newQ=srcQuoted.match(/"[^"]*"/g)||[];
+      for(var _i=0;_i<_newQ.length;_i++){ var _q=_newQ[_i]; if(_origQ[_q]){ _origQ[_q]--; continue; } if(/\s/.test(_q.slice(1,-1).trim())){ warnQuote=true; break; } }
+    }
+    if(warnQuote){
+      var qw=document.getElementById("quoteWarn");
+      if(qw){
+        qw.style.display="block";
+        qw.innerHTML = en
+          ? '⚠ <b>Quotes were auto-added to controlled vocabulary.</b> Your query contains multi-word controlled terms without quotes. The “<b>starting database</b>” card in the results below now shows the quoted version (e.g. <code>"maternal diabetes mellitus"/exp</code>). Please rely on the converted results and update your own original query accordingly.'
+          : '⚠ <b>已自動為控制詞彙加上雙引號。</b>你的檢索式中有未加引號的多字控制詞彙。下方轉譯結果的「<b>起始資料庫</b>」卡片已顯示補上引號的版本(例:<code>"maternal diabetes mellitus"/exp</code>)。請以轉譯結果為準,並建議你回頭更新自己的原始檢索式。';
+      }
+    }
+    // 依選單順序輸出全部資料庫（含來源庫）
     TARGETS.forEach(tg=>{
       const d=tg.engine;
       const isSource=(tg.id===srcTarget);
-      const txt=isSource?input:res.results[d].text;
+      const txt=isSource?srcQuoted:res.results[d].text;
       if(!isSource) (res.results[d].warn||[]).forEach(w=>notes.add(w));
       if(!isSource && (!txt || !txt.trim())){ omitted.push(tg.label); return; }
       exportCards.push({db:d, label:tg.label, text:txt, isSource:isSource, id:tg.id});
@@ -1040,7 +1170,7 @@ if (typeof module !== "undefined" && module.exports) {
       const name=document.createElement("span"); name.innerHTML=tg.label+(isSource?' <span class="srcbadge">'+(en?"start":"起始")+'</span>':'');
       const btn=document.createElement("button"); btn.className="copy"; btn.textContent="Copy";
       h.appendChild(name); h.appendChild(btn); card.appendChild(h);
-      const pre=document.createElement("pre"); pre.textContent=txt; card.appendChild(pre);
+      const pre=document.createElement("pre"); paintPre(pre, txt, d); card.appendChild(pre);
       btn.onclick=()=>{ navigator.clipboard.writeText(pre.textContent).then(()=>{btn.textContent="✓ Copied";btn.classList.add("done");setTimeout(()=>{btn.textContent="Copy";btn.classList.remove("done")},1400);}); };
       // PubMed 鄰近字語法選項 + 字尾候選（半自動）
       if(d==="pubmed" && !isSource){
@@ -1055,7 +1185,7 @@ if (typeof module !== "undefined" && module.exports) {
         function collectVars(){ const V={}; Object.keys(varState).forEach(function(r){ V[r]=Array.from(varState[r]); }); return V; }
         function recompute(){
           const r2=convert(input, src, ["pubmed"], {proximityExpand:cb.checked, variants: cb.checked?collectVars():null});
-          pre.textContent=r2.results.pubmed.text;
+          paintPre(pre, r2.results.pubmed.text, "pubmed");
           const ec=exportCards.find(function(x){return x.db==="pubmed";}); if(ec) ec.text=pre.textContent;
         }
         function buildVarPanel(roots){
@@ -1085,10 +1215,10 @@ if (typeof module !== "undefined" && module.exports) {
           if(cb.checked){
             noteEl.textContent=w2.length?("⚠ "+w2[0]):""; noteEl.style.display=w2.length?"block":"none";
             if(roots.length){ buildVarPanel(roots); varPanel.style.display="block"; recompute(); }
-            else { varPanel.style.display="none"; pre.textContent=r2.results.pubmed.text; const ec=exportCards.find(function(x){return x.db==="pubmed";}); if(ec)ec.text=pre.textContent; }
+            else { varPanel.style.display="none"; paintPre(pre, r2.results.pubmed.text, "pubmed"); const ec=exportCards.find(function(x){return x.db==="pubmed";}); if(ec)ec.text=pre.textContent; }
           } else {
             varPanel.style.display="none"; noteEl.style.display="none";
-            pre.textContent=r2.results.pubmed.text; const ec=exportCards.find(function(x){return x.db==="pubmed";}); if(ec)ec.text=pre.textContent;
+            paintPre(pre, r2.results.pubmed.text, "pubmed"); const ec=exportCards.find(function(x){return x.db==="pubmed";}); if(ec)ec.text=pre.textContent;
           }
         };
       }
@@ -1102,14 +1232,14 @@ if (typeof module !== "undefined" && module.exports) {
           opt.appendChild(cb); opt.appendChild(sp); card.appendChild(opt);
           cb.onchange=()=>{
             const r2=convert(input, src, [d], {fieldExpand:cb.checked});
-            pre.textContent=r2.results[d].text;
+            paintPre(pre, r2.results[d].text, d);
             const ec=exportCards.find(x=>x.db===d); if(ec) ec.text=pre.textContent;
           };
         }
       }
       outs.appendChild(card);
     });
-    window.__lastResult={srcTarget:srcTarget, src:src, input:input, cards:exportCards};
+    window.__lastResult={srcTarget:srcTarget, src:src, input:input, cards:exportCards, sem:(cbColor&&cbColor.checked), brk:(cbBracket&&cbBracket.checked)};
 
     // 顯著提醒（優先序：來源不符 > 多字詞未指定關係）
     const srcLabel=TARGET_BY_ID[srcTarget].label;
@@ -1194,8 +1324,11 @@ if (typeof module !== "undefined" && module.exports) {
   }
   function escapeHtml(s){return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
 
-  srcSel.addEventListener("change",()=>{ refreshExamples(); var _e=TARGET_BY_ID[srcSel.value].engine; if(!userTouched && DEFAULT_IN[_e]) inp.value=DEFAULT_IN[_e]; run(); });
-  inp.addEventListener("input",()=>{ userTouched=true; clearTimeout(window.__t); window.__t=setTimeout(run,180); });
+  srcSel.addEventListener("change",()=>{ refreshExamples(); run(); paintInput(); });
+  inp.addEventListener("input",()=>{ userTouched=true; paintInput(); clearTimeout(window.__t); window.__t=setTimeout(run,180); });
+  inp.addEventListener("scroll",()=>{ if(inhl){ inhl.scrollTop=inp.scrollTop; inhl.scrollLeft=inp.scrollLeft; } });
+  if(cbColor) cbColor.addEventListener("change",()=>{ paintInput(); run(); });
+  if(cbBracket) cbBracket.addEventListener("change",()=>{ paintInput(); run(); });
 
   window.cycleSrc=function(){ const ids=TARGETS.map(function(x){return x.id;}); const i=ids.indexOf(srcSel.value); srcSel.value=ids[(i+1)%ids.length]; srcSel.dispatchEvent(new Event("change")); };
 
@@ -1205,24 +1338,51 @@ if (typeof module !== "undefined" && module.exports) {
     var params=new URLSearchParams(location.search);
     var q=params.get("q"), qsrc=params.get("src");
     if(q){ if(qsrc){ if(TARGET_BY_ID[qsrc]){ srcSel.value=qsrc; } else { var _tt=TARGETS.filter(function(x){return x.engine===qsrc;})[0]; if(_tt) srcSel.value=_tt.id; } refreshExamples(); } inp.value=q; userTouched=true; }
-    else { inp.value=DEFAULT_IN.embase; }
+    else { inp.value=""; }
   })();
   buildRefTable();
   run();
-  window.__rerender=function(){ try{buildRefTable();}catch(e){} try{run();}catch(e){} };
+  paintInput();
+  window.__rerender=function(){ try{buildRefTable();}catch(e){} try{run();}catch(e){} try{paintInput();}catch(e){} };
 })();
 
 window.downloadWord=function(){
   const R=window.__lastResult; if(!R || !R.cards || !R.cards.length) return;
   const en=document.body.classList.contains("en");
-  const esc=x=>String(x).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\n/g,"<br>");
-  const rows=R.cards.map(c=>'<tr><td style="border:1px solid #999;padding:6px 10px;font-weight:bold;white-space:nowrap;vertical-align:top">'+c.label+(c.isSource?(en?" (start)":"（起始）"):"")+'</td><td style="border:1px solid #999;padding:6px 10px;font-family:Consolas,monospace;font-size:10.5pt;vertical-align:top">'+esc(c.text)+'</td></tr>').join("");
+  const esc=x=>String(x).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const msoF="font-family:Consolas,'Microsoft JhengHei',monospace;mso-ascii-font-family:Consolas;mso-hansi-font-family:Consolas;mso-bidi-font-family:Consolas;mso-fareast-font-family:'Microsoft JhengHei'";
+  const fspan=s=>"<span style=\""+msoF+"\">"+s+"</span>";
+  const HLC={fld:"#0a8f4f",cv:"#d32029",px:"#0f83d6",bk0:"#7c3aed",bk1:"#ea580c",bk2:"#a16207",bk3:"#64748b",bk4:"#c026d3",bk5:"#0d9488"};
+  const HL=window.__hl, sem=!!R.sem, brk=!!R.brk, colorOn=(sem||brk)&&!!HL;
+  const synCell=(text,engine)=>{
+    if(!colorOn) return fspan(esc(text));
+    const h=HL(text,engine,sem,brk).html.replace(/<span class="hl-(\w+)">/g,function(m,cl){var bd=/^(fld|cv|px)$/.test(cl)?";font-weight:bold":"";return "<span style=\"color:"+(HLC[cl]||"inherit")+bd+";"+msoF+"\">";});
+    return fspan(h);
+  };
+  const cDb="border:1px solid #999;padding:6px 10px;font-weight:bold;white-space:nowrap;vertical-align:top;font-size:11pt;"+msoF;
+  const cNum="border:1px solid #999;padding:6px 8px;color:#0d6e6e;font-weight:bold;white-space:nowrap;vertical-align:top;text-align:center;font-size:11pt;"+msoF;
+  const cSyn="border:1px solid #999;padding:6px 10px;font-size:11pt;vertical-align:top;"+msoF;
+  let rows="";
+  R.cards.forEach(function(c){
+    const label=esc(c.label+(c.isSource?(en?" (start)":"（起始）"):""));
+    const lines=String(c.text).split(/\r?\n/); if(!lines.length) lines.push("");
+    lines.forEach(function(ln,i){
+      const m=ln.match(/^\s*(#\d+)\s+([\s\S]*)$/);
+      const num=m?m[1]:""; const syn=m?m[2]:ln;
+      let row="<tr>";
+      if(i===0) row+="<td style='"+cDb+"' rowspan='"+lines.length+"'>"+fspan(label)+"</td>";
+      row+="<td style='"+cNum+"'>"+fspan(esc(num))+"</td><td style='"+cSyn+"'>"+synCell(syn, c.db)+"</td></tr>";
+      rows+=row;
+    });
+  });
   const title=en?"Search Syntax Conversion":"檢索語法轉換結果";
   const srcline=(en?"Starting database: ":"起始資料庫：")+TARGET_BY_ID[R.srcTarget].label;
-  const th="border:1px solid #999;padding:6px 10px;background:#0d6e6e;color:#fff;font-weight:bold";
+  const th="border:1px solid #999;padding:6px 10px;background:#0d6e6e;color:#fff;font-weight:bold;font-size:11pt;"+msoF;
+  const cite=(en?"Cite this tool: ":"工具引用：")+"Fang, C.-J. (2026). SR Search Toolkit: Proximity Builder, PICO Strategy Builder, and Search Syntax Converter. Zenodo. https://doi.org/10.5281/zenodo.21960702";
   const html="<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head>"+
-    "<body style=\"font-family:'Segoe UI',Arial,sans-serif\"><h2>"+title+"</h2><p>"+srcline+"</p>"+
-    "<table style='border-collapse:collapse;width:100%'><tr><td style='"+th+"'>"+(en?"Database":"資料庫 Database")+"</td><td style='"+th+"'>"+(en?"Search syntax":"搜尋語法 Search syntax")+"</td></tr>"+rows+"</table></body></html>";
+    "<body style=\""+msoF+"\"><h2>"+fspan(title)+"</h2><p>"+fspan(srcline)+"</p>"+
+    "<table border='1' cellspacing='0' style='border-collapse:collapse;width:100%;border:1px solid #999'><tr><td style='"+th+"'>"+fspan(en?"Database":"資料庫 Database")+"</td><td style='"+th+";text-align:center'>"+fspan("#")+"</td><td style='"+th+"'>"+fspan(en?"Search syntax":"搜尋語法 Search syntax")+"</td></tr>"+rows+"</table>"+
+    "<p style='margin-top:14px;font-size:9pt;color:#555'>"+fspan(esc(cite))+"</p></body></html>";
   const blob=new Blob(["\ufeff"+html],{type:"application/msword"});
   const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="search_syntax.doc"; document.body.appendChild(a); a.click(); a.remove();
 };

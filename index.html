@@ -9,7 +9,7 @@
     --head:#4b5563;--head2:#374151;--accent:#f3f4f6;--code:#0f172a;--codebg:#f8fafc}
   *{box-sizing:border-box}
   body{margin:0;font-family:-apple-system,"Segoe UI","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6}
-  header{background:linear-gradient(135deg,var(--head),var(--head2));color:#fff;padding:26px 24px}
+  header{background:linear-gradient(135deg,#4b5563,#374151);color:#fff;padding:20px 24px;font-family:-apple-system,"Segoe UI","PingFang TC","Microsoft JhengHei","Noto Sans TC",Roboto,Arial,sans-serif}
   .hwrap{max-width:1040px;margin:0 auto;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
   h1{margin:0 0 6px;font-size:24px}
   header p{margin:0;font-size:14px;opacity:.92;max-width:700px}
@@ -27,6 +27,15 @@
   .tool:hover .go{background:var(--head2)}
   footer{max-width:1040px;margin:0 auto;padding:0 24px 40px;color:var(--mut);font-size:12.5px}
   footer code{background:var(--codebg);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:12px}
+  /* ---- 統一導覽列 ---- */
+  .hbar{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .brand{text-decoration:none;color:#fff;flex-shrink:0}
+  .brand h1{margin:0;font-size:20px;font-weight:700;letter-spacing:.3px;white-space:nowrap}
+  .toolnav{display:flex;gap:8px;flex-wrap:wrap;flex:1;margin-left:4px}
+  .toolbtn{text-decoration:none;color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.4);padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;white-space:nowrap;transition:background .15s}
+  .toolbtn:hover{background:rgba(255,255,255,.26)}
+  .toolbtn.active{background:#fff;color:#0d6e6e;border-color:#fff;box-shadow:0 1px 8px rgba(0,0,0,.2);cursor:default}
+  .subtitle{max-width:1200px;margin:10px auto 0;font-size:13px;opacity:.92;color:#fff}
   [data-en]{display:none}
   html[lang="en"] [data-zh]{display:none}
   html[lang="en"] [data-en]{display:inline}
@@ -35,13 +44,16 @@
 </head>
 <body>
 <header>
-  <div class="hwrap">
-    <div>
-      <h1><span data-zh>SR 檢索工具組</span><span data-en>Systematic Review Search Toolkit</span></h1>
-      <p><span data-zh>系統性文獻回顧檢索的三個獨立小工具，各自可單獨使用，也能互相搭配。每個頁面都能跳到另外兩個。</span><span data-en>Three independent tools for systematic-review searching. Use any one on its own, or combine them — every page links to the other two.</span></p>
-    </div>
+  <div class="hbar">
+    <a class="brand" href="index.html"><h1><span data-zh>SR 檢索工具組</span><span data-en>SR Search Toolkit</span></h1></a>
+    <nav class="toolnav">
+      <a class="toolbtn" href="proximity-builder.html"><span data-zh>鄰近字組合器</span><span data-en>Proximity Builder</span></a>
+      <a class="toolbtn" href="pico-builder.html"><span data-zh>PICO 檢索策略產生器</span><span data-en>PICO Strategy Builder</span></a>
+      <a class="toolbtn" href="syntax-converter.html"><span data-zh>資料庫檢索語法轉換器</span><span data-en>Search Syntax Converter</span></a>
+    </nav>
     <button class="langbtn" id="langBtn" onclick="toggleLang()">English</button>
   </div>
+  <p class="subtitle"><span data-zh>系統性文獻回顧檢索的三個獨立小工具，各自可單獨使用，也能互相搭配。每個頁面都能跳到另外兩個。</span><span data-en>Three independent tools for systematic-review searching. Use any one on its own, or combine them — every page links to the other two.</span></p>
 </header>
 <main>
   <div class="lead">
@@ -74,6 +86,8 @@
 </main>
 <footer>
   <p><span data-zh>提示：三個工具與本頁放在同一個資料夾即可互相跳轉。鄰近字組合器整理好的片段會透過網址參數（<code>?src=&amp;q=</code>）直接帶入語法轉換器。</span><span data-en>Note: keep the three tools and this page in the same folder so the links work. Fragments from the Proximity Builder are carried into the Converter via URL parameters (<code>?src=&amp;q=</code>).</span></p>
+  <p><span data-zh>引用建議:Fang, C.-J. (2026). <i>SR Search Toolkit: Proximity Builder, PICO Strategy Builder, and Search Syntax Converter</i>. Zenodo. <a href="https://doi.org/10.5281/zenodo.21960702" target="_blank" rel="noopener">https://doi.org/10.5281/zenodo.21960702</a></span><span data-en>Cite as: Fang, C.-J. (2026). <i>SR Search Toolkit: Proximity Builder, PICO Strategy Builder, and Search Syntax Converter</i>. Zenodo. <a href="https://doi.org/10.5281/zenodo.21960702" target="_blank" rel="noopener">https://doi.org/10.5281/zenodo.21960702</a></span></p>
+  <p>© 2026 Ching-Ju Fang · All rights reserved · v1.0.1</p>
 </footer>
 <script>
   function toggleLang(){

@@ -13,6 +13,7 @@ authors:
     family-names: Fang
     email: sunflora.f@gmail.com
 version: "1.0.0"
+doi: "10.5281/zenodo.21960702"
 date-released: "2026-08-16"
 license: MIT
 repository-code: "https://github.com/sunfloraf-sketch/sr-search-toolkit"

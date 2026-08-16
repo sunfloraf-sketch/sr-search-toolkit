@@ -1,6 +1,9 @@
 # 本機備份，不上傳 GitHub / not published
 _舊版備份/
 
+# 本機小工具（不發佈）/ local helper, not published
+push.bat
+
 # OS / editor junk
 .DS_Store
 Thumbs.db
