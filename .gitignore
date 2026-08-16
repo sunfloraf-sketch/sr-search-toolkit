@@ -1,0 +1,10 @@
+# 本機備份，不上傳 GitHub / not published
+_舊版備份/
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+desktop.ini
+*~
+.vscode/
+.idea/

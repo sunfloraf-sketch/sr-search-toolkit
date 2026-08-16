@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "SR Search Toolkit: Proximity Builder, PICO Strategy Builder, and Search Syntax Converter"
+abstract: >-
+  A set of three browser-based tools for systematic-review literature searching:
+  a Proximity Builder that assembles adjacency/near fragments from synonym stacks,
+  a PICO Strategy Builder that generates line-numbered strategies with controlled
+  vocabulary mapping, and a Search Syntax Converter that translates a query across
+  seven databases/platforms. All tools run entirely in the browser.
+type: software
+authors:
+  - given-names: Ching-Ju
+    family-names: Fang
+    email: sunflora.f@gmail.com
+version: "1.0.0"
+date-released: "2026-08-16"
+license: MIT
+repository-code: "https://github.com/sunfloraf-sketch/sr-search-toolkit"
+url: "https://sunfloraf-sketch.github.io/sr-search-toolkit/"
+keywords:
+  - systematic review
+  - literature search
+  - search strategy
+  - PICO
+  - controlled vocabulary
+  - MeSH
+  - Emtree
+  - proximity operators
+  - bibliographic databases

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SR 檢索工具組 · Systematic Review Search Toolkit</title>
+<style>
+  :root{--bg:#f4f6f9;--card:#ffffff;--ink:#1c2733;--mut:#5b6b7b;--line:#e2e8f0;
+    --head:#4b5563;--head2:#374151;--accent:#f3f4f6;--code:#0f172a;--codebg:#f8fafc}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"Segoe UI","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6}
+  header{background:linear-gradient(135deg,var(--head),var(--head2));color:#fff;padding:26px 24px}
+  .hwrap{max-width:1040px;margin:0 auto;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+  h1{margin:0 0 6px;font-size:24px}
+  header p{margin:0;font-size:14px;opacity:.92;max-width:700px}
+  .langbtn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;padding:6px 14px;border-radius:20px;cursor:pointer;font-size:13px;font-weight:600}
+  .langbtn:hover{background:rgba(255,255,255,.28)}
+  main{max-width:1040px;margin:0 auto;padding:26px 24px 40px}
+  .lead{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:22px;font-size:13.5px;color:var(--mut)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+  .tool{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;text-decoration:none;color:inherit;transition:box-shadow .15s,transform .15s,border-color .15s}
+  .tool:hover{box-shadow:0 8px 24px rgba(15,23,42,.10);transform:translateY(-2px);border-color:#cbd5e1}
+  .tool h2{margin:0 0 2px;font-size:19px}
+  .tool .sub{font-size:12.5px;color:var(--mut);font-weight:600;margin-bottom:10px}
+  .tool p{margin:0 0 16px;font-size:13.5px;color:var(--mut);flex:1}
+  .go{align-self:flex-start;background:var(--head);color:#fff;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700}
+  .tool:hover .go{background:var(--head2)}
+  footer{max-width:1040px;margin:0 auto;padding:0 24px 40px;color:var(--mut);font-size:12.5px}
+  footer code{background:var(--codebg);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:12px}
+  [data-en]{display:none}
+  html[lang="en"] [data-zh]{display:none}
+  html[lang="en"] [data-en]{display:inline}
+  html[lang="en"] .sub[data-zh]{display:none}
+</style>
+</head>
+<body>
+<header>
+  <div class="hwrap">
+    <div>
+      <h1><span data-zh>SR 檢索工具組</span><span data-en>Systematic Review Search Toolkit</span></h1>
+      <p><span data-zh>系統性文獻回顧檢索的三個獨立小工具，各自可單獨使用，也能互相搭配。每個頁面都能跳到另外兩個。</span><span data-en>Three independent tools for systematic-review searching. Use any one on its own, or combine them — every page links to the other two.</span></p>
+    </div>
+    <button class="langbtn" id="langBtn" onclick="toggleLang()">English</button>
+  </div>
+</header>
+<main>
+  <div class="lead">
+    <span data-zh>三個工具沒有先後順序，依你的需要挑選：整理同義詞的鄰近字片段、建立含控制詞彙的 PICO 檢索策略、或把檢索式在各資料庫間轉換。</span>
+    <span data-en>The three tools are not sequential — pick whichever you need: build proximity fragments from synonyms, assemble a PICO strategy with controlled vocabulary, or convert a query between databases.</span>
+  </div>
+
+  <div class="grid">
+    <a class="tool" href="proximity-builder.html">
+      <h2><span data-zh>鄰近字組合器</span><span data-en>Proximity Builder</span></h2>
+      <div class="sub" data-zh>Proximity Builder</div>
+      <p><span data-zh>把多堆同義詞組成鄰近字（adj/near/N）片段；也能貼一份 Before 清單自動分堆，整理好可直接送進語法轉換器。</span><span data-en>Turn stacks of synonyms into a proximity (adj/near/N) fragment, or auto-split a Before list into stacks — then send it straight to the converter.</span></p>
+      <span class="go" data-zh>開啟工具 →</span><span class="go" data-en>Open tool →</span>
+    </a>
+
+    <a class="tool" href="pico-builder.html">
+      <h2><span data-zh>PICO 檢索策略產生器</span><span data-en>PICO Strategy Builder</span></h2>
+      <div class="sub" data-zh>PICO Strategy Builder</div>
+      <p><span data-zh>在 PICO 概念表填入自由詞與控制詞彙，選欄位完整度，一鍵生成各資料庫「帶行號」的檢索策略（內建 MeSH／Emtree／CINAHL Headings 對應）。</span><span data-en>Fill in free-text and controlled terms per PICO concept, pick a field level, and generate line-numbered strategies for each database (with MeSH / Emtree / CINAHL Headings mapping built in).</span></p>
+      <span class="go" data-zh>開啟工具 →</span><span class="go" data-en>Open tool →</span>
+    </a>
+
+    <a class="tool" href="syntax-converter.html">
+      <h2><span data-zh>資料庫檢索語法轉換器</span><span data-en>Search Syntax Converter</span></h2>
+      <div class="sub" data-zh>Search Syntax Converter</div>
+      <p><span data-zh>貼上任一起始資料庫的檢索式，一鍵轉出 7 大資料庫／平台的語法，可用 #1 #2 引用行號，並可下載 Word。</span><span data-en>Paste a query written for any starting database and generate syntax for 7 databases/platforms in one click — reference lines with #1 #2, and export to Word.</span></p>
+      <span class="go" data-zh>開啟工具 →</span><span class="go" data-en>Open tool →</span>
+    </a>
+  </div>
+</main>
+<footer>
+  <p><span data-zh>提示：三個工具與本頁放在同一個資料夾即可互相跳轉。鄰近字組合器整理好的片段會透過網址參數（<code>?src=&amp;q=</code>）直接帶入語法轉換器。</span><span data-en>Note: keep the three tools and this page in the same folder so the links work. Fragments from the Proximity Builder are carried into the Converter via URL parameters (<code>?src=&amp;q=</code>).</span></p>
+</footer>
+<script>
+  function toggleLang(){
+    var en=document.documentElement.getAttribute("lang")==="en";
+    document.documentElement.setAttribute("lang",en?"zh-Hant":"en");
+    document.getElementById("langBtn").textContent=en?"English":"中文";
+  }
+</script>
+</body>
+</html>

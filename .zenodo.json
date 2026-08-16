@@ -1,0 +1,21 @@
+{
+  "title": "SR Search Toolkit: Proximity Builder, PICO Strategy Builder, and Search Syntax Converter",
+  "description": "<p>A set of three browser-based tools for systematic-review literature searching: a Proximity Builder that assembles adjacency/near fragments from synonym stacks, a PICO Strategy Builder that generates line-numbered strategies with controlled-vocabulary (MeSH / Emtree / CINAHL Headings) mapping, and a Search Syntax Converter that translates a query across seven databases/platforms (MEDLINE (Ovid), PubMed, Cochrane, Embase, CINAHL, Web of Science, Scopus). All tools run entirely in the browser; no data is uploaded.</p>",
+  "upload_type": "software",
+  "license": "MIT",
+  "creators": [
+    { "name": "Fang, Ching-Ju" }
+  ],
+  "keywords": [
+    "systematic review",
+    "literature search",
+    "search strategy",
+    "PICO",
+    "controlled vocabulary",
+    "MeSH",
+    "Emtree",
+    "proximity operators",
+    "bibliographic databases"
+  ],
+  "access_right": "open"
+}
