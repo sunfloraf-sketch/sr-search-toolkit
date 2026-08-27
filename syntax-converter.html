@@ -24,6 +24,9 @@
   .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:18px}
   label.fld{display:block;font-weight:600;font-size:13px;margin-bottom:6px;color:var(--mut)}
   .controls{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-end}
+  .dbchecks{display:grid;grid-template-columns:repeat(3,minmax(150px,1fr));gap:7px 18px;max-width:660px;margin-top:4px}
+  .dbchecks label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink);cursor:pointer;white-space:nowrap}
+  .dbchecks input{width:15px;height:15px;cursor:pointer;accent-color:var(--brand)}
   select,textarea{font-family:inherit;font-size:14px;border:1px solid var(--line);border-radius:8px;padding:9px 11px;color:var(--ink);background:#fff}
   select{min-width:230px;cursor:pointer}
   textarea{width:100%;min-height:96px;resize:vertical;margin-top:4px;line-height:1.55}
@@ -143,6 +146,8 @@
       </div>
       <button class="swap" onclick="cycleSrc()" title="切換起始資料庫 / next">↻ <span data-zh>換起始庫</span><span data-en>next</span></button>
     </div>
+    <label class="fld" style="margin-top:14px"><span data-zh>輸出資料庫（勾選要產生的）</span><span data-en>Output databases (tick to generate)</span></label>
+    <div class="dbchecks" id="dbchecks"></div>
     <label class="fld" style="margin-top:14px"><span data-zh>貼上檢索式 (可多行；用 #1 #2 引用行號)</span><span data-en>Paste your query (multi-line OK; reference lines with #1 #2)</span></label>
     <div class="in-wrap"><div id="inhl" class="in-backdrop" aria-hidden="true"></div><textarea id="in" placeholder="" spellcheck="false"></textarea></div>
     <div class="quotewarn" id="quoteWarn" style="display:none"></div>
@@ -778,6 +783,8 @@ function quoteControlledVocab(body, src) {
 
 function parseLine(line, src, warn) {
   var trimmed = line.trim();
+  // 中文鄰近字：「鄰(近)N個(單)字」→ NEAR/(N + 該庫offset)，再由引擎依各庫轉換
+  trimmed = trimmed.replace(/鄰\s*近?\s*(\d+)(?:\s*個)?(?:\s*單)?(?:\s*字)?/g, function(m,n){ return " NEAR/"+(parseInt(n,10)+(SYNTAX_MAP.proximityOffset[src]||0))+" "; });
   // 1) 先剝除行首「行號標籤」（此行自己的編號）
   //    - 帶 . 或 ) 者： "1." "1)" "#1." "S1)"
   var body = trimmed.replace(/^#?\s*S?\d+\s*[.)]\s+/i, "");
@@ -895,6 +902,11 @@ function wrapField(inner, field, dst, paren, codes) {
 
 function encodeTrunc(value, dst, warn) {
   var enc = SYNTAX_MAP.truncation[dst].encode;
+  // 字頭切截（詞首 *）僅 Cochrane / Scopus / WoS 支援；其他資料庫移除詞首 * 並提醒
+  if (dst!=="cochrane" && dst!=="scopus" && dst!=="wos" && /(^|[\s("'])\*/.test(value)) {
+    value = value.replace(/(^|[\s("'])\*+/g, "$1");
+    warn.push(DB_LABEL[dst] + (_EN()?": does not support leading (word-initial) truncation — leading * removed":"：不支援字頭切截（詞首 *），已移除詞首 *"));
+  }
   return value.replace(/[*?#]/g, function (ch) {
     if (ch in enc) {
       if (enc[ch] === null) { warn.push(DB_LABEL[dst] + (_EN()?(": does not support " + (ch === "*" ? "multi-character" : ch === "?" ? "0/1-character" : "single-character") + " truncation — removed"):("：不支援「" + (ch === "*" ? "多字元" : ch === "?" ? "0/1字元" : "單字元") + "」截字，已移除"))); return ""; }
@@ -1023,11 +1035,29 @@ if (typeof module !== "undefined" && module.exports) {
 /* ================= UI APP ================= */
 (function(){
   const $ = s => document.querySelector(s);
-  const srcSel = $("#src"), inp = $("#in"), outs = $("#outs"), exWrap = $("#examples");
+  const srcSel = $("#src"), inp = $("#in"), outs = $("#outs"), exWrap = $("#examples"), dbchecks = $("#dbchecks");
 
   // populate source dropdown
   TARGETS.forEach(tg=>{ const o=document.createElement("option"); o.value=tg.id; o.textContent=tg.label; srcSel.appendChild(o); });
   srcSel.value = "embase_com";
+
+  // 輸出資料庫勾選（預設與 PICO 相同：不勾 pubmed / embase_ovid / medline_ebsco，避免重複搜同一資料庫）
+  var DB_LAYOUT = [
+    ["medline_ovid","pubmed","medline_ebsco"],
+    ["embase_com","embase_ovid",null],
+    ["cochrane","cinahl_ebsco",null],
+    ["wos","scopus",null]
+  ];
+  var DB_UNCHECKED = { pubmed:1, embase_ovid:1, medline_ebsco:1 };
+  DB_LAYOUT.forEach(function(row){ row.forEach(function(id){
+    if(!id){ dbchecks.appendChild(document.createElement("div")); return; }
+    var tg=TARGET_BY_ID[id];
+    var lb=document.createElement("label");
+    var cb=document.createElement("input"); cb.type="checkbox"; cb.value=tg.id; cb.checked=!DB_UNCHECKED[tg.id];
+    var sp=document.createElement("span"); sp.textContent=tg.label;
+    lb.appendChild(cb); lb.appendChild(sp); dbchecks.appendChild(lb);
+  }); });
+  dbchecks.addEventListener("change", function(){ run(); });
   let userTouched = false;
 
   // ================= syntax highlighter (ported from PICO builder) =================
@@ -1153,6 +1183,7 @@ if (typeof module !== "undefined" && module.exports) {
 
   function run(){
     const srcTarget=srcSel.value, src=TARGET_BY_ID[srcTarget].engine, input=inp.value.trim();
+    const checkedSet = new Set(Array.prototype.filter.call(dbchecks.querySelectorAll("input"), function(c){return c.checked;}).map(function(c){return c.value;}));
     outs.innerHTML="";
     var _qw0=document.getElementById("quoteWarn"); if(_qw0) _qw0.style.display="none";
     const oldN=document.getElementById("runNotes"); if(oldN) oldN.remove();
@@ -1169,7 +1200,7 @@ if (typeof module !== "undefined" && module.exports) {
     const omitted=[]; const exportCards=[];
 
     // 起始資料庫：自動為控制詞彙補上雙引號（非破壞性，只影響顯示與匯出，不改動輸入框）
-    const srcQuoted = input.split(/\r?\n/).map(function(l){ return quoteControlledVocab(l, src); }).join("\n");
+    const srcQuoted = input.split(/\r?\n/).map(function(l){ l=l.replace(/鄰\s*近?\s*(\d+)(?:\s*個)?(?:\s*單)?(?:\s*字)?/g, function(m,n){ return " NEAR/"+(parseInt(n,10)+(SYNTAX_MAP.proximityOffset[src]||0))+" "; }).replace(/ {2,}/g," ").trim(); return quoteControlledVocab(l, src); }).join("\n");
     // 單字控制詞彙也會靜默補引號；只有「多字詞」被補引號時才顯示警示
     var warnQuote=false;
     if(srcQuoted!==input){
@@ -1190,6 +1221,7 @@ if (typeof module !== "undefined" && module.exports) {
     TARGETS.forEach(tg=>{
       const d=tg.engine;
       const isSource=(tg.id===srcTarget);
+      if(!isSource && !checkedSet.has(tg.id)) return;   // 未勾選的輸出資料庫略過（起始庫一律顯示）
       const txt=isSource?srcQuoted:res.results[d].text;
       const srcVocab=TARGET_BY_ID[srcTarget].vocab;
       // 詞表不同才需替換（如 MeSH→Emtree）；詞表相同(如 PubMed→Ovid MEDLINE→Cochrane 皆 MeSH)則不需

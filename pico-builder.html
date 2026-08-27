@@ -140,8 +140,8 @@
           <th class="lab" style="width:44px"><span data-zh>概念</span><span data-en>Concept</span></th>
           <th class="ref" style="width:15%"><span data-zh>中文同義詞</span><span data-en>Chinese synonyms</span></th>
           <th class="free" style="width:29%"><span data-zh>英文同義詞</span><span data-en>English synonyms</span></th>
-          <th class="cv" style="width:18%">MeSH</th>
           <th class="cv" style="width:18%">Emtree</th>
+          <th class="cv" style="width:18%">MeSH</th>
           <th class="cv" style="width:18%">CINAHL Headings</th>
           <th style="width:30px"></th>
         </tr>
@@ -869,6 +869,11 @@ function wrapField(inner, field, dst, paren, codes) {
 
 function encodeTrunc(value, dst, warn) {
   var enc = SYNTAX_MAP.truncation[dst].encode;
+  // 字頭切截（詞首 *）僅 Cochrane / Scopus / WoS 支援；其他資料庫移除詞首 * 並提醒
+  if (dst!=="cochrane" && dst!=="scopus" && dst!=="wos" && /(^|[\s("'])\*/.test(value)) {
+    value = value.replace(/(^|[\s("'])\*+/g, "$1");
+    warn.push(DB_LABEL[dst] + (_EN()?": does not support leading (word-initial) truncation — leading * removed":"：不支援字頭切截（詞首 *），已移除詞首 *"));
+  }
   return value.replace(/[*?#]/g, function (ch) {
     if (ch in enc) {
       if (enc[ch] === null) { warn.push(DB_LABEL[dst] + "：不支援「" + (ch === "*" ? "多字元" : ch === "?" ? "0/1字元" : "單字元") + "」截字，已移除 · truncation removed"); return ""; }
@@ -1083,8 +1088,8 @@ if (typeof module !== "undefined" && module.exports) {
   // ---- PICO 列 ----
   // GDM 範例資料（供「載入 GDM 範例」與空白表格的灰字預覽共用）
   var GDM_EX = {
-    P:{ zh:"妊娠糖尿病\n姙娠期糖尿病\n孕期糖尿病", ft:"((gestation* OR pregnan* OR gravid*) NEAR/4 (diabet* OR DM))", mesh:"Diabetes, Gestational\nPregnancy in Diabetics", emtree:"maternal diabetes", cinahl:"Pregnancy in Diabetes" },
-    I:{ zh:"運動\n體能活動\n有氧運動\n阻力訓練", ft:"(exercise* OR walk* OR yoga OR aerobic OR strength OR training OR (physical NEAR/4 (activit* OR movement*)))", mesh:"Exercise\nExercise Therapy", emtree:"exercise\nkinesiotherapy\nphysical activity", cinahl:"Exercise\nTherapeutic Exercise" }
+    P:{ zh:"妊娠糖尿病\n姙娠期糖尿病\n孕期糖尿病", ft:"GDM\n((gestation*\npregnan*\ngravid*)\nNEAR/4\n(diabet*\nT2DM\nNIDDM))", mesh:"Diabetes, Gestational\nPregnancy in Diabetics", emtree:"maternal diabetes", cinahl:"Pregnancy in Diabetes" },
+    I:{ zh:"運動\n體能活動\n有氧運動\n阻力訓練", ft:"(physical\nNEAR/4\n(activit*\nmovement*))\nexercise*\nkinesio*\nsport*\ntraining\nfitness\nwalk*", mesh:"Exercise\nExercise Therapy", emtree:"exercise\nkinesiotherapy\nphysical activity", cinahl:"Exercise\nTherapeutic Exercise" }
   };
   function mkCell(cls, ph){ var td=document.createElement("td"); if(cls)td.className=cls; var ta=document.createElement("textarea"); ta.spellcheck=false; if(ph)ta.placeholder=ph; td.appendChild(ta); return {td:td, ta:ta}; }
   function addRow(label, zh, ft, mesh, emtree, cinahl, phs){
@@ -1096,7 +1101,7 @@ if (typeof module !== "undefined" && module.exports) {
     c0.ta.value=zh||""; c1.ta.value=ft||""; c2.ta.value=mesh||""; c3.ta.value=emtree||""; c4.ta.value=cinahl||"";
     var rmTd=document.createElement("td"); var rm=document.createElement("button"); rm.className="rmrow"; rm.textContent="✕";
     rm.onclick=function(){ tr.remove(); }; rmTd.appendChild(rm);
-    tr.appendChild(labTd); tr.appendChild(c0.td); tr.appendChild(c1.td); tr.appendChild(c2.td); tr.appendChild(c3.td); tr.appendChild(c4.td); tr.appendChild(rmTd);
+    tr.appendChild(labTd); tr.appendChild(c0.td); tr.appendChild(c1.td); tr.appendChild(c3.td); tr.appendChild(c2.td); tr.appendChild(c4.td); tr.appendChild(rmTd);
     tr._get=function(){ return { label:labIn.value.trim()||"?", zh:c0.ta.value.trim(), ft:c1.ta.value.trim(), mesh:c2.ta.value.trim(), emtree:c3.ta.value.trim(), cinahl:c4.ta.value.trim() }; };
     picoBody.appendChild(tr);
     return tr;
@@ -1116,7 +1121,16 @@ if (typeof module !== "undefined" && module.exports) {
   function stripOuterParen(s){ s=(s||"").trim(); if(s[0]!=="("||s[s.length-1]!==")") return s; var depth=0; for(var i=0;i<s.length;i++){ if(s[i]==="(")depth++; else if(s[i]===")"){ depth--; if(depth===0 && i<s.length-1) return s; } } return s.slice(1,-1).trim(); }
   function scopeFreetext(freetext, startDB, db, level){
     RENDER_OPTS.expand=false; RENDER_OPTS.fieldExpand=false; RENDER_OPTS.variants=null; RENDER_OPTS.strippedRoots=[];
-    var parsed = parseQuery(freetext.replace(/\s*\n\s*/g," ").trim(), startDB);
+    // 中文鄰近字：「鄰(近)N個(單)字」→ NEAR/(N + 該庫offset)，再交給引擎依各庫轉換
+    freetext = String(freetext||"").replace(/鄰\s*近?\s*(\d+)(?:\s*個)?(?:\s*單)?(?:\s*字)?/g, function(m,n){ return " NEAR/"+(parseInt(n,10)+(SYNTAX_MAP.proximityOffset[startDB]||0))+" "; });
+    // 英文同義詞：Enter 換行 → 相鄰「詞」之間插 OR；若前一行結尾為「(」或運算子、或下一行開頭為「)」或運算子，則只接空白(保留使用者的括號/鄰近字結構)
+    var _lns = freetext.split(/\r?\n/).map(function(l){return l.trim();}).filter(Boolean);
+    var _OP = "(?:OR|AND|NOT|ADJ\\d*|NEAR(?:\\/\\d+)?|NEXT(?:\\/\\d+)?|PRE\\/\\d+|W\\/?\\d+|N\\/?\\d+)";
+    var _endsOpen = function(s){ return /\($/.test(s) || new RegExp("(?:^|\\s)"+_OP+"$","i").test(s); };
+    var _startsClose = function(s){ return /^\)/.test(s) || new RegExp("^"+_OP+"(?:\\s|$)","i").test(s); };
+    var _joined = _lns[0]||"";
+    for(var _i=1;_i<_lns.length;_i++){ _joined += ((_endsOpen(_lns[_i-1])||_startsClose(_lns[_i]))?" ":" OR ") + _lns[_i]; }
+    var parsed = parseQuery(_joined, startDB);
     var node = { t:"field", field:level, child:parsed.ast };
     var out = render(node, db, [], { scoped:false });
     if(db==="ebsco"||db==="wos"||db==="scopus") out=stripOuterParen(out);  // 各行為獨立檢索，最外層括弧不需要
