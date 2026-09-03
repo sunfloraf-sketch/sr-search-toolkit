@@ -131,6 +131,11 @@
       <div class="picotools">
         <button class="btn ghost" id="addRow">＋ <span data-zh>新增概念</span><span data-en>Add concept</span></button>
         <button class="ex" id="exBtn"><span data-zh>載入 GDM 範例</span><span data-en>Load GDM example</span></button>
+        <button class="btn ghost" id="clearBtn"><span data-zh>清空</span><span data-en>Clear</span></button>
+        <a class="btn ghost" href="pico_template_zh.docx" download style="text-decoration:none"><span data-zh>下載樣板(中)</span><span data-en>Template ZH</span></a>
+        <a class="btn ghost" href="pico_template_en.docx" download style="text-decoration:none"><span data-zh>下載樣板(英)</span><span data-en>Template EN</span></a>
+        <button class="btn ghost" id="uploadBtn"><span data-zh>⬆ 上傳 Word</span><span data-en>⬆ Upload Word</span></button>
+        <input type="file" id="wordFile" accept=".docx" style="display:none">
       </div>
     </div>
     <div class="hint" style="margin:0 0 10px"><span data-zh>中文同義詞僅供規劃參考，不納入產出的檢索式。英文同義詞建議先用「鄰近字組合器」整理好再貼入。控制詞彙一格可放多個，<b>一行一個</b>（詞內逗號會保留，如 Diabetes, Gestational）。對應：MeSH→MEDLINE(各平台)·PubMed·Cochrane；Emtree→Embase(各平台)；CINAHL Headings→CINAHL(EBSCOhost)；WoS·Scopus 無控制詞彙。</span><span data-en>Chinese synonyms are for planning only and are not included in the output. Tidy English synonyms in the Proximity Builder first. One controlled term per line (commas inside a term are kept, e.g. Diabetes, Gestational). Mapping: MeSH→MEDLINE(all platforms)·PubMed·Cochrane; Emtree→Embase(all platforms); CINAHL Headings→CINAHL(EBSCOhost); WoS·Scopus have none.</span></div>
@@ -867,6 +872,7 @@ function wrapField(inner, field, dst, paren, codes) {
   return inner;
 }
 
+function _EN(){ return document.body.classList.contains("en"); }
 function encodeTrunc(value, dst, warn) {
   var enc = SYNTAX_MAP.truncation[dst].encode;
   // 字頭切截（詞首 *）僅 Cochrane / Scopus / WoS 支援；其他資料庫移除詞首 * 並提醒
@@ -1108,6 +1114,64 @@ if (typeof module !== "undefined" && module.exports) {
   }
   function seedEmpty(){ picoBody.innerHTML=""; ["P","I","C","O"].forEach(function(l){ addRow(l,"","","","","", GDM_EX[l]); }); }
   $("#addRow").onclick=function(){ addRow(""); };
+  $("#clearBtn").onclick=function(){ picoBody.innerHTML=""; ["P","I","C","O"].forEach(function(l){ addRow(l); }); outs.innerHTML=""; if(picoWarn)picoWarn.style.display="none"; lastGen=null; };
+
+  // ---- 上傳 Word 讀取檢索詞（純瀏覽器解析 .docx，使用原生 DecompressionStream，可離線）----
+  var wordFile=$("#wordFile"), uploadBtn=$("#uploadBtn");
+  if(wordFile && uploadBtn){
+    var _u16=function(a,o){return a[o]|(a[o+1]<<8);};
+    var _u32=function(a,o){return (a[o]|(a[o+1]<<8)|(a[o+2]<<16)|(a[o+3]<<24))>>>0;};
+    var _extractXml=async function(buf){
+      for(var i=0;i+30<=buf.length;){
+        if(buf[i]===0x50&&buf[i+1]===0x4b&&buf[i+2]===0x03&&buf[i+3]===0x04){
+          var method=_u16(buf,i+8), csize=_u32(buf,i+18), fnlen=_u16(buf,i+26), exlen=_u16(buf,i+28);
+          var name=new TextDecoder().decode(buf.slice(i+30,i+30+fnlen));
+          var dataStart=i+30+fnlen+exlen;
+          if(name==="word/document.xml"){
+            var comp=buf.slice(dataStart,dataStart+csize);
+            if(method===0) return new TextDecoder().decode(comp);
+            var ds=new DecompressionStream("deflate-raw");
+            return await new Response(new Blob([comp]).stream().pipeThrough(ds)).text();
+          }
+          if(!csize){ i=dataStart; continue; }
+          i=dataStart+csize;
+        } else i++;
+      }
+      throw new Error("document.xml not found");
+    };
+    var _cellText=function(tc){
+      var out="", re=/<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>|<w:br\b[^>]*?\/?>|<\/w:p>/g, m;
+      while((m=re.exec(tc))){ out += (m[1]!==undefined ? m[1] : "\n"); }
+      return out.replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'").replace(/\n+$/,"").replace(/^\n+/,"").trim();
+    };
+    var _parseTable=function(xml){
+      var t=xml.match(/<w:tbl[\s>][\s\S]*?<\/w:tbl>/); if(!t) return [];
+      var rows=[], trRe=/<w:tr[\s>][\s\S]*?<\/w:tr>/g, tr;
+      while((tr=trRe.exec(t[0]))){
+        var cells=[], tcRe=/<w:tc[\s>][\s\S]*?<\/w:tc>/g, tc;
+        while((tc=tcRe.exec(tr[0]))) cells.push(_cellText(tc[0]));
+        rows.push(cells);
+      }
+      return rows;
+    };
+    var _SKIP=/^(概念|主題概念|concept|中文同義|chinese|english|before|after|emtree|mesh|cinahl|範例|example)/i;
+    uploadBtn.onclick=function(){ wordFile.click(); };
+    wordFile.onchange=async function(ev){
+      var f=ev.target.files&&ev.target.files[0]; if(!f) return;
+      try{
+        var buf=new Uint8Array(await f.arrayBuffer());
+        var xml=await _extractXml(buf);
+        var rows=_parseTable(xml);
+        var data=rows.filter(function(r){ var lab=(r[0]||"").trim(); return lab && !_SKIP.test(lab); });
+        if(!data.length){ alert(isEn()?"No term table found — please use the provided template.":"檔案中找不到檢索詞表格 —— 請使用提供的樣板格式。"); ev.target.value=""; return; }
+        picoBody.innerHTML="";
+        // 欄位對應：0=概念 1=中文 2=英文同義詞 3=Emtree 4=MeSH 5=CINAHL；addRow(label,zh,ft,mesh,emtree,cinahl)
+        data.forEach(function(r){ addRow((r[0]||"").trim(), r[1]||"", r[2]||"", r[4]||"", r[3]||"", r[5]||""); });
+        if(picoWarn) picoWarn.style.display="none";
+      }catch(e){ alert((isEn()?"Read failed: ":"讀取失敗：")+e.message); }
+      ev.target.value="";
+    };
+  }
 
   $("#exBtn").onclick=function(){
     srcSel.value="embase_com"; levelSel.value="L1"; refreshLvlNote();
@@ -1182,7 +1246,14 @@ if (typeof module !== "undefined" && module.exports) {
     if(!rows.length){ outs.innerHTML='<div class="panel" style="color:var(--warn)">'+(isEn()?"Please fill at least one concept.":"請至少填入一個概念的詞彙。")+'</div>'; return; }
     var checked = Array.prototype.filter.call(dbchecks.querySelectorAll("input"), function(c){return c.checked;}).map(function(c){return c.value;});
     if(!checked.length){ outs.innerHTML='<div class="panel" style="color:var(--warn)">'+(isEn()?"Please tick at least one output database.":"請至少勾選一個輸出資料庫。")+'</div>'; return; }
-    if(picoWarn){ var ub=[]; rows.forEach(function(r){ if(r.ft && inputUnbalanced(r.ft)) ub.push(r.label); }); if(ub.length){ picoWarn.textContent="\u26A0 "+(isEn()?("Unbalanced parentheses in free-text: "+ub.join(", ")):("自由詞圓括弧無法成對："+ub.join("、")+" 概念，請檢查")); picoWarn.style.display="block"; } else picoWarn.style.display="none"; }
+    if(picoWarn){
+      var msgs=[];
+      var ub=[]; rows.forEach(function(r){ if(r.ft && inputUnbalanced(r.ft)) ub.push(r.label); });
+      if(ub.length) msgs.push(isEn()?("Unbalanced parentheses in free-text: "+ub.join(", ")):("自由詞圓括弧無法成對："+ub.join("、")+" 概念，請檢查"));
+      var lt=[]; rows.forEach(function(r){ if(r.ft && /(^|[\s("'])\*/.test(r.ft)) lt.push(r.label); });
+      if(lt.length) msgs.push(isEn()?("Leading truncation (word-initial *) in: "+lt.join(", ")+" — only Cochrane / Scopus / Web of Science support it; the leading * is removed for other databases."):("字頭切截（詞首 *）出現在："+lt.join("、")+" 概念 —— 僅 Cochrane / Scopus / Web of Science 支援，其餘資料庫的詞首 * 已自動移除。"));
+      if(msgs.length){ picoWarn.innerHTML="\u26A0 "+msgs.join("<br>\u26A0 "); picoWarn.style.display="block"; } else picoWarn.style.display="none";
+    }
     var lvlLabel = level+"　"+(isEn()?({L1:"Comprehensive",L2:"Balanced",L3:"Precise"}[level]):({L1:"完整",L2:"平衡",L3:"精準"}[level]));
     var exportData=[];
     checked.forEach(function(tid){

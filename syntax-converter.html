@@ -23,7 +23,8 @@
   main{max-width:1180px;margin:0 auto;padding:22px 24px 60px}
   .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:18px}
   label.fld{display:block;font-weight:600;font-size:13px;margin-bottom:6px;color:var(--mut)}
-  .controls{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-end}
+  .controls{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+  .dbcheckwrap{margin-left:auto}
   .dbchecks{display:grid;grid-template-columns:repeat(3,minmax(150px,1fr));gap:7px 18px;max-width:660px;margin-top:4px}
   .dbchecks label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink);cursor:pointer;white-space:nowrap}
   .dbchecks input{width:15px;height:15px;cursor:pointer;accent-color:var(--brand)}
@@ -48,8 +49,8 @@
   .copy:hover{background:var(--brand2)} .copy.done{background:#16a34a}
   .out pre{margin:0;padding:13px 14px;white-space:pre-wrap;word-break:break-word;font-family:"SF Mono","Cascadia Code",Consolas,monospace;
            font-size:13px;line-height:1.95;color:var(--code);background:var(--codebg);flex:1;min-height:44px}
-  .cvnote{margin:0;padding:9px 14px;background:#fff7ed;border-top:1px solid #f0c896;color:#9a5b00;font-size:12px;line-height:1.55}
-  .cvnote b{color:#b45309}
+  .cvnote{margin:0;padding:9px 14px;background:#eef0f2;border-top:1px solid #cfd4da;color:#4b5563;font-size:12px;line-height:1.55}
+  .cvnote b{color:#1f2937}
   .wl{margin:0;padding:9px 14px;border-top:1px dashed var(--line);background:var(--warnbg);color:var(--warn);font-size:12px;list-style:none}
   .wl li{margin:3px 0;padding-left:16px;position:relative}
   .wl li::before{content:"⚠";position:absolute;left:0}
@@ -144,10 +145,12 @@
         <label class="fld"><span data-zh>起始資料庫 (你的檢索式是用哪個資料庫寫的？)</span><span data-en>Starting database (which database is your query written for?)</span></label>
         <select id="src"></select>
       </div>
-      <button class="swap" onclick="cycleSrc()" title="切換起始資料庫 / next">↻ <span data-zh>換起始庫</span><span data-en>next</span></button>
+      <button class="swap" onclick="cycleSrc()" title="切換起始資料庫 / next" style="margin-top:19px">↻ <span data-zh>換起始庫</span><span data-en>next</span></button>
+      <div class="dbcheckwrap">
+        <label class="fld"><span data-zh>輸出資料庫（勾選要產生的）</span><span data-en>Output databases (tick to generate)</span></label>
+        <div class="dbchecks" id="dbchecks"></div>
+      </div>
     </div>
-    <label class="fld" style="margin-top:14px"><span data-zh>輸出資料庫（勾選要產生的）</span><span data-en>Output databases (tick to generate)</span></label>
-    <div class="dbchecks" id="dbchecks"></div>
     <label class="fld" style="margin-top:14px"><span data-zh>貼上檢索式 (可多行；用 #1 #2 引用行號)</span><span data-en>Paste your query (multi-line OK; reference lines with #1 #2)</span></label>
     <div class="in-wrap"><div id="inhl" class="in-backdrop" aria-hidden="true"></div><textarea id="in" placeholder="" spellcheck="false"></textarea></div>
     <div class="quotewarn" id="quoteWarn" style="display:none"></div>
@@ -1176,9 +1179,13 @@ if (typeof module !== "undefined" && module.exports) {
     lab.innerHTML='<span data-zh>輸入框中的灰字為範例預覽（#1／#2）：</span><span data-en>The grey text in the box is an example preview (#1 / #2):</span>';
     const load=document.createElement("button"); load.type="button"; load.className="exload";
     load.innerHTML='<span data-zh>⬇ 載入範例</span><span data-en>⬇ Load example</span>';
-    head.appendChild(lab); head.appendChild(load); exWrap.appendChild(head);
+    const clr=document.createElement("button"); clr.type="button"; clr.className="exload"; clr.style.background="#64748b"; clr.style.marginLeft="8px";
+    clr.innerHTML='<span data-zh>清空</span><span data-en>Clear</span>';
+    head.appendChild(lab); head.appendChild(load); head.appendChild(clr); exWrap.appendChild(head);
     // 真實載入：把兩行(含 #1／#2 行號)放進輸入框並轉換
     load.onclick=function(){ userTouched=true; inp.value=loadText; run(); paintInput(); inp.focus(); };
+    // 清空：清掉輸入內容與灰字預覽
+    clr.onclick=function(){ userTouched=true; inp.value=""; inp.placeholder=""; run(); paintInput(); inp.focus(); };
   }
 
   function run(){

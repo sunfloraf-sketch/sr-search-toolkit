@@ -113,6 +113,7 @@
       <div style="display:flex;flex-direction:column;gap:8px">
         <button class="gobtn" onclick="autoSplit()"><span data-zh>自動分堆 →</span><span data-en>Auto-split →</span></button>
         <button class="gobtn" style="background:#0d6e6e" onclick="loadExample()"><span data-zh>載入範例</span><span data-en>Load example</span></button>
+        <button class="gobtn" style="background:#64748b" onclick="clearProx()"><span data-zh>清空</span><span data-en>Clear</span></button>
       </div>
     </div>
     <div id="splitHint"></div>
@@ -172,6 +173,7 @@ var EX_BY_N={
   "4":"central line associated bloodstream infection\ncentral catheter related bloodstream infection\ncentral catheter associated blood stream infection\ncentral catheter associated blood stream infections\ncentral access associated blood stream infections\nCLABSI\nCLABSIs"
 };
 window.loadExample=function(){ beforeTa.value=EX_BY_N[nSel.value]||EX_BY_N["2"]; autoSplit(); };
+window.clearProx=function(){ beforeTa.value=""; beforeTa.placeholder=""; if(soloIn)soloIn.value=""; if(stackset)stackset.innerHTML=""; if(outs)outs.innerHTML=""; if(reviewEl)reviewEl.innerHTML=""; if(removedBox)removedBox.innerHTML=""; var sh=document.getElementById("splitHint"); if(sh)sh.innerHTML=""; };
 function lines(t){return (t||"").split(/[\r\n,]+/).map(function(x){return x.trim();}).filter(Boolean);}
 function opFor(src,sem){var p=PROX[src];var N=Math.max(1,sem+(p.off||0));return p.tpl.replace("%N",N);}
 function orLump(){ return beforeTa.value.split(/\r?\n/).map(function(x){return x.trim();}).filter(Boolean).map(function(w){ w=w.replace(/,/g," ").replace(/\s+/g," ").trim(); return /\s/.test(w)?('"'+w+'"'):w; }).join(" OR "); }
