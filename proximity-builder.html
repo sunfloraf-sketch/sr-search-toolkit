@@ -98,10 +98,20 @@
         <select id="dist"></select>
       </div>
       <div>
+        <label class="fld"><span data-zh>詞序</span><span data-en>Word order</span></label>
+        <select id="order"></select>
+      </div>
+      <div>
         <label class="fld"><span data-zh>堆數</span><span data-en>Number of stacks</span></label>
         <select id="nstacks"></select>
       </div>
     </div>
+  </div>
+
+  <div class="panel" id="picoBar" style="display:none;padding:11px 18px">
+    <span data-zh>已累加到 PICO 概念表：</span><span data-en>Queued for the PICO table: </span><b id="picoCount">0</b><span data-zh> 個概念（每個概念一列，自由詞已填入；控制詞彙請到 PICO 補填）</span><span data-en> concept(s) (one row each, free-text filled; add controlled vocab in PICO)</span>
+    <a class="sendbtn" style="margin-left:12px" href="pico-builder.html?import=1" target="sr_pico"><span data-zh>開啟 PICO →</span><span data-en>Open PICO →</span></a>
+    <button class="copy" style="background:#64748b;margin-left:6px" onclick="clearPicoInbox()"><span data-zh>清除累加</span><span data-en>Clear queue</span></button>
   </div>
 
   <div class="panel">
@@ -128,8 +138,8 @@
       <label class="fld"><span data-zh>單獨保留（縮寫等，會以 OR 併入，多個以逗號或換行分隔）</span><span data-en>Keep separate (abbreviations; OR-ed in; comma/line separated)</span></label>
       <textarea id="solo" spellcheck="false" placeholder="GDM" rows="2"></textarea>
     </div>
-    <div class="hint" data-zh>提示：每堆是鄰近關係的一個位置。距離依來源資料庫自動換算（Ovid/Embase/Cochrane 需 +1）。</div>
-    <div class="hint" data-en>Tip: each stack is one position of the proximity relation. Distance is auto-adjusted per database (Ovid/Embase/Cochrane +1).</div>
+    <div class="hint" data-zh>提示：每堆是鄰近關係的一個位置。距離依來源資料庫自動換算（Ovid/Embase/Cochrane 需 +1）。「有次序」僅 Embase.com（NEXT）、EBSCO（W）、Scopus（PRE）支援；其餘資料庫維持無次序並於輸出加註。</div>
+    <div class="hint" data-en>Tip: each stack is one position of the proximity relation. Distance is auto-adjusted per database (Ovid/Embase/Cochrane +1). Ordered proximity is only supported by Embase.com (NEXT), EBSCO (W) and Scopus (PRE); other databases stay unordered and the output says so.</div>
   </div>
 
   <div id="outs"></div>
@@ -147,6 +157,17 @@
 var DBS=["embase","ovid","pubmed","cochrane","ebsco","wos","scopus"];
 var DB_LABEL={embase:"Embase.com",ovid:"Ovid (MEDLINE/Embase)",pubmed:"PubMed",cochrane:"Cochrane Library",ebsco:"EBSCOhost (CINAHL/MEDLINE)",wos:"Web of Science",scopus:"Scopus"};
 var PROX={embase:{tpl:"NEAR/%N",off:1},ovid:{tpl:"ADJ%N",off:1},cochrane:{tpl:"NEAR/%N",off:1},wos:{tpl:"NEAR/%N",off:0},ebsco:{tpl:"N%N",off:0},scopus:{tpl:"W/%N",off:0},pubmed:{expand:true,off:0}};
+// 有次序（依輸入順序）運算子：僅這三個資料庫支援；其餘維持無次序並加註
+var PROX_ORD={embase:"NEXT/%N",ebsco:"W%N",scopus:"PRE/%N"};
+var ORD_OK={embase:1,ebsco:1,scopus:1};
+// 送到 PICO：本工具的資料庫代碼 → PICO 工具的「來源資料庫」id（同引擎）
+var PICO_SRC={embase:"embase_com",ovid:"medline_ovid",pubmed:"pubmed",cochrane:"cochrane",ebsco:"medline_ebsco",wos:"wos",scopus:"scopus"};
+var PICO_INBOX_KEY="sr_pico_inbox";
+function picoInboxGet(){ try{ return JSON.parse(localStorage.getItem(PICO_INBOX_KEY)||"[]")||[]; }catch(e){ return []; } }
+function picoInboxSet(a){ try{ localStorage.setItem(PICO_INBOX_KEY, JSON.stringify(a)); }catch(e){} }
+function sendToPico(ft, picoSrc){ var box=picoInboxGet(); box.push({ft:ft, src:picoSrc}); picoInboxSet(box); updatePicoBar(); window.open("pico-builder.html?import=1","sr_pico"); }
+function updatePicoBar(){ var bar=document.getElementById("picoBar"), c=document.getElementById("picoCount"); if(!bar)return; var n=picoInboxGet().length; if(n){ bar.style.display="block"; if(c)c.textContent=n; } else { bar.style.display="none"; } }
+window.clearPicoInbox=function(){ picoInboxSet([]); updatePicoBar(); };
 
 // 停用字：僅純虛詞（介系詞/冠詞/連接詞）。疾病/症狀等實詞不列入。
 var STOP={a:1,an:1,and:1,or:1,not:1,of:1,the:1,to:1,in:1,on:1,at:1,by:1,"for":1,with:1,from:1,into:1,as:1,due:1,than:1,then:1,per:1,via:1};
@@ -157,15 +178,19 @@ var MODIFIER={mellitus:1,induced:1,related:1,associated:1,complicated:1,acquired
 var SUF=["arum","orum","ies","ing","ally","ed","al","ic","ous","es","us","um","ae","cy","s","a"];
 
 var $=function(s){return document.querySelector(s);};
-var srcSel=$("#src"),distSel=$("#dist"),nSel=$("#nstacks"),soloIn=$("#solo"),beforeTa=$("#before"),outs=$("#outs"),reviewEl=$("#review"),removedBox=$("#removedBox"),stackset=$("#stackset");
+var srcSel=$("#src"),distSel=$("#dist"),orderSel=$("#order"),nSel=$("#nstacks"),soloIn=$("#solo"),beforeTa=$("#before"),outs=$("#outs"),reviewEl=$("#review"),removedBox=$("#removedBox"),stackset=$("#stackset");
 var STACK_COLORS=["bA","bB","bC","bD"];
 
 DBS.forEach(function(d){var o=document.createElement("option");o.value=d;o.textContent=DB_LABEL[d];srcSel.appendChild(o);});
 srcSel.value="embase";
 for(var k=2;k<=4;k++){var o=document.createElement("option");o.value=k;o.textContent=k+(document.body.classList.contains("en")?" stacks":" 堆");nSel.appendChild(o);}
 nSel.value="2";
-function fillDist(){var cur=distSel.value||"3";distSel.innerHTML="";var en=document.body.classList.contains("en");for(var n=1;n<=10;n++){var op=document.createElement("option");op.value=n;op.textContent=(en?"within ":"鄰 ")+n+(en?" words":" 單字內");distSel.appendChild(op);}distSel.value=cur;}
+function fillDist(){var cur=distSel.value||"3";distSel.innerHTML="";var en=document.body.classList.contains("en");for(var n=0;n<=10;n++){var op=document.createElement("option");op.value=n;op.textContent=(n===0)?(en?"within 0 words":"鄰 0 單字內"):((en?"within ":"鄰 ")+n+(en?(n===1?" word":" words"):" 單字內"));distSel.appendChild(op);}distSel.value=cur;}
 fillDist();
+function fillOrder(){var cur=orderSel.value||"unordered";orderSel.innerHTML="";var en=document.body.classList.contains("en");
+  [["unordered",en?"Unordered (any order)":"無次序（任意順序）"],["ordered",en?"Ordered (as entered)":"有次序（依輸入順序）"]].forEach(function(o){var op=document.createElement("option");op.value=o[0];op.textContent=o[1];orderSel.appendChild(op);});
+  orderSel.value=cur;}
+fillOrder();
 
 var EX_BY_N={
   "2":"GDM\ngestational diabetes mellitus\ngestational diabetes\ngestational DM\ndiabetes in pregnancy\npregnancy-induced diabetes\npregnancy associated diabetes\ndiabetes mellitus gravidarum",
@@ -173,9 +198,20 @@ var EX_BY_N={
   "4":"central line associated bloodstream infection\ncentral catheter related bloodstream infection\ncentral catheter associated blood stream infection\ncentral catheter associated blood stream infections\ncentral access associated blood stream infections\nCLABSI\nCLABSIs"
 };
 window.loadExample=function(){ beforeTa.value=EX_BY_N[nSel.value]||EX_BY_N["2"]; autoSplit(); };
-window.clearProx=function(){ beforeTa.value=""; beforeTa.placeholder=""; if(soloIn)soloIn.value=""; if(stackset)stackset.innerHTML=""; if(outs)outs.innerHTML=""; if(reviewEl)reviewEl.innerHTML=""; if(removedBox)removedBox.innerHTML=""; var sh=document.getElementById("splitHint"); if(sh)sh.innerHTML=""; };
+window.clearProx=function(){
+  if(soloIn){ soloIn.value=""; soloIn.placeholder=""; }   // 連同 placeholder 一起清（避免殘留灰字 GDM）
+  stackEls.forEach(function(t){ t.value=""; });            // 清空各詞堆內容
+  removedWords=[];
+  if(reviewEl)reviewEl.innerHTML="";
+  if(removedBox)removedBox.innerHTML="";
+  var sh=document.getElementById("splitHint"); if(sh)sh.innerHTML="";
+  renderStacks();                                          // 重建空的詞堆（保留堆數）
+  beforeTa.value=""; beforeTa.placeholder="";              // 放在 renderStacks 之後，避免範例 placeholder 回填
+  if(outs)outs.innerHTML="";
+};
 function lines(t){return (t||"").split(/[\r\n,]+/).map(function(x){return x.trim();}).filter(Boolean);}
-function opFor(src,sem){var p=PROX[src];var N=Math.max(1,sem+(p.off||0));return p.tpl.replace("%N",N);}
+function opFor(src,sem){var p=PROX[src];var N=Math.max(0,sem+(p.off||0));var ordered=orderSel&&orderSel.value==="ordered";if(ordered&&ORD_OK[src])return PROX_ORD[src].replace("%N",N);return p.tpl.replace("%N",N);}
+function ordUnsupported(src){return !!(orderSel&&orderSel.value==="ordered"&&!ORD_OK[src]);}
 function orLump(){ return beforeTa.value.split(/\r?\n/).map(function(x){return x.trim();}).filter(Boolean).map(function(w){ w=w.replace(/,/g," ").replace(/\s+/g," ").trim(); return /\s/.test(w)?('"'+w+'"'):w; }).join(" OR "); }
 
 // 方案二輔助：把一組 token 做字根合併，回切截詞陣列（重用 stem/commonPrefix/isAbbrev）
@@ -410,7 +446,7 @@ function refreshStackTargets(){ if(removedWords.length) renderRemoved(); }
 
 /* ---------- 產生輸出（支援 N 堆） ---------- */
 function build(){
-  var src=srcSel.value, sem=parseInt(distSel.value,10)||3;
+  var src=srcSel.value, sem=(distSel.value===""?3:parseInt(distSel.value,10)); if(isNaN(sem))sem=3;
   var stacks=stackEls.map(function(t){return lines(t.value);});
   var nonEmpty=stacks.filter(function(s){return s.length;});
   var solo=lines(soloIn.value);
@@ -426,11 +462,19 @@ function build(){
     // PubMed：所有非空堆做笛卡爾積，去切截
     var hadTrunc=false, combos=[[]];
     nonEmpty.forEach(function(stack){ var nx=[]; combos.forEach(function(pre){ stack.forEach(function(w){ if(/[*?#$]/.test(w))hadTrunc=true; nx.push(pre.concat([w.replace(/[*?#$]/g,"")])); }); }); combos=nx; });
-    var pairs=combos.map(function(c){return '"'+c.join(" ")+'"[tiab:~'+sem+']';});
+    // 鄰 0＝相鄰：用片語（[tiab]）表示，PubMed 不需 :~0
+    var pairs=combos.map(function(c){return sem===0 ? ('"'+c.join(" ")+'"[tiab]') : ('"'+c.join(" ")+'"[tiab:~'+sem+']');});
     var body=pairs.join(" OR ");
     var full=solo.length?(solo.map(function(s){return s+"[tiab]";}).join(" OR ")+" OR "+body):body;
+    var pmNotes=[];
+    if(hadTrunc) pmNotes.push(en?"Proximity does not support truncation; * removed — add suffix variants yourself.":"鄰近字語法不支援切截，已移除 * ，請自行補齊字尾變化。");
+    if(ordUnsupported(src)) pmNotes.push(en?"PubMed has no ordered proximity operator; kept unordered (any order).":"PubMed 無『有次序』鄰近運算子，已維持無次序（任意順序）。");
+    // 送到 PICO 用的中性斷行片段：保留切截，鄰近以「鄰N」標記（PICO 會依各庫轉成 NEAR/ADJ…）
+    var pnParts=nonEmpty.map(function(s){return s.length>1?("("+s.join("\n")+")"):s[0];});
+    var pnGrp="("+pnParts.join("\n 鄰"+sem+" \n")+")";
+    var picoFragPM=solo.length?(solo.join("\n")+"\n"+pnGrp):pnGrp;
     cards.push({title:(en?"PubMed proximity (expanded)":"PubMed 鄰近展開（逐一配對）"),text:full,send:full,
-      note:hadTrunc?(en?"Proximity does not support truncation; * removed — add suffix variants yourself.":"鄰近字語法不支援切截，已移除 * ，請自行補齊字尾變化。"):null});
+      note:pmNotes.length?pmNotes.join(en?"  ":"　"):null, pico:true, picoFrag:picoFragPM, picoSrc:"pubmed", conv:true});
   }else{
     var op=opFor(src,sem);
     var stackedParts=nonEmpty.map(function(s){return s.length>1?("("+s.join("\n")+")"):s[0];});
@@ -439,8 +483,9 @@ function build(){
     var onelineGrp="("+onelineParts.join(" "+op+" ")+")";
     var stacked=solo.length?(solo.join("\n")+"\n"+stackedGrp):stackedGrp;
     var oneline=solo.length?("("+solo.join(" OR ")+" OR "+onelineGrp+")"):onelineGrp;
-    cards.push({title:(en?"Stacked (line break = OR)":"換行整理版（換行＝OR）"),text:stacked,send:oneline});
-    cards.push({title:(en?"One line (OR expanded)":"單行 OR 版"),text:oneline,send:oneline});
+    var ordNote = ordUnsupported(src) ? (en?(DB_LABEL[src]+" has no ordered proximity operator; kept unordered ("+op+")."):(DB_LABEL[src]+" 無『有次序』鄰近運算子，已維持無次序（"+op+"）。")) : null;
+    cards.push({title:(en?"Stacked (line break = OR)":"換行整理版（換行＝OR）"),text:stacked,send:oneline,note:ordNote,pico:true,picoFrag:stacked,picoSrc:PICO_SRC[src]});
+    cards.push({title:(en?"One line (OR expanded)":"單行 OR 版"),text:oneline,send:oneline,note:ordNote,conv:true});
   }
 
   cards.forEach(function(c){
@@ -451,9 +496,17 @@ function build(){
     var copy=document.createElement("button"); copy.className="copy"; copy.textContent="Copy";
     copy.onclick=(function(txt){return function(){navigator.clipboard.writeText(txt).then(function(){copy.textContent="✓ Copied";copy.classList.add("done");setTimeout(function(){copy.textContent="Copy";copy.classList.remove("done");},1400);});};})(c.text);
     row.appendChild(copy);
-    var a=document.createElement("a"); a.className="sendbtn"; a.textContent=en?"Send to Converter →":"送到轉換器 →";
-    a.href="syntax-converter.html?src="+encodeURIComponent(src)+"&q="+encodeURIComponent(c.send||c.text);
-    row.appendChild(a);
+    if(c.pico){
+      var pb=document.createElement("button"); pb.className="sendbtn";
+      pb.textContent=en?"Send to PICO ＋":"送到 PICO ＋";
+      pb.onclick=(function(frag,psrc){return function(){ sendToPico(frag,psrc); var t=pb.textContent; pb.textContent=en?"✓ added":"✓ 已累加"; setTimeout(function(){pb.textContent=t;},1400); };})(c.picoFrag,c.picoSrc);
+      row.appendChild(pb);
+    }
+    if(c.conv){
+      var a=document.createElement("a"); a.className="sendbtn"; a.textContent=en?"Send to Converter →":"送到轉換器 →";
+      a.href="syntax-converter.html?src="+encodeURIComponent(src)+"&q="+encodeURIComponent(c.send||c.text);
+      row.appendChild(a);
+    }
     h.appendChild(nm); h.appendChild(row); card.appendChild(h);
     var pre=document.createElement("pre"); pre.textContent=c.text; card.appendChild(pre);
     if(c.note){var nt=document.createElement("div");nt.className="pmnote";nt.textContent="⚠ "+c.note;card.appendChild(nt);}
@@ -463,15 +516,18 @@ function build(){
 
 srcSel.addEventListener("change",build);
 distSel.addEventListener("change",build);
+orderSel.addEventListener("change",build);
 nSel.addEventListener("change",renderStacks);
 soloIn.addEventListener("input",build);
 seed();
+updatePicoBar();
 
 window.toggleLang=function(){
   var b=document.body; b.classList.toggle("en");
   document.getElementById("langBtn").textContent=b.classList.contains("en")?"中文":"English";
   document.documentElement.lang=b.classList.contains("en")?"en":"zh-Hant";
   fillDist();
+  fillOrder();
   var cn=nSel.value; nSel.innerHTML=""; for(var k=2;k<=4;k++){var o=document.createElement("option");o.value=k;o.textContent=k+(b.classList.contains("en")?" stacks":" 堆");nSel.appendChild(o);} nSel.value=cn;
   ["splitHint","removedBox","review"].forEach(function(id){var e=document.getElementById(id);if(e)e.innerHTML="";});
   renderStacks();

@@ -1114,7 +1114,7 @@ if (typeof module !== "undefined" && module.exports) {
   }
   function seedEmpty(){ picoBody.innerHTML=""; ["P","I","C","O"].forEach(function(l){ addRow(l,"","","","","", GDM_EX[l]); }); }
   $("#addRow").onclick=function(){ addRow(""); };
-  $("#clearBtn").onclick=function(){ picoBody.innerHTML=""; ["P","I","C","O"].forEach(function(l){ addRow(l); }); outs.innerHTML=""; if(picoWarn)picoWarn.style.display="none"; lastGen=null; };
+  $("#clearBtn").onclick=function(){ picoBody.innerHTML=""; ["P","I","C","O"].forEach(function(l){ addRow(l); }); outs.innerHTML=""; if(picoWarn)picoWarn.style.display="none"; lastGen=null; try{ localStorage.removeItem("sr_pico_inbox"); }catch(e){} };
 
   // ---- 上傳 Word 讀取檢索詞（純瀏覽器解析 .docx，使用原生 DecompressionStream，可離線）----
   var wordFile=$("#wordFile"), uploadBtn=$("#uploadBtn");
@@ -1351,7 +1351,27 @@ if (typeof module !== "undefined" && module.exports) {
 
   if(cbColor) cbColor.addEventListener("change", function(){ if(outs.children.length) $("#genBtn").click(); });
   if(cbBracket) cbBracket.addEventListener("change", function(){ if(outs.children.length) $("#genBtn").click(); });
-  seedEmpty();
+
+  // ---- 由「鄰近字組合器」帶入（localStorage 佇列，可累加多個概念）----
+  function importFromProximity(){
+    var box=[]; try{ box=JSON.parse(localStorage.getItem("sr_pico_inbox")||"[]")||[]; }catch(e){ box=[]; }
+    if(!box.length) return false;
+    if(box[0].src && TARGET_BY_ID[box[0].src]) srcSel.value=box[0].src;   // 來源資料庫以第一筆為準
+    picoBody.innerHTML="";
+    var LB=["P","I","C","O"];
+    box.forEach(function(item,i){ addRow(LB[i]||"", "", item.ft||"", "", "", ""); });
+    if(picoWarn){
+      picoWarn.style.display="block";
+      var srcName=TARGET_BY_ID[srcSel.value]?TARGET_BY_ID[srcSel.value].label:srcSel.value;
+      picoWarn.textContent = isEn()
+        ? ("Imported "+box.length+" concept(s) from the Proximity Builder (source: "+srcName+"). Free-text is filled in; add controlled vocabulary (MeSH / Emtree / CINAHL) as needed. Sending more concepts rebuilds this list — fill controlled vocab after you finish sending.")
+        : ("已從鄰近字組合器帶入 "+box.length+" 個概念（來源："+srcName+"）。自由詞已填入，控制詞彙（MeSH／Emtree／CINAHL）請自行補填。若再累加概念會重建此清單，建議累加完成後再填控制詞彙。");
+    }
+    return true;
+  }
+  var _imported = /[?&]import=1(?:&|$)/.test(location.search) ? importFromProximity() : false;
+  if(!_imported) seedEmpty();
+  else { try{ history.replaceState(null,"",location.pathname); }catch(e){} }
   setLevelLabels();
   refreshLvlNote();
 })();
