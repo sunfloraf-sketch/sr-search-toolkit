@@ -826,6 +826,7 @@ function parseQuery(input, src) {
    scoped=true 代表目前在某欄位範圍內，裸 term 只輸出詞本身。
    ===================================================================== */
 function _EN(){return document.body.classList.contains("en");}
+function srCount(p,t){ try{ if(window.goatcounter&&window.goatcounter.count) window.goatcounter.count({path:p,title:t||p,event:true}); }catch(e){} }
 function render(node, dst, warn, ctx) {
   if (!node) return "";
   ctx = ctx || { scoped: false };
@@ -1183,7 +1184,7 @@ if (typeof module !== "undefined" && module.exports) {
     clr.innerHTML='<span data-zh>清空</span><span data-en>Clear</span>';
     head.appendChild(lab); head.appendChild(load); head.appendChild(clr); exWrap.appendChild(head);
     // 真實載入：把兩行(含 #1／#2 行號)放進輸入框並轉換
-    load.onclick=function(){ userTouched=true; inp.value=loadText; run(); paintInput(); inp.focus(); };
+    load.onclick=function(){ srCount('conv-example','轉換器-載入範例'); userTouched=true; inp.value=loadText; run(); paintInput(); inp.focus(); };
     // 清空：清掉輸入內容與灰字預覽
     clr.onclick=function(){ userTouched=true; inp.value=""; inp.placeholder=""; run(); paintInput(); inp.focus(); };
   }
@@ -1258,7 +1259,7 @@ if (typeof module !== "undefined" && module.exports) {
           card.appendChild(cvn);
         }
       }
-      btn.onclick=()=>{ navigator.clipboard.writeText(pre.textContent).then(()=>{btn.textContent="✓ Copied";btn.classList.add("done");setTimeout(()=>{btn.textContent="Copy";btn.classList.remove("done")},1400);}); };
+      btn.onclick=()=>{ srCount('conv-copy','轉換器-複製結果'); navigator.clipboard.writeText(pre.textContent).then(()=>{btn.textContent="✓ Copied";btn.classList.add("done");setTimeout(()=>{btn.textContent="Copy";btn.classList.remove("done")},1400);}); };
       // PubMed 鄰近字語法選項 + 字尾候選（半自動）
       if(d==="pubmed" && !isSource){
         const opt=document.createElement("label"); opt.className="pmopt";
@@ -1435,6 +1436,7 @@ if (typeof module !== "undefined" && module.exports) {
 
 window.downloadWord=function(){
   const R=window.__lastResult; if(!R || !R.cards || !R.cards.length) return;
+  srCount('conv-download-word','轉換器-下載Word');
   const en=document.body.classList.contains("en");
   const esc=x=>String(x).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
   const msoF="font-family:Consolas,'Microsoft JhengHei',monospace;mso-ascii-font-family:Consolas;mso-hansi-font-family:Consolas;mso-bidi-font-family:Consolas;mso-fareast-font-family:'Microsoft JhengHei'";
@@ -1494,5 +1496,6 @@ window.toggleLang=function(){
 };
 try{ if(localStorage.getItem("sr_lang")==="en") window.toggleLang(); }catch(e){}
 </script>
+<script data-goatcounter="https://sr-toolkit.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>

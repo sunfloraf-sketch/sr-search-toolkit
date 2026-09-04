@@ -1171,6 +1171,7 @@ if (typeof module !== "undefined" && module.exports) {
     uploadBtn.onclick=function(){ wordFile.click(); };
     wordFile.onchange=async function(ev){
       var f=ev.target.files&&ev.target.files[0]; if(!f) return;
+      srCount('pico-upload','PICO-上傳Word');
       try{
         var buf=new Uint8Array(await f.arrayBuffer());
         var xml=await _extractXml(buf);
@@ -1209,6 +1210,7 @@ if (typeof module !== "undefined" && module.exports) {
   }
 
   $("#exBtn").onclick=function(){
+    srCount('pico-example','PICO-載入範例');
     srcSel.value="embase_com"; levelSel.value="L1"; refreshLvlNote();
     picoBody.innerHTML="";
     addRow("P",GDM_EX.P.zh,GDM_EX.P.ft,GDM_EX.P.mesh,GDM_EX.P.emtree,GDM_EX.P.cinahl);
@@ -1275,6 +1277,7 @@ if (typeof module !== "undefined" && module.exports) {
 
   var lastGen=null;
   $("#genBtn").onclick=function(){
+    srCount('pico-generate','PICO-產生檢索策略');
     var startDB=srcSel.value, level=levelSel.value;
     var rows=[]; Array.prototype.forEach.call(picoBody.querySelectorAll("tr"), function(tr){ var r=tr._get(); if(r.ft||r.mesh||r.emtree||r.cinahl) rows.push(r); });
     outs.innerHTML="";
@@ -1354,9 +1357,11 @@ if (typeof module !== "undefined" && module.exports) {
   if(cbBracket) cbBracket.addEventListener("change", function(){ if(outs.children.length) $("#genBtn").click(); });
 
   // ---- 由「鄰近字組合器」帶入（localStorage 佇列，可累加多個概念）----
+  function srCount(p,t){ try{ if(window.goatcounter&&window.goatcounter.count) window.goatcounter.count({path:p,title:t||p,event:true}); }catch(e){} }
   function importFromProximity(){
     var box=[]; try{ box=JSON.parse(localStorage.getItem("sr_pico_inbox")||"[]")||[]; }catch(e){ box=[]; }
     if(!box.length) return false;
+    srCount('pico-import','PICO-由鄰近字帶入');
     if(box[0].src && TARGET_BY_ID[box[0].src]) srcSel.value=box[0].src;   // 來源資料庫以第一筆為準
     picoBody.innerHTML="";
     var LB=["P","I","C","O"];
@@ -1378,5 +1383,6 @@ if (typeof module !== "undefined" && module.exports) {
   try{ if(localStorage.getItem("sr_lang")==="en") window.toggleLang(); }catch(e){}
 })();
 </script>
+<script data-goatcounter="https://sr-toolkit.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>

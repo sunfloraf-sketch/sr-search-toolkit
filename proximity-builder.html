@@ -165,7 +165,8 @@ var PICO_SRC={embase:"embase_com",ovid:"medline_ovid",pubmed:"pubmed",cochrane:"
 var PICO_INBOX_KEY="sr_pico_inbox";
 function picoInboxGet(){ try{ return JSON.parse(localStorage.getItem(PICO_INBOX_KEY)||"[]")||[]; }catch(e){ return []; } }
 function picoInboxSet(a){ try{ localStorage.setItem(PICO_INBOX_KEY, JSON.stringify(a)); }catch(e){} }
-function sendToPico(ft, picoSrc){ var box=picoInboxGet(); box.push({ft:ft, src:picoSrc}); picoInboxSet(box); updatePicoBar(); window.open("pico-builder.html?import=1","sr_pico"); }
+function srCount(p,t){ try{ if(window.goatcounter&&window.goatcounter.count) window.goatcounter.count({path:p,title:t||p,event:true}); }catch(e){} }
+function sendToPico(ft, picoSrc){ srCount('prox-send-pico','鄰近字→PICO'); var box=picoInboxGet(); box.push({ft:ft, src:picoSrc}); picoInboxSet(box); updatePicoBar(); window.open("pico-builder.html?import=1","sr_pico"); }
 function updatePicoBar(){ var bar=document.getElementById("picoBar"), c=document.getElementById("picoCount"); if(!bar)return; var n=picoInboxGet().length; if(n){ bar.style.display="block"; if(c)c.textContent=n; } else { bar.style.display="none"; } }
 window.clearPicoInbox=function(){ picoInboxSet([]); updatePicoBar(); };
 
@@ -308,6 +309,7 @@ function commonPrefix(a,b){var n=Math.min(a.length,b.length),i=0;while(i<n&&a[i]
 function isAbbrev(norm,orig){ var o2=(orig||"").replace(/s$/,""); return /[0-9]/.test(norm)||(/^[A-Z0-9]+$/.test(orig)&&orig.length<=6)||(/^[A-Z0-9]+$/.test(o2)&&o2.length<=6)||!/[aeiou]/.test(norm); }
 
 function autoSplit(){
+  srCount('prox-autosplit','鄰近字-自動分堆');
   var nsel=parseInt(nSel.value,10)||2;
   var removed=[];
   function pushRemoved(w,kind){ if(!removed.some(function(x){return x.word===w;})) removed.push({word:w,kind:kind}); }
@@ -505,6 +507,7 @@ function build(){
     if(c.conv){
       var a=document.createElement("a"); a.className="sendbtn"; a.textContent=en?"Send to Converter →":"送到轉換器 →";
       a.href="syntax-converter.html?src="+encodeURIComponent(src)+"&q="+encodeURIComponent(c.send||c.text);
+      a.addEventListener("click",function(){ srCount('prox-send-converter','鄰近字→轉換器'); });
       row.appendChild(a);
     }
     h.appendChild(nm); h.appendChild(row); card.appendChild(h);
@@ -536,5 +539,6 @@ window.toggleLang=function(){
 };
 try{ if(localStorage.getItem("sr_lang")==="en") window.toggleLang(); }catch(e){}
 </script>
+<script data-goatcounter="https://sr-toolkit.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>
