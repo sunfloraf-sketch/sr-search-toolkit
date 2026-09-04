@@ -1486,10 +1486,13 @@ window.downloadWord=function(){
 
 window.toggleLang=function(){
   const b=document.body; b.classList.toggle("en");
-  document.getElementById("langBtn").textContent = b.classList.contains("en")?"中文":"English";
-  document.documentElement.lang = b.classList.contains("en")?"en":"zh-Hant";
+  const en=b.classList.contains("en");
+  document.getElementById("langBtn").textContent = en?"中文":"English";
+  document.documentElement.lang = en?"en":"zh-Hant";
+  try{ localStorage.setItem("sr_lang", en?"en":"zh"); }catch(e){}
   if(window.__rerender) window.__rerender();
 };
+try{ if(localStorage.getItem("sr_lang")==="en") window.toggleLang(); }catch(e){}
 </script>
 </body>
 </html>

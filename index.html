@@ -94,7 +94,9 @@
     var en=document.documentElement.getAttribute("lang")==="en";
     document.documentElement.setAttribute("lang",en?"zh-Hant":"en");
     document.getElementById("langBtn").textContent=en?"English":"中文";
+    try{ localStorage.setItem("sr_lang", en?"zh":"en"); }catch(e){}
   }
+  try{ if(localStorage.getItem("sr_lang")==="en") toggleLang(); }catch(e){}
 </script>
 </body>
 </html>

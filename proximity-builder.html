@@ -524,14 +524,17 @@ updatePicoBar();
 
 window.toggleLang=function(){
   var b=document.body; b.classList.toggle("en");
-  document.getElementById("langBtn").textContent=b.classList.contains("en")?"中文":"English";
-  document.documentElement.lang=b.classList.contains("en")?"en":"zh-Hant";
+  var en=b.classList.contains("en");
+  document.getElementById("langBtn").textContent=en?"中文":"English";
+  document.documentElement.lang=en?"en":"zh-Hant";
+  try{ localStorage.setItem("sr_lang", en?"en":"zh"); }catch(e){}
   fillDist();
   fillOrder();
-  var cn=nSel.value; nSel.innerHTML=""; for(var k=2;k<=4;k++){var o=document.createElement("option");o.value=k;o.textContent=k+(b.classList.contains("en")?" stacks":" 堆");nSel.appendChild(o);} nSel.value=cn;
+  var cn=nSel.value; nSel.innerHTML=""; for(var k=2;k<=4;k++){var o=document.createElement("option");o.value=k;o.textContent=k+(en?" stacks":" 堆");nSel.appendChild(o);} nSel.value=cn;
   ["splitHint","removedBox","review"].forEach(function(id){var e=document.getElementById(id);if(e)e.innerHTML="";});
   renderStacks();
 };
+try{ if(localStorage.getItem("sr_lang")==="en") window.toggleLang(); }catch(e){}
 </script>
 </body>
 </html>

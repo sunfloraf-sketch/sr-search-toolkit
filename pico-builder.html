@@ -1345,6 +1345,7 @@ if (typeof module !== "undefined" && module.exports) {
   window.toggleLang=function(){
     document.body.classList.toggle("en");
     $("#langBtn").textContent = isEn() ? "中文" : "English";
+    try{ localStorage.setItem("sr_lang", isEn()?"en":"zh"); }catch(e){}
     setLevelLabels();
     refreshLvlNote();
   };
@@ -1374,6 +1375,7 @@ if (typeof module !== "undefined" && module.exports) {
   else { try{ history.replaceState(null,"",location.pathname); }catch(e){} }
   setLevelLabels();
   refreshLvlNote();
+  try{ if(localStorage.getItem("sr_lang")==="en") window.toggleLang(); }catch(e){}
 })();
 </script>
 </body>
