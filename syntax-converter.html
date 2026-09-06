@@ -163,6 +163,7 @@
     <div class="coloropts">
       <label title="自由詞欄位＋外層括弧=綠、控制詞彙=紅、鄰近字=藍"><input type="checkbox" id="cbColor" checked><span data-zh>語法顏色標記</span><span data-en>Syntax colors</span></label>
       <label title="以顏色標出成對圓括弧"><input type="checkbox" id="cbBracket"><span data-zh>成對括弧顏色</span><span data-en>Bracket pairs</span></label>
+      <label title="把最後一行的 #行號組合展開，串成一條可直接貼入單一檢索框的長檢索式"><input type="checkbox" id="cbFlat"><span data-zh>整併為單一長式</span><span data-en>One combined query</span></label>
     </div>
     <button class="wordbtn" onclick="downloadWord()"><span data-zh>⬇ 下載 Word</span><span data-en>⬇ Download Word</span></button>
   </div>
@@ -230,11 +231,11 @@ var DB_LABEL = {
 
 // 9 種「資料庫 × 平台」目標：語法看 engine(7 個渲染引擎之一)，控制詞彙看 vocab(mesh/emtree/cinahl/null)
 var TARGETS = [
+  { id:"embase_com",    label:"Embase.com",          engine:"embase",   vocab:"emtree" },
+  { id:"embase_ovid",   label:"Embase (Ovid)",       engine:"ovid",     vocab:"emtree" },
   { id:"medline_ovid",  label:"MEDLINE (Ovid)",      engine:"ovid",     vocab:"mesh"   },
   { id:"pubmed",        label:"PubMed",              engine:"pubmed",   vocab:"mesh"   },
   { id:"medline_ebsco", label:"MEDLINE (EBSCOhost)", engine:"ebsco",    vocab:"mesh"   },
-  { id:"embase_com",    label:"Embase.com",          engine:"embase",   vocab:"emtree" },
-  { id:"embase_ovid",   label:"Embase (Ovid)",       engine:"ovid",     vocab:"emtree" },
   { id:"cochrane",      label:"Cochrane Library",    engine:"cochrane", vocab:"mesh"   },
   { id:"cinahl_ebsco",  label:"CINAHL (EBSCOhost)",  engine:"ebsco",    vocab:"cinahl" },
   { id:"wos",           label:"Web of Science",      engine:"wos",      vocab:null     },
@@ -545,6 +546,7 @@ function parseExpression(toks, src, warn) {
       pos++;
       var e = parseOr();
       if (peek() && peek().k === ")") pos++;
+      if (e && e.t === "prox") e._grp = true;   // 來自明確括號的鄰近表達式（供偵測巢狀鄰近）
       var nx = peek();
       if (nx && nx.k === "term" && !nx.phrase) {
         var gf = groupFieldOf(nx.v, src);
@@ -827,6 +829,19 @@ function parseQuery(input, src) {
    ===================================================================== */
 function _EN(){return document.body.classList.contains("en");}
 function srCount(p,t){ try{ if(window.goatcounter&&window.goatcounter.count) window.goatcounter.count({path:p,title:t||p,event:true}); }catch(e){} }
+// 整併為單一長式：在「來源語法」層先把最後一個 #行號組合展開成一條內嵌長檢索式，
+// 再交給轉換引擎（各庫的行號寫法不同，故在來源端展開最穩健）。無組合行時原樣返回。
+function flattenInput(raw){
+  var lines=String(raw).split(/\r?\n/), map={}, lastNum=null;
+  lines.forEach(function(l){ var m=l.match(/^\s*#(\d+)\s+([\s\S]*)$/); if(m) map[m[1]]=m[2]; });
+  for(var i=lines.length-1;i>=0;i--){ var m=lines[i].match(/^\s*#(\d+)\s+([\s\S]*)$/); if(m){ lastNum=m[1]; break; } }
+  if(lastNum==null) return raw;                 // 沒有行號
+  var body=map[lastNum];
+  if(!/#\d+/.test(body)) return raw;            // 最後一行沒有引用其他行，無可整併
+  var g=0;
+  while(/#\d+/.test(body) && g++<50){ body=body.replace(/#(\d+)/g, function(_,k){ return map[k]!=null?("("+map[k]+")"):("#"+k); }); }
+  return body;                                   // 單一長式檢索（來源語法）
+}
 function render(node, dst, warn, ctx) {
   if (!node) return "";
   ctx = ctx || { scoped: false };
@@ -965,10 +980,16 @@ function renderProx(node, dst, warn, ctx) {
   var p = SYNTAX_MAP.proximity[dst];
   var tpl = node.ordered ? p.ordered : p.unordered;
   if (node.ordered && !tpl) { warn.push(DB_LABEL[dst] + (_EN()?": ordered proximity unsupported — using unordered":"：不支援有次序鄰近，改用無次序")); tpl = p.unordered; }
-  var a = parenP(node.a, render(node.a, dst, warn, ctx));
-  var b = parenP(node.b, render(node.b, dst, warn, ctx));
+  // 平行鏈接 A NEAR/n B NEAR/n C（未明確括號、同距離同次序）不多包括號；明確括號的巢狀鄰近則保留括號
+  var sameA = node.a && node.a.t === "prox" && node.a.dist === node.dist && node.a.ordered === node.ordered && !node.a._grp;
+  var sameB = node.b && node.b.t === "prox" && node.b.dist === node.dist && node.b.ordered === node.ordered && !node.b._grp;
+  var a = sameA ? render(node.a, dst, warn, ctx) : parenP(node.a, render(node.a, dst, warn, ctx));
+  var b = sameB ? render(node.b, dst, warn, ctx) : parenP(node.b, render(node.b, dst, warn, ctx));
   if (!a.trim()) return b; if (!b.trim()) return a;
   if (!tpl) { warn.push(DB_LABEL[dst] + (_EN()?": proximity unsupported — using AND":"：不支援鄰近，改用 AND")); return a + " AND " + b; }
+  // 只有「明確括號的巢狀鄰近」（鄰近表達式當成另一個鄰近的運算元）才提醒；平行鏈接不提醒
+  if (dst === "embase" && ((node.a && node.a.t === "prox" && node.a._grp) || (node.b && node.b.t === "prox" && node.b._grp)))
+    warn.push(_EN() ? "This contains nested proximity (NEAR/NEXT) operators, which Embase.com does not support. Change the relationship between the phrase groups to parallel proximity, or split it into separate sets." : "此式含巢狀鄰近（NEAR／NEXT）運算，Embase.com 不支援，請將詞組間關係改為平行鄰近，或拆成多組處理");
   return tpl.replace("%A", a).replace("%B", b).replace("%N", outN);
 }
 function parenP(child, s) { return (child && (child.t === "bool" || child.t === "prox")) ? "(" + s + ")" : s; }
@@ -1047,8 +1068,8 @@ if (typeof module !== "undefined" && module.exports) {
 
   // 輸出資料庫勾選（預設與 PICO 相同：不勾 pubmed / embase_ovid / medline_ebsco，避免重複搜同一資料庫）
   var DB_LAYOUT = [
-    ["medline_ovid","pubmed","medline_ebsco"],
     ["embase_com","embase_ovid",null],
+    ["medline_ovid","pubmed","medline_ebsco"],
     ["cochrane","cinahl_ebsco",null],
     ["wos","scopus",null]
   ];
@@ -1100,7 +1121,7 @@ if (typeof module !== "undefined" && module.exports) {
     if(cur)out+="</span>";
     return {html:out};
   }
-  var cbColor=$("#cbColor"), cbBracket=$("#cbBracket"), inhl=$("#inhl");
+  var cbColor=$("#cbColor"), cbBracket=$("#cbBracket"), cbFlat=$("#cbFlat"), inhl=$("#inhl");
   window.__hl=hlHighlight;   // 供 Word 匯出使用
   const inWrap = inp.parentNode;
   function hlOn(){ return (cbColor&&cbColor.checked)||(cbBracket&&cbBracket.checked); }
@@ -1190,7 +1211,9 @@ if (typeof module !== "undefined" && module.exports) {
   }
 
   function run(){
-    const srcTarget=srcSel.value, src=TARGET_BY_ID[srcTarget].engine, input=inp.value.trim();
+    const srcTarget=srcSel.value, src=TARGET_BY_ID[srcTarget].engine;
+    let input=inp.value.trim();
+    if(cbFlat && cbFlat.checked) input=flattenInput(input);   // 整併為單一長式（在來源端展開 #行號）
     const checkedSet = new Set(Array.prototype.filter.call(dbchecks.querySelectorAll("input"), function(c){return c.checked;}).map(function(c){return c.value;}));
     outs.innerHTML="";
     var _qw0=document.getElementById("quoteWarn"); if(_qw0) _qw0.style.display="none";
@@ -1235,6 +1258,7 @@ if (typeof module !== "undefined" && module.exports) {
       // 詞表不同才需替換（如 MeSH→Emtree）；詞表相同(如 PubMed→Ovid MEDLINE→Cochrane 皆 MeSH)則不需
       const needReplace = !isSource && !!tg.vocab && !!srcVocab && (tg.vocab!==srcVocab);
       if(!isSource) (res.results[d].warn||[]).forEach(w=>notes.add(w));
+      else if(d==="embase") (res.results[d]&&res.results[d].warn||[]).forEach(function(w){ if(/巢狀|nested proximity/.test(w)) notes.add(w); });  // 起始庫是 Embase 時，仍提示巢狀鄰近
       if(!isSource && (!txt || !txt.trim())){ omitted.push(tg.label); return; }
       exportCards.push({db:d, label:tg.label, text:txt, isSource:isSource, id:tg.id, needReplace:needReplace});
       const card=document.createElement("div"); card.className="out";
@@ -1417,6 +1441,7 @@ if (typeof module !== "undefined" && module.exports) {
   inp.addEventListener("scroll",()=>{ if(inhl){ inhl.scrollTop=inp.scrollTop; inhl.scrollLeft=inp.scrollLeft; } });
   if(cbColor) cbColor.addEventListener("change",()=>{ paintInput(); run(); });
   if(cbBracket) cbBracket.addEventListener("change",()=>{ paintInput(); run(); });
+  if(cbFlat) cbFlat.addEventListener("change",()=>{ run(); });
 
   window.cycleSrc=function(){ const ids=TARGETS.map(function(x){return x.id;}); const i=ids.indexOf(srcSel.value); srcSel.value=ids[(i+1)%ids.length]; srcSel.dispatchEvent(new Event("change")); };
 
