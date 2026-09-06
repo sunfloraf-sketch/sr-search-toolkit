@@ -4,6 +4,9 @@ _舊版備份/
 # 本機小工具（不發佈）/ local helper, not published
 push.bat
 
+# 內部開發紀錄（不上傳）/ internal dev log, not published
+CHANGELOG_internal.md
+
 # OS / editor junk
 .DS_Store
 Thumbs.db
