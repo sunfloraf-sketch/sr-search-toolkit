@@ -136,6 +136,8 @@
         <a class="btn ghost" data-en href="pico_template_en.docx" download style="text-decoration:none">Download template</a>
         <button class="btn ghost" id="uploadBtn"><span data-zh>⬆ 上傳 Word</span><span data-en>⬆ Upload Word</span></button>
         <input type="file" id="wordFile" accept=".docx" style="display:none">
+        <button class="btn ghost" id="toProxBtn">＋ <span data-zh>用鄰近字組合器加概念</span><span data-en>Add via Proximity Builder</span></button>
+        <button class="btn ghost" id="restoreBtn" style="display:none;border-color:#7c9a7c;color:#3f6f3f">↩ <span data-zh>還原上次內容</span><span data-en>Restore last</span></button>
       </div>
     </div>
     <div class="hint" style="margin:0 0 10px"><span data-zh>中文同義詞僅供規劃參考，不納入產出的檢索式。英文同義詞建議先用「鄰近字組合器」整理好再貼入。控制詞彙一格可放多個，<b>一行一個</b>（詞內逗號會保留，如 Diabetes, Gestational）。對應：MeSH→MEDLINE(各平台)·PubMed·Cochrane；Emtree→Embase(各平台)；CINAHL Headings→CINAHL(EBSCOhost)；WoS·Scopus 無控制詞彙。<br><b>進階寫法</b>：控制詞彙可用 <code>AND</code>／<code>OR</code>／括號 組合；加次標目寫成 <code>詞/dg</code>（如 <code>Optic Nerve/dg</code>）；不含下位詞寫成 <code>詞(不含狹義詞)</code>（如 <code>Algorithms(不含狹義詞)</code>）。例：<code>Optic&nbsp;Nerve</code>〔換行〕<code>AND</code>〔換行〕<code>(Ultrasonography</code>〔換行〕<code>Optic&nbsp;Nerve/dg)</code>。</span><span data-en>Chinese synonyms are for planning only and are not included in the output. Tidy English synonyms in the Proximity Builder first. One controlled term per line (commas inside a term are kept, e.g. Diabetes, Gestational). Mapping: MeSH→MEDLINE(all platforms)·PubMed·Cochrane; Emtree→Embase(all platforms); CINAHL Headings→CINAHL(EBSCOhost); WoS·Scopus have none.<br><b>Advanced</b>: controlled terms may use <code>AND</code>／<code>OR</code>／parentheses; add a subheading as <code>term/dg</code> (e.g. <code>Optic Nerve/dg</code>); non-exploded as <code>term(不含狹義詞)</code>. e.g. <code>Optic Nerve</code> ⏎ <code>AND</code> ⏎ <code>(Ultrasonography</code> ⏎ <code>Optic Nerve/dg)</code>.</span></div>
@@ -1055,7 +1057,8 @@ if (typeof module !== "undefined" && module.exports) {
   };
   var srcSel = $("#src"), levelSel = $("#level"), dbchecks = $("#dbchecks"),
       picoBody = $("#picoBody"), outs = $("#outs"), lvlnote = $("#lvlnote"),
-      cbColor = $("#cbColor"), cbBracket = $("#cbBracket"), cbFlat = $("#cbFlat"), customCombo = $("#customCombo"), picoWarn = $("#picoWarn");
+      cbColor = $("#cbColor"), cbBracket = $("#cbBracket"), cbFlat = $("#cbFlat"), customCombo = $("#customCombo"), picoWarn = $("#picoWarn"),
+      toProxBtn = $("#toProxBtn"), restoreBtn = $("#restoreBtn");
   // ---- 語法顏色標記 highlighter（綠=自由詞欄位+外層括弧, 紅=控制詞彙, 藍=鄰近字）----
   var PROX_RE=/\b(?:ADJ\d+|NEAR\/\d+|NEXT\/\d+|NEXT|N\d+|W\/\d+|W\d+|PRE\/\d+)\b|:~\d+/g;
   var CV_RE={pubmed:/(?:"[^"]*"|[A-Za-z][\w-]*)\s*\[(?:mh|mj|mesh)(?::noexp)?\]/gi,ovid:/(?:\bexp\s+)?\*?"[^"]*"\//gi,embase:/"[^"]*"\/(?:exp(?:\/mj)?|de|mj)\b/gi,cochrane:/\[mh\b[^\[\]]*(?:\[mj\])?\]/gi,ebsco:/\b(?:MH|MM)\s*\([^)]*\)|\bMW\s+"[^"]*"/gi,wos:null,scopus:null};
@@ -1129,15 +1132,49 @@ if (typeof module !== "undefined" && module.exports) {
     rm.onclick=function(){ tr.remove(); }; rmTd.appendChild(rm);
     tr.appendChild(labTd); tr.appendChild(c0.td); tr.appendChild(c1.td); tr.appendChild(c3.td); tr.appendChild(c2.td); tr.appendChild(c4.td); tr.appendChild(rmTd);
     tr._get=function(){ return { label:labIn.value.trim()||"?", zh:c0.ta.value.trim(), ft:c1.ta.value.trim(), mesh:c2.ta.value.trim(), emtree:c3.ta.value.trim(), cinahl:c4.ta.value.trim() }; };
-    rm.onclick=function(){ tr.remove(); updateCodes(); };
+    rm.onclick=function(){ tr.remove(); updateCodes(); if(typeof saveDraftDebounced==="function") saveDraftDebounced(); };
     picoBody.appendChild(tr);
     updateCodes();
     return tr;
   }
   function updateCodes(){ Array.prototype.forEach.call(picoBody.querySelectorAll("tr"), function(tr,i){ var b=tr.querySelector(".ccode"); if(b) b.textContent="C"+(i+1); }); }
   function seedEmpty(){ picoBody.innerHTML=""; ["P","I","C","O"].forEach(function(l){ addRow(l,"","","","","", GDM_EX[l]); }); }
-  $("#addRow").onclick=function(){ addRow(""); };
-  $("#clearBtn").onclick=function(){ picoBody.innerHTML=""; ["P","I","C","O"].forEach(function(l){ addRow(l); }); outs.innerHTML=""; if(picoWarn)picoWarn.style.display="none"; lastGen=null; try{ localStorage.removeItem("sr_pico_inbox"); }catch(e){} };
+
+  // ===== 狀態保存：sessionStorage(每分頁草稿，多分頁不互蓋) + localStorage(離開快照) =====
+  var DRAFT_KEY="sr_pico_draft", SNAP_KEY="sr_pico_snapshot";
+  function serializeState(){
+    var rows=[]; Array.prototype.forEach.call(picoBody.querySelectorAll("tr"), function(tr){ if(tr._get) rows.push(tr._get()); });
+    return { src:srcSel.value, combo:(customCombo?customCombo.value:""), rows:rows };
+  }
+  function stateNonEmpty(st){ return !!(st && st.rows && st.rows.some(function(r){ return (r.zh||r.ft||r.mesh||r.emtree||r.cinahl); })); }
+  function applyState(st){
+    if(!st||!st.rows) return false;
+    if(st.src && TARGET_BY_ID[st.src]) srcSel.value=st.src;
+    if(customCombo) customCombo.value=st.combo||"";
+    picoBody.innerHTML="";
+    st.rows.forEach(function(r){ addRow(r.label||"", r.zh||"", r.ft||"", r.mesh||"", r.emtree||"", r.cinahl||""); });
+    if(!picoBody.querySelector("tr")) seedEmpty();
+    return true;
+  }
+  var _saveT=null;
+  function saveDraft(){ try{ sessionStorage.setItem(DRAFT_KEY, JSON.stringify(serializeState())); }catch(e){} }
+  function saveDraftDebounced(){ if(_saveT) clearTimeout(_saveT); _saveT=setTimeout(saveDraft, 400); }
+  function saveSnapshot(){ try{ var st=serializeState(); if(stateNonEmpty(st)) localStorage.setItem(SNAP_KEY, JSON.stringify(st)); }catch(e){} }
+  function clearPersist(){ try{ sessionStorage.removeItem(DRAFT_KEY); }catch(e){} try{ localStorage.removeItem(SNAP_KEY); }catch(e){} }
+  function snapshotState(){ try{ return JSON.parse(localStorage.getItem(SNAP_KEY)||"null"); }catch(e){ return null; } }
+  function offerRestore(){ if(restoreBtn) restoreBtn.style.display = stateNonEmpty(snapshotState()) ? "" : "none"; }
+  // 即時暫存（本分頁草稿）；離開分頁時寫快照（供「還原上次」與 PICO↔鄰近字來回）
+  picoBody.addEventListener("input", saveDraftDebounced);
+  if(customCombo) customCombo.addEventListener("input", saveDraftDebounced);
+  srcSel.addEventListener("change", saveDraftDebounced);
+  window.addEventListener("pagehide", function(){ saveDraft(); saveSnapshot(); });
+  document.addEventListener("visibilitychange", function(){ if(document.visibilityState==="hidden"){ saveDraft(); saveSnapshot(); } });
+  // 切到鄰近字組合器（離開前先保存，回來由「送到 PICO」還原並附加）
+  if(toProxBtn) toProxBtn.onclick=function(){ srCount('pico-to-prox','PICO→鄰近字'); saveDraft(); saveSnapshot(); location.href="proximity-builder.html"; };
+  if(restoreBtn) restoreBtn.onclick=function(){ var s=snapshotState(); if(stateNonEmpty(s)){ applyState(s); saveDraft(); restoreBtn.style.display="none"; } };
+
+  $("#addRow").onclick=function(){ addRow(""); saveDraftDebounced(); };
+  $("#clearBtn").onclick=function(){ picoBody.innerHTML=""; ["P","I","C","O"].forEach(function(l){ addRow(l); }); outs.innerHTML=""; if(picoWarn)picoWarn.style.display="none"; lastGen=null; try{ localStorage.removeItem("sr_pico_inbox"); }catch(e){} clearPersist(); if(restoreBtn) restoreBtn.style.display="none"; };
 
   // ---- 上傳 Word 讀取檢索詞（純瀏覽器解析 .docx，使用原生 DecompressionStream，可離線）----
   var wordFile=$("#wordFile"), uploadBtn=$("#uploadBtn");
@@ -1244,7 +1281,7 @@ if (typeof module !== "undefined" && module.exports) {
   // ---- 核心：自由詞欄位範圍化（重用引擎的 field 節點；PubMed 逐詞展開） ----
   function stripOuterParen(s){ s=(s||"").trim(); if(s[0]!=="("||s[s.length-1]!==")") return s; var depth=0; for(var i=0;i<s.length;i++){ if(s[i]==="(")depth++; else if(s[i]===")"){ depth--; if(depth===0 && i<s.length-1) return s; } } return s.slice(1,-1).trim(); }
   function scopeFreetext(freetext, startDB, db, level, warnOut){
-    RENDER_OPTS.expand=false; RENDER_OPTS.fieldExpand=false; RENDER_OPTS.variants=null; RENDER_OPTS.strippedRoots=[];
+    RENDER_OPTS.expand=false; RENDER_OPTS.variants=null; RENDER_OPTS.strippedRoots=[]; RENDER_OPTS.fieldExpand=false;
     // 中文鄰近字：「鄰(近)N個(單)字」→ NEAR/(N + 該庫offset)，再交給引擎依各庫轉換
     freetext = String(freetext||"").replace(/鄰\s*近?\s*(\d+)(?:\s*個)?(?:\s*單)?(?:\s*字)?/g, function(m,n){ return " NEAR/"+(parseInt(n,10)+(SYNTAX_MAP.proximityOffset[startDB]||0))+" "; });
     // 英文同義詞：Enter 換行 → 相鄰「詞」之間插 OR；若前一行結尾為「(」或運算子、或下一行開頭為「)」或運算子，則只接空白(保留使用者的括號/鄰近字結構)
@@ -1466,22 +1503,30 @@ if (typeof module !== "undefined" && module.exports) {
     var box=[]; try{ box=JSON.parse(localStorage.getItem("sr_pico_inbox")||"[]")||[]; }catch(e){ box=[]; }
     if(!box.length) return false;
     srCount('pico-import','PICO-由鄰近字帶入');
-    if(box[0].src && TARGET_BY_ID[box[0].src]) srcSel.value=box[0].src;   // 來源資料庫以第一筆為準
-    picoBody.innerHTML="";
-    var LB=["P","I","C","O"];
-    box.forEach(function(item,i){ addRow(LB[i]||"", "", item.ft||"", "", "", ""); });
+    // 先還原離開前的 PICO 內容（快照），再把新概念接在後面（不覆蓋原本的表格）
+    var snap=snapshotState(), hadBase=false;
+    if(stateNonEmpty(snap)){ applyState(snap); hadBase=true; }
+    else { picoBody.innerHTML=""; if(box[0].src && TARGET_BY_ID[box[0].src]) srcSel.value=box[0].src; }
+    var LB=["P","I","C","O"], baseN=picoBody.querySelectorAll("tr").length;
+    box.forEach(function(item,i){ addRow(item.label||LB[baseN+i]||"", item.zh||"", item.ft||"", item.mesh||"", item.emtree||"", item.cinahl||""); });
+    try{ localStorage.removeItem("sr_pico_inbox"); }catch(e){}   // 消化後清掉，避免下次重複附加
+    saveDraft(); saveSnapshot();
     if(picoWarn){
       picoWarn.style.display="block";
       var srcName=TARGET_BY_ID[srcSel.value]?TARGET_BY_ID[srcSel.value].label:srcSel.value;
       picoWarn.textContent = isEn()
-        ? ("Imported "+box.length+" concept(s) from the Proximity Builder (source: "+srcName+"). Free-text is filled in; add controlled vocabulary (MeSH / Emtree / CINAHL) as needed. Sending more concepts rebuilds this list — fill controlled vocab after you finish sending.")
-        : ("已從鄰近字組合器帶入 "+box.length+" 個概念（來源："+srcName+"）。自由詞已填入，控制詞彙（MeSH／Emtree／CINAHL）請自行補填。若再累加概念會重建此清單，建議累加完成後再填控制詞彙。");
+        ? ("Added "+box.length+" concept(s) from the Proximity Builder"+(hadBase?" after your existing table":" (source: "+srcName+")")+". Free-text is filled in; add controlled vocabulary (MeSH / Emtree / CINAHL) as needed.")
+        : ("已從鄰近字組合器新增 "+box.length+" 個概念"+(hadBase?"（接在原本的表格後面）":"（來源："+srcName+"）")+"。自由詞已填入，控制詞彙（MeSH／Emtree／CINAHL）請自行補填。");
     }
     return true;
   }
   var _imported = /[?&]import=1(?:&|$)/.test(location.search) ? importFromProximity() : false;
-  if(!_imported) seedEmpty();
-  else { try{ history.replaceState(null,"",location.pathname); }catch(e){} }
+  if(_imported){ try{ history.replaceState(null,"",location.pathname); }catch(e){} }
+  else {
+    var _draft=null; try{ _draft=JSON.parse(sessionStorage.getItem(DRAFT_KEY)||"null"); }catch(e){}
+    if(stateNonEmpty(_draft)){ applyState(_draft); }        // 本分頁草稿（F5／重新整理不掉）
+    else { seedEmpty(); offerRestore(); }                    // 空白起始；有上次快照則顯示「還原上次」
+  }
   setLevelLabels();
   refreshLvlNote();
   try{ if(localStorage.getItem("sr_lang")==="en") window.toggleLang(); }catch(e){}

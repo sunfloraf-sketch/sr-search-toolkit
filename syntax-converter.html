@@ -1306,8 +1306,8 @@ if (typeof module !== "undefined" && module.exports) {
         if(cvLines.length){
           var cvn=document.createElement("div"); cvn.className="cvnote";
           cvn.innerHTML = en
-            ? "⚠ <b>Controlled-vocabulary line(s): "+cvLines.join(", ")+"</b> — syntax converted, but the controlled vocabulary (shown in gray) is NOT mapped across thesauri. Replace against this database’s controlled-vocabulary list."
-            : "⚠ <b>含控制詞彙的行:"+cvLines.join("、")+"</b> — 語法已轉換，但控制詞彙(灰字)未跨詞表對應，請依<b>此資料庫</b>的控制詞彙表自行替換。";
+            ? "⚠ <b>Controlled-vocabulary line(s): "+cvLines.join(", ")+"</b> — syntax converted, but the controlled vocabulary (shown in gray) is NOT mapped across thesauri. Check this database’s own controlled-vocabulary list and replace them yourself."
+            : "⚠ <b>含控制詞彙的行:"+cvLines.join("、")+"</b> — 語法已轉換，但控制詞彙(灰字)未跨詞表對應，請自行查檢<b>此資料庫</b>的控制詞彙表替換。";
           card.appendChild(cvn);
         }
       }
@@ -1506,7 +1506,7 @@ window.downloadWord=function(){
     });
     return fspan(h);
   };
-  const dbNote = en ? "⚠ Replace controlled vocab per this database’s thesaurus" : "⚠ 控制詞彙需依本資料庫詞表替換";
+  const dbNote = en ? "⚠ Check this database’s controlled-vocabulary list and replace the controlled vocab yourself" : "⚠ 控制詞彙(灰字)請自行查檢此資料庫的控制詞彙表替換";
   const cDb="border:1px solid #999;padding:0.1cm 0.2cm;font-weight:bold;white-space:nowrap;vertical-align:top;font-size:11pt;"+msoF;
   const cNum="border:1px solid #999;padding:0.1cm 0.2cm;color:#0d6e6e;font-weight:bold;white-space:nowrap;vertical-align:top;text-align:center;font-size:11pt;"+msoF;
   const cSyn="border:1px solid #999;padding:0.1cm 0.2cm;font-size:11pt;vertical-align:top;"+msoF;
