@@ -1163,35 +1163,46 @@ if (typeof module !== "undefined" && module.exports) {
     inhl.scrollTop=inp.scrollTop; inhl.scrollLeft=inp.scrollLeft;
   }
 
+  // 完整檢索策略範例：族群(自由詞+控制詞彙) × 介入(自由詞+控制詞彙)，最後一行為組合式
   const EXAMPLES = {
-    pubmed:   [
+    pubmed:   { lines:[
       'GDM[tiab] OR ((gestation*[tiab] OR pregnan*[tiab] OR gravid*[tiab]) AND (diabet*[tiab] OR T2DM[tiab] OR NIDDM[tiab]))',
       '"Diabetes, Gestational"[mh] OR "Pregnancy in Diabetics"[mh]',
+      '(physical[tiab] AND (activit*[tiab] OR movement*[tiab])) OR exercise*[tiab] OR kinesio*[tiab] OR sport*[tiab] OR training[tiab] OR fitness[tiab] OR walk*[tiab]',
       '"Exercise"[mh] OR "Exercise Therapy"[mh] OR "Sports"[mh]'
-    ],
-    ovid:     [
+    ], combine:'(#1 OR #2) AND (#3 OR #4)' },
+    ovid:     { lines:[
       '(GDM OR ((gestation* OR pregnan* OR gravid*) ADJ4 (diabet* OR T2DM OR NIDDM))).ti,ab,kf',
-      'exp "Diabetes, Gestational"/ OR exp "Pregnancy in Diabetics"/'
-    ],
-    embase:   [
+      'exp "Diabetes, Gestational"/ OR exp "Pregnancy in Diabetics"/',
+      '((physical ADJ4 (activit* OR movement*)) OR exercise* OR kinesio* OR sport* OR training OR fitness OR walk*).ti,ab,kf',
+      'exp "Exercise"/ OR exp "Exercise Therapy"/'
+    ], combine:'(#1 OR #2) AND (#3 OR #4)' },
+    embase:   { lines:[
       '(GDM OR ((gestation* OR pregnan* OR gravid*) NEAR/4 (diabet* OR T2DM OR NIDDM))):ti,ab,kw',
-      '"maternal diabetes mellitus"/exp'
-    ],
-    cochrane: [
+      '"maternal diabetes"/exp',
+      '((physical NEAR/4 (activit* OR movement*)) OR exercise* OR kinesio* OR sport* OR training OR fitness OR walk*):ti,ab,kw',
+      '"exercise"/exp OR "kinesiotherapy"/exp OR "physical activity"/exp'
+    ], combine:'(#1 OR #2) AND (#3 OR #4)' },
+    cochrane: { lines:[
       '(GDM OR ((gestation* OR pregnan* OR gravid*) NEAR/4 (diabet* OR T2DM OR NIDDM))):ti,ab,kw',
-      '[mh "Diabetes, Gestational"] OR [mh "Pregnancy in Diabetics"]'
-    ],
-    ebsco:    [
+      '[mh "Diabetes, Gestational"] OR [mh "Pregnancy in Diabetics"]',
+      '((physical NEAR/4 (activit* OR movement*)) OR exercise* OR kinesio* OR sport* OR training OR fitness OR walk*):ti,ab,kw',
+      '[mh "Exercise"] OR [mh "Exercise Therapy"]'
+    ], combine:'(#1 OR #2) AND (#3 OR #4)' },
+    ebsco:    { lines:[
       'XB (GDM OR ((gestation* OR pregnan* OR gravid*) N3 (diabet* OR T2DM OR NIDDM)))',
-      'MH ("Diabetes Mellitus, Gestational+" OR "Pregnancy in Diabetes+")'
-    ],
-    wos:      [
+      'MH ("Diabetes Mellitus, Gestational+" OR "Pregnancy in Diabetes+")',
+      'XB ((physical N4 (activit* OR movement*)) OR exercise* OR kinesio* OR sport* OR training OR fitness OR walk*)',
+      'MH ("Exercise+" OR "Therapeutic Exercise+")'
+    ], combine:'(#1 OR #2) AND (#3 OR #4)' },
+    wos:      { lines:[
       'TS=(GDM OR ((gestation* OR pregnan* OR gravid*) NEAR/3 (diabet* OR T2DM OR NIDDM)))',
-      'TS=((physical NEAR/3 (activit* OR movement*)) OR exercise* OR kinesio* OR sport*)'
-    ],
-    scopus:   [
-      'title-abs (GDM OR ((gestation* OR pregnan* OR gravid*) W/3 (diabet* OR T2DM OR NIDDM)))'
-    ],
+      'TS=((physical NEAR/3 (activit* OR movement*)) OR exercise* OR kinesio* OR sport* OR training OR fitness OR walk*)'
+    ], combine:'#1 AND #2' },
+    scopus:   { lines:[
+      'title-abs (GDM OR ((gestation* OR pregnan* OR gravid*) W/3 (diabet* OR T2DM OR NIDDM)))',
+      'title-abs ((physical W/3 (activit* OR movement*)) OR exercise* OR kinesio* OR sport* OR training OR fitness OR walk*)'
+    ], combine:'#1 AND #2' },
   };
   const DEFAULT_IN = {
     pubmed:   'GDM[tiab] OR ((gestation*[tiab] OR pregnan*[tiab] OR gravid*[tiab]) AND (diabet*[tiab] OR T2DM[tiab] OR NIDDM[tiab]))',
@@ -1205,22 +1216,25 @@ if (typeof module !== "undefined" && module.exports) {
 
   function refreshExamples(){
     const src = TARGET_BY_ID[srcSel.value].engine;
-    const ex = (EXAMPLES[src]||[]).slice(0,2);
+    const conf = EXAMPLES[src] || {lines:[]};
+    const ex = conf.lines || [];
     exWrap.innerHTML="";
-    const loadText = ex.map(function(t,i){ return "#"+(i+1)+" "+t; }).join("\n");
+    const numbered = ex.map(function(t,i){ return "#"+(i+1)+" "+t; });
+    if(conf.combine) numbered.push("#"+(ex.length+1)+" "+conf.combine);   // 完整範例：加上組合行
+    const loadText = numbered.join("\n");
     // 灰色預覽：把範例放進輸入框的 placeholder（像鄰近字組合器的灰字預載）
     inp.placeholder = loadText;
     if(!ex.length) return;
     // 一行說明 + 載入範例按鈕
     const head=document.createElement("div"); head.className="exhead";
     const lab=document.createElement("span"); lab.className="exlabel";
-    lab.innerHTML='<span data-zh>輸入框中的灰字為範例預覽（#1／#2）：</span><span data-en>The grey text in the box is an example preview (#1 / #2):</span>';
+    lab.innerHTML='<span data-zh>輸入框中的灰字為完整範例預覽（含組合行）：</span><span data-en>The grey text in the box is a full example preview (with a combining line):</span>';
     const load=document.createElement("button"); load.type="button"; load.className="exload";
     load.innerHTML='<span data-zh>⬇ 載入範例</span><span data-en>⬇ Load example</span>';
     const clr=document.createElement("button"); clr.type="button"; clr.className="exload"; clr.style.background="#64748b"; clr.style.marginLeft="8px";
     clr.innerHTML='<span data-zh>清空</span><span data-en>Clear</span>';
     head.appendChild(lab); head.appendChild(load); head.appendChild(clr); exWrap.appendChild(head);
-    // 真實載入：把兩行(含 #1／#2 行號)放進輸入框並轉換
+    // 真實載入：把完整範例(含行號與組合行)放進輸入框並轉換
     load.onclick=function(){ srCount('conv-example','轉換器-載入範例'); userTouched=true; inp.value=loadText; run(); paintInput(); inp.focus(); };
     // 清空：清掉輸入內容與灰字預覽
     clr.onclick=function(){ userTouched=true; inp.value=""; inp.placeholder=""; run(); paintInput(); inp.focus(); };
