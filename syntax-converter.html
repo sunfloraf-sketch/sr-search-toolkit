@@ -177,13 +177,13 @@
         <b>[註1]</b> EBSCOhost 介面：僅 CINAHL 與 MEDLINE 可用 <code>MH ("pain+")</code> 含下位詞；其他資料庫(Academic Search Complete, PsycInfo, ERIC…)須以控制詞彙工具逐層 Explode &amp; Add。<br>
         <b>[註2]</b> 控制詞彙為單字時雙引號可省；片語在 Embase / Cochrane、或詞彙本身含 and/or 時，雙引號必須。<br>
         <b>[註3]</b> 兩字以上詞彙(如 physical activity)務必自行指定關係(交集 / 鄰近 / 片語)，否則各庫預設邏輯不一：PubMed 交集與片語並用；Ovid 片語；Embase / Scopus 交集(且可能誤拆)；EBSCO / Cochrane / WoS 交集。希望片語檢索時務必加雙引號。<br>
-        <b>[註4] 控制詞彙跨庫不通用：</b>本工具僅轉換<b>語法格式</b>(如 [mh] → exp .../ → MH(...))，<b>詞彙本身(MeSH／Emtree／CINAHL Headings)不會自動跨詞表對應</b>。輸出中含控制詞彙的行會以橘色提醒標註，請務必依各資料庫的索引詞表自行替換並確認。
+        <b>[註4] 控制詞彙跨庫不通用：</b>本工具僅轉換<b>語法格式</b>(如 [mh] → exp .../ → MH(...))，<b>詞彙本身(MeSH／Emtree／CINAHL Headings)不會自動跨詞表對應</b>。輸出中含控制詞彙的行為灰字，請務必依各資料庫的控制詞彙表自行替換並確認。
       </div>
       <div class="note" data-en style="display:none">
         <b>[Note 1]</b> EBSCOhost: only CINAHL &amp; MEDLINE support <code>MH ("pain+")</code> to include narrower terms; other databases require manual Explode &amp; Add via the thesaurus.<br>
         <b>[Note 2]</b> Quotes are optional for single-word controlled terms; for phrases in Embase / Cochrane, or terms containing and/or, quotes are required.<br>
         <b>[Note 3]</b> For multi-word concepts, always specify the relationship (intersection / proximity / phrase) yourself — database defaults differ and will otherwise produce inconsistent searches.<br>
-        <b>[Note 4] Controlled vocabulary is not interchangeable across databases:</b> this tool only converts the <b>syntax format</b> (e.g. [mh] → exp .../ → MH(...)); <b>the terms themselves (MeSH / Emtree / CINAHL Headings) are NOT mapped across thesauri</b>. Lines containing controlled vocabulary are flagged (amber note) — always replace and verify them against each database's own thesaurus.
+        <b>[Note 4] Controlled vocabulary is not interchangeable across databases:</b> this tool only converts the <b>syntax format</b> (e.g. [mh] → exp .../ → MH(...)); <b>the terms themselves (MeSH / Emtree / CINAHL Headings) are NOT mapped across thesauri</b>. Lines containing controlled vocabulary are shown in gray — always replace and verify them against each database's own controlled-vocabulary list.
       </div>
     </details>
     <details>
@@ -832,11 +832,27 @@ function srCount(p,t){ try{ if(window.goatcounter&&window.goatcounter.count) win
 // 整併為單一長式：在「來源語法」層先把最後一個 #行號組合展開成一條內嵌長檢索式，
 // 再交給轉換引擎（各庫的行號寫法不同，故在來源端展開最穩健）。無組合行時原樣返回。
 function flattenInput(raw){
-  var lines=String(raw).split(/\r?\n/), map={}, lastNum=null;
-  lines.forEach(function(l){ var m=l.match(/^\s*#(\d+)\s+([\s\S]*)$/); if(m) map[m[1]]=m[2]; });
-  for(var i=lines.length-1;i>=0;i--){ var m=lines[i].match(/^\s*#(\d+)\s+([\s\S]*)$/); if(m){ lastNum=m[1]; break; } }
-  if(lastNum==null) return raw;                 // 沒有行號
-  var body=map[lastNum];
+  // 支援多種行號格式（與 parseLine 一致）：#1 / 1 / S1 / #1. / 1) / S1)（含引用 #1 S1 1）
+  var lines=String(raw).split(/\r?\n/).filter(function(l){ return l.trim().length; });
+  if(lines.length<=1) return raw;               // 單行無可整併
+  var map={}, order=[];
+  lines.forEach(function(l, idx){
+    var t=l.trim(), label=null, body=t, m;
+    // 1) 行首「自身行號標籤」：帶 . 或 ) → "1." "1)" "#1." "S1)"
+    if((m=t.match(/^#?\s*S?(\d+)\s*[.)]\s+([\s\S]*)$/i))){ label=+m[1]; body=m[2]; }
+    // 2) 帶 # 或 S 前綴 + 空白（其後非布林才算標籤）
+    else if((m=t.match(/^(?:#|S)\s*(\d+)\s+([\s\S]*)$/i)) && !/^(?:and|or|not)\b/i.test(m[2])){ label=+m[1]; body=m[2]; }
+    // 3) 裸數字開頭（Ovid）：其後非布林才算標籤
+    else if((m=t.match(/^(\d+)\s+([\s\S]*)$/)) && !/^(?:and|or|not)\b/i.test(m[2])){ label=+m[1]; body=m[2]; }
+    if(label==null) label=idx+1;                // 無標籤 → 用位置（與 parseQuery 一致）
+    // 純組合行（僅行號/布林/括號）：把 Sn 與裸數字引用正規化為 #n
+    var comboTest=body.replace(/[#S()]/gi," ").replace(/\b(and|or|not)\b/gi," ").trim();
+    if(comboTest.length && /^[\d\s]+$/.test(comboTest)){
+      body=body.replace(/#?S(\d+)/gi,"#$1").replace(/(^|[\s(])(\d+)/g,"$1#$2");
+    }
+    map[label]=body; order.push(label);
+  });
+  var lastLabel=order[order.length-1], body=map[lastLabel];
   if(!/#\d+/.test(body)) return raw;            // 最後一行沒有引用其他行，無可整併
   var g=0;
   while(/#\d+/.test(body) && g++<50){ body=body.replace(/#(\d+)/g, function(_,k){ return map[k]!=null?("("+map[k]+")"):("#"+k); }); }
@@ -1278,8 +1294,8 @@ if (typeof module !== "undefined" && module.exports) {
         if(cvLines.length){
           var cvn=document.createElement("div"); cvn.className="cvnote";
           cvn.innerHTML = en
-            ? "⚠ <b>Controlled-vocabulary line(s): "+cvLines.join(", ")+"</b> — syntax converted, but the index terms are NOT mapped across thesauri. Replace/verify against this database’s thesaurus (MeSH / Emtree / CINAHL Headings)."
-            : "⚠ <b>含控制詞彙的行:"+cvLines.join("、")+"</b> — 語法已轉換，但索引詞未跨詞表對應，請依<b>本資料庫</b>的索引詞表(MeSH／Emtree／CINAHL Headings)自行替換並確認。";
+            ? "⚠ <b>Controlled-vocabulary line(s): "+cvLines.join(", ")+"</b> — syntax converted, but the controlled vocabulary (shown in gray) is NOT mapped across thesauri. Replace against this database’s controlled-vocabulary list."
+            : "⚠ <b>含控制詞彙的行:"+cvLines.join("、")+"</b> — 語法已轉換，但控制詞彙(灰字)未跨詞表對應，請依<b>此資料庫</b>的控制詞彙表自行替換。";
           card.appendChild(cvn);
         }
       }
