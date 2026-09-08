@@ -72,6 +72,8 @@
   .out pre .hl-cv{color:#d32029;font-weight:600}
   .out pre .hl-px{color:#0f83d6;font-weight:600}
   .out pre .hl-bk0{color:#7c3aed}.out pre .hl-bk1{color:#ea580c}.out pre .hl-bk2{color:#a16207}.out pre .hl-bk3{color:#64748b}.out pre .hl-bk4{color:#c026d3}.out pre .hl-bk5{color:#0d9488}
+  .out pre .cvlink{color:#0d6e6e;text-decoration:underline;text-underline-offset:2px}
+  .out pre .cvlink:hover{color:#0a5757;background:#e6f4f4}
   .foot{font-size:12px;color:var(--mut);margin-top:26px;text-align:center;line-height:1.7}
   .note{font-size:12.5px;color:var(--mut);background:var(--codebg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-top:4px}
   .note b{color:var(--ink)}
@@ -184,6 +186,8 @@
       <label title="自由詞欄位＋外層括弧=綠、控制詞彙=紅、鄰近字=藍"><input type="checkbox" id="cbColor" checked><span data-zh>語法顏色標記</span><span data-en>Syntax colors</span></label>
       <label title="以顏色標出成對圓括弧"><input type="checkbox" id="cbBracket"><span data-zh>成對括弧顏色</span><span data-en>Bracket pairs</span></label>
       <label title="把最後一行的 #行號組合展開，串成一條可直接貼入單一檢索框的長檢索式"><input type="checkbox" id="cbFlat"><span data-zh>整併為單一長式</span><span data-en>One combined query</span></label>
+      <label title="產出的控制詞彙(MeSH/Emtree/CINAHL)加上可點的詞表查核連結；Word 下載也內嵌超連結。連結只供核對，複製的檢索式仍為純文字。"><input type="checkbox" id="cbLinks" checked><span data-zh>控制詞彙查核連結</span><span data-en>Vocab verify links</span></label>
+      <span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--mut)" title="你機構的 EBSCO 專屬代碼（research.ebsco.com/c/XXXX/ 中的 XXXX，如 shmie4）；填了 CINAHL 控制詞彙才會有查核連結。只存在你的瀏覽器本機。"><span data-zh>CINAHL 機構碼</span><span data-en>CINAHL inst.</span><input type="text" id="cinahlInst" placeholder="e.g. shmie4" style="width:90px;font-size:12px;padding:3px 6px;border:1px solid var(--line);border-radius:6px"></span>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn ghost" id="wordBtn"><span data-zh>⬇ 下載 Word</span><span data-en>⬇ Download Word</span></button>
@@ -1069,18 +1073,38 @@ if (typeof module !== "undefined" && module.exports) {
   var srcSel = $("#src"), levelSel = $("#level"), dbchecks = $("#dbchecks"),
       picoBody = $("#picoBody"), outs = $("#outs"), lvlnote = $("#lvlnote"),
       cbColor = $("#cbColor"), cbBracket = $("#cbBracket"), cbFlat = $("#cbFlat"), customCombo = $("#customCombo"), picoWarn = $("#picoWarn"),
-      toProxBtn = $("#toProxBtn"), restoreBtn = $("#restoreBtn");
+      toProxBtn = $("#toProxBtn"), restoreBtn = $("#restoreBtn"),
+      cbLinks = $("#cbLinks"), cinahlInst = $("#cinahlInst");
   // ---- 語法顏色標記 highlighter（綠=自由詞欄位+外層括弧, 紅=控制詞彙, 藍=鄰近字）----
   var PROX_RE=/\b(?:ADJ\d+|NEAR\/\d+|NEXT\/\d+|NEXT|N\d+|W\/\d+|W\d+|PRE\/\d+)\b|:~\d+/g;
   var CV_RE={pubmed:/(?:"[^"]*"|[A-Za-z][\w-]*)\s*\[(?:mh|mj|mesh)(?::noexp)?\]/gi,ovid:/(?:\bexp\s+)?\*?"[^"]*"\//gi,embase:/"[^"]*"\/(?:exp(?:\/mj)?|de|mj)\b/gi,cochrane:/\[mh\b[^\[\]]*(?:\[mj\])?\]/gi,ebsco:/\b(?:MH|MM)\s*\([^)]*\)|\bMW\s+"[^"]*"/gi,wos:null,scopus:null};
   var FIELD_RE={pubmed:/\[(?:tiab|ti|tw|ab)\]/gi,ovid:/\.(?:ti|ab|kf|kw|mp|tw|nm|pt|sh|fs|xm|lg)(?:,(?:ti|ab|kf|kw|mp|tw|nm|pt|sh|fs|xm|lg))*\./gi,embase:/:(?:ti|ab|kw|de)(?:,(?:ti|ab|kw|de))*(?![a-z])/gi,cochrane:/:(?:ti|ab|kw|de)(?:,(?:ti|ab|kw|de))*(?![a-z])/gi,ebsco:/\b(?:TI|AB|KW|TX|XB)\b(?=\s*\()/gi,wos:/\b(?:TI|AB|AK|TS)=/gi,scopus:/\b(?:TITLE-ABS-KEY|TITLE-ABS|TITLE|ABS|AUTHKEY|KEY)\b(?=\s*\()/gi};
-  function hlHighlight(text, engine, semantic, brackets){
+  // 控制詞彙查核連結：由標目文字 + 詞表類型 組出詞表查詢網址
+  function cvUrl(term, vocab){
+    var t=String(term||"").replace(/^["']+|["']+$/g,"").replace(/\/(?:exp|de|fs|dg|mj|noexp)\b.*$/i,"").replace(/[+*]+$/,"").replace(/\s+/g," ").trim();
+    if(!t) return null;
+    var q=encodeURIComponent(t);
+    if(vocab==="mesh") return "https://www.ncbi.nlm.nih.gov/mesh/?term="+q;
+    if(vocab==="emtree") return "https://www.embase.com/emtree?term="+q;
+    if(vocab==="cinahl"){ var inst=((cinahlInst&&cinahlInst.value)||"").trim(); if(!inst) return null; return "https://research.ebsco.com/c/"+encodeURIComponent(inst)+"/search/advanced/cinmesh?defaultdb=cin20&searchTerm="+q; }
+    return null;
+  }
+  function hlHighlight(text, engine, semantic, brackets, vocab, linksOn){
     var n=text.length, cls=new Array(n), m, st, i;
     var openOf={},closeOf={}; st=[];
     for(i=0;i<n;i++){var c=text[i]; if(c==="(")st.push(i); else if(c===")"){ if(st.length){var o=st.pop(); openOf[o]=i; closeOf[i]=o;} }}
     function mk(s,e,tag){ for(var k=s;k<e;k++){ if(!cls[k]) cls[k]=tag; } }
+    var cvHeads=[];
+    if((semantic || (linksOn && vocab)) && CV_RE[engine]){
+      CV_RE[engine].lastIndex=0;
+      while((m=CV_RE[engine].exec(text))){
+        var ms=m.index, me=ms+m[0].length, seg=m[0], q1=seg.indexOf('"'), hs, he;
+        if(q1>=0){ var q2=seg.indexOf('"', q1+1); if(q2<0)q2=seg.length; hs=ms+q1+1; he=ms+q2; if(semantic){ mk(ms, ms+q1+1, "cv"); mk(ms+q2, me, "cv"); } }
+        else { var ti=seg.search(/[\[(]/); if(ti<0)ti=seg.length; hs=ms; he=ms+ti; if(semantic){ mk(ms+ti, me, "cv"); } }
+        if(he>hs) cvHeads.push({s:hs,e:he});
+      }
+    }
     if(semantic){
-      if(CV_RE[engine]){ CV_RE[engine].lastIndex=0; while((m=CV_RE[engine].exec(text))){ var ms=m.index, me=ms+m[0].length, seg=m[0], q1=seg.indexOf('"'); if(q1>=0){ var q2=seg.indexOf('"', q1+1); if(q2<0)q2=seg.length; mk(ms, ms+q1+1, "cv"); mk(ms+q2, me, "cv"); } else { var ti=seg.search(/[\[(]/); if(ti<0)ti=seg.length; mk(ms+ti, me, "cv"); } } }
       PROX_RE.lastIndex=0; while((m=PROX_RE.exec(text))) mk(m.index,m.index+m[0].length,"px");
       var FR=FIELD_RE[engine];
       if(FR){ FR.lastIndex=0; while((m=FR.exec(text))){ var s=m.index,e=s+m[0].length; mk(s,e,"fld");
@@ -1089,9 +1113,20 @@ if (typeof module !== "undefined" && module.exports) {
       } }
     }
     if(brackets){ var d2={}; st=[]; for(i=0;i<n;i++){var c2=text[i]; if(c2==="(")st.push(i); else if(c2===")"&&st.length){var o2=st.pop(); d2[o2]=d2[i]=st.length;}} for(i=0;i<n;i++){ if((text[i]==="("||text[i]===")") && !cls[i]) cls[i]="bk"+((d2[i]||0)%6); } }
+    var LINKHREF={}, LINKEND={};
+    if(linksOn && vocab && cvHeads.length){
+      cvHeads.forEach(function(h){ var clear=true; for(var k=h.s;k<h.e;k++){ if(cls[k]){clear=false;break;} } if(!clear) return; var url=cvUrl(text.slice(h.s,h.e), vocab); if(url){ LINKHREF[h.s]=url.replace(/&/g,"&amp;"); LINKEND[h.s]=h.e; } });
+    }
     var esc2=function(c){ return c==="&"?"&amp;":c==="<"?"&lt;":c===">"?"&gt;":c; };
-    var out="",cur=null;
-    for(i=0;i<n;i++){ var tg2=cls[i]||null; if(tg2!==cur){ if(cur)out+="</span>"; if(tg2)out+="<span class=\"hl-"+tg2+"\">"; cur=tg2; } out+=esc2(text[i]); }
+    var out="",cur=null,inLink=false,linkEndAt=-1;
+    for(i=0;i<n;i++){
+      if(inLink && i===linkEndAt){ out+="</a>"; inLink=false; }
+      var tg2=cls[i]||null;
+      if(tg2!==cur){ if(cur)out+="</span>"; if(tg2)out+="<span class=\"hl-"+tg2+"\">"; cur=tg2; }
+      if(!inLink && LINKHREF[i]!==undefined){ out+="<a class=\"cvlink\" target=\"_blank\" rel=\"noopener\" href=\""+LINKHREF[i]+"\">"; inLink=true; linkEndAt=LINKEND[i]; }
+      out+=esc2(text[i]);
+    }
+    if(inLink) out+="</a>";
     if(cur)out+="</span>";
     return {html:out};
   }
@@ -1521,12 +1556,12 @@ if (typeof module !== "undefined" && module.exports) {
       } else {
         allRows = baseRows;
       }
-      exportData.push({label:tg.label, engine:tg.engine, isStart:(tid===startDB), rows:allRows});
+      exportData.push({label:tg.label, engine:tg.engine, vocab:tg.vocab, isStart:(tid===startDB), rows:allRows});
       var copyText = allRows.map(function(x){return x.text;}).join("\n");
       cp.onclick=function(){ navigator.clipboard.writeText(copyText); cp.textContent=isEn()?"Copied":"已複製"; cp.classList.add("done"); setTimeout(function(){cp.textContent=isEn()?"Copy syntax":"複製語法";cp.classList.remove("done");},1400); };
       h.appendChild(nm); h.appendChild(cp); card.appendChild(h);
       if(b.reminders.length){ var rem=document.createElement("div"); rem.className="rem"; b.reminders.forEach(function(m){ var d=document.createElement("div"); d.textContent="⚠ "+m; rem.appendChild(d); }); card.appendChild(rem); }
-      var pre=document.createElement("pre"); allRows.forEach(function(x){ var ln=document.createElement("div"); ln.className="qline"; var gn=document.createElement("span"); gn.className="qn"; gn.textContent=(x.n!=null?"#"+x.n:""); var gs=document.createElement("span"); gs.className="qs"; if((cbColor&&cbColor.checked)||(cbBracket&&cbBracket.checked)){ gs.innerHTML=hlHighlight(x.text, tg.engine, cbColor&&cbColor.checked, cbBracket&&cbBracket.checked).html; } else { gs.textContent=x.text; } ln.appendChild(gn); ln.appendChild(gs); pre.appendChild(ln); }); card.appendChild(pre);
+      var pre=document.createElement("pre"); allRows.forEach(function(x){ var ln=document.createElement("div"); ln.className="qline"; var gn=document.createElement("span"); gn.className="qn"; gn.textContent=(x.n!=null?"#"+x.n:""); var gs=document.createElement("span"); gs.className="qs"; if((cbColor&&cbColor.checked)||(cbBracket&&cbBracket.checked)||(cbLinks&&cbLinks.checked)){ gs.innerHTML=hlHighlight(x.text, tg.engine, cbColor&&cbColor.checked, cbBracket&&cbBracket.checked, tg.vocab, cbLinks&&cbLinks.checked).html; } else { gs.textContent=x.text; } ln.appendChild(gn); ln.appendChild(gs); pre.appendChild(ln); }); card.appendChild(pre);
       outs.appendChild(card);
     });
     lastGen={data:exportData, level:lvlLabel};
@@ -1539,9 +1574,11 @@ if (typeof module !== "undefined" && module.exports) {
     var msoF="font-family:Consolas,'Microsoft JhengHei',monospace;mso-ascii-font-family:Consolas;mso-hansi-font-family:Consolas;mso-bidi-font-family:Consolas;mso-fareast-font-family:'Microsoft JhengHei'";
     var fspan=function(s){ return "<span style=\""+msoF+"\">"+s+"</span>"; };
     var HLC={fld:"#0a8f4f",cv:"#d32029",px:"#0f83d6",bk0:"#7c3aed",bk1:"#ea580c",bk2:"#a16207",bk3:"#64748b",bk4:"#c026d3",bk5:"#0d9488"};
-    function synCell(text, eng){
-      if(!colorOn || !text) return fspan(wesc(text||""));
-      var h=hlHighlight(text, eng, sem, brk).html.replace(/<span class="hl-(\w+)">/g, function(m,cl){var bd=/^(fld|cv|px)$/.test(cl)?";font-weight:bold":"";return "<span style=\"color:"+(HLC[cl]||"inherit")+bd+";"+msoF+"\">";});
+    var linksOn=cbLinks&&cbLinks.checked;
+    function synCell(text, eng, vocab){
+      if((!colorOn && !linksOn) || !text) return fspan(wesc(text||""));
+      var h=hlHighlight(text, eng, sem, brk, vocab, linksOn).html.replace(/<span class="hl-(\w+)">/g, function(m,cl){var bd=/^(fld|cv|px)$/.test(cl)?";font-weight:bold":"";return "<span style=\"color:"+(HLC[cl]||"inherit")+bd+";"+msoF+"\">";});
+      h=h.replace(/<a class="cvlink"/g, '<a style="color:#0d6e6e;text-decoration:underline"');
       return fspan(h);
     }
     var tdb="border:1px solid #999;padding:0.1cm 0.2cm;font-weight:bold;white-space:nowrap;vertical-align:top;font-size:11pt";
@@ -1552,7 +1589,7 @@ if (typeof module !== "undefined" && module.exports) {
     lastGen.data.forEach(function(c){
       var lab=wesc(c.label)+(c.isStart?(en?" (start)":"（起始）"):"");
       c.rows.forEach(function(x,i){
-        rows+="<tr>"+(i===0?("<td rowspan='"+c.rows.length+"' style='"+tdb+"'>"+fspan(lab)+"</td>"):"")+"<td style='"+tnum+"'>"+fspan(x.n!=null?String(x.n):"")+"</td><td style='"+tsyn+"'>"+synCell(x.text, c.engine)+"</td></tr>";
+        rows+="<tr>"+(i===0?("<td rowspan='"+c.rows.length+"' style='"+tdb+"'>"+fspan(lab)+"</td>"):"")+"<td style='"+tnum+"'>"+fspan(x.n!=null?String(x.n):"")+"</td><td style='"+tsyn+"'>"+synCell(x.text, c.engine, c.vocab)+"</td></tr>";
       });
     });
     var title=en?"PICO Search Strategy":"PICO 檢索策略";
@@ -1574,6 +1611,11 @@ if (typeof module !== "undefined" && module.exports) {
   if(cbColor) cbColor.addEventListener("change", function(){ if(outs.children.length) $("#genBtn").click(); });
   if(cbBracket) cbBracket.addEventListener("change", function(){ if(outs.children.length) $("#genBtn").click(); });
   if(cbFlat) cbFlat.addEventListener("change", function(){ if(outs.children.length) $("#genBtn").click(); });
+  if(cbLinks) cbLinks.addEventListener("change", function(){ if(outs.children.length) $("#genBtn").click(); });
+  // CINAHL 機構碼：本機記憶，變更後重生（讓 CINAHL 連結生效）
+  if(cinahlInst){ try{ cinahlInst.value=localStorage.getItem("sr_cinahl_inst")||""; }catch(e){}
+    cinahlInst.addEventListener("input", function(){ try{ localStorage.setItem("sr_cinahl_inst", cinahlInst.value.trim()); }catch(e){} });
+    cinahlInst.addEventListener("change", function(){ if(outs.children.length && (!cbLinks||cbLinks.checked)) $("#genBtn").click(); }); }
 
   // ---- 由「鄰近字組合器」帶入（localStorage 佇列，可累加多個概念）----
   function srCount(p,t){ try{ if(window.goatcounter&&window.goatcounter.count) window.goatcounter.count({path:p,title:t||p,event:true}); }catch(e){} }
