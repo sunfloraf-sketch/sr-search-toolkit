@@ -1188,8 +1188,10 @@ if (typeof module !== "undefined" && module.exports) {
 
   // ===== 貼上 AI 表格：解析剪貼簿的 HTML 表格（或 Tab 分隔文字），依標題自動對欄填入 =====
   var pasteZone=$("#pasteZone"), pasteMsg=$("#pasteMsg");
-  function cellClean(s){ return String(s||"").replace(/ /g," ").replace(/[↗↪⧉➚🔗⇱]/g,"").split(/\r?\n/).map(function(x){return x.replace(/[ \t]+/g," ").trim();}).filter(function(x){return x!=="";}).join("\n").trim(); }
+  function cellClean(s){ return String(s||"").replace(/ /g," ").replace(/<\/?[a-z][^>]*>/gi,"").replace(/[↗↪⧉➚🔗⇱]/g,"").split(/\r?\n/).map(function(x){return x.replace(/[ \t]+/g," ").trim();}).filter(function(x){return x!=="";}).join("\n").trim(); }
   function labClean(s){ var f=String(s||"").split("\n")[0].trim(); var m=f.match(/^[PICOSET]\b/i); if(m) return m[0].toUpperCase(); return f.split(/[\s(（:：]/)[0].slice(0,4); }
+  // 同義詞／控制詞彙一格多個 → 拆成「一行一個」。keepComma=true 時保留詞內半形逗號（如 Diabetes, Gestational），只以 、；;／換行 斷行；同義詞欄則連半形逗號也斷。
+  function toLines(s, keepComma){ var re = keepComma ? /[、；;\n]+/ : /[、，,；;\n]+/; return cellClean(s).split(re).map(function(x){return x.trim();}).filter(Boolean).join("\n"); }
   function parsePaste(html, text){
     var rows=[];
     if(html && /<t(able|r)\b/i.test(html)){
@@ -1229,7 +1231,7 @@ if (typeof module !== "undefined" && module.exports) {
     else { data=rows; col={label:0,zh:1,ft:2,emtree:3,mesh:4,cinahl:5}; }
     var g=function(c,i){ return (i>=0&&i<c.length)?c[i]:""; };
     var filled=[];
-    data.forEach(function(c){ if(!c.length||c.every(function(x){return !x;}))return; filled.push({label:labClean(g(c,col.label)),zh:g(c,col.zh),ft:g(c,col.ft),mesh:g(c,col.mesh),emtree:g(c,col.emtree),cinahl:g(c,col.cinahl)}); });
+    data.forEach(function(c){ if(!c.length||c.every(function(x){return !x;}))return; filled.push({label:labClean(g(c,col.label)),zh:toLines(g(c,col.zh),false),ft:toLines(g(c,col.ft),false),mesh:toLines(g(c,col.mesh),true),emtree:toLines(g(c,col.emtree),true),cinahl:toLines(g(c,col.cinahl),true)}); });
     if(!filled.length){ warn(en?"Table has no data rows.":"表格沒有資料列。"); return; }
     var pre=serializeState(); if(stateNonEmpty(pre)){ try{ localStorage.setItem(SNAP_KEY, JSON.stringify(pre)); }catch(e){} }  // 貼上前內容 → 供「還原上次」救回
     picoBody.innerHTML="";
