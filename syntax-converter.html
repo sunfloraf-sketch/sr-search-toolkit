@@ -1225,15 +1225,13 @@ if (typeof module !== "undefined" && module.exports) {
     // 灰色預覽：把範例放進輸入框的 placeholder（像鄰近字組合器的灰字預載）
     inp.placeholder = loadText;
     if(!ex.length) return;
-    // 一行說明 + 載入範例按鈕
+    // 載入範例按鈕（不含說明文字）
     const head=document.createElement("div"); head.className="exhead";
-    const lab=document.createElement("span"); lab.className="exlabel";
-    lab.innerHTML='<span data-zh>輸入框中的灰字為完整範例預覽（含組合行）：</span><span data-en>The grey text in the box is a full example preview (with a combining line):</span>';
     const load=document.createElement("button"); load.type="button"; load.className="exload";
     load.innerHTML='<span data-zh>⬇ 載入範例</span><span data-en>⬇ Load example</span>';
     const clr=document.createElement("button"); clr.type="button"; clr.className="exload"; clr.style.background="#64748b"; clr.style.marginLeft="8px";
     clr.innerHTML='<span data-zh>清空</span><span data-en>Clear</span>';
-    head.appendChild(lab); head.appendChild(load); head.appendChild(clr); exWrap.appendChild(head);
+    head.appendChild(load); head.appendChild(clr); exWrap.appendChild(head);
     // 真實載入：把完整範例(含行號與組合行)放進輸入框並轉換
     load.onclick=function(){ srCount('conv-example','轉換器-載入範例'); userTouched=true; inp.value=loadText; run(); paintInput(); inp.focus(); };
     // 清空：清掉輸入內容與灰字預覽
