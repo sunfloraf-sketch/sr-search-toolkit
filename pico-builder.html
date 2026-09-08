@@ -141,6 +141,17 @@
       </div>
     </div>
     <div class="hint" style="margin:0 0 10px"><span data-zh>中文同義詞僅供規劃參考，不納入產出的檢索式。英文同義詞建議先用「鄰近字組合器」整理好再貼入。控制詞彙一格可放多個，<b>一行一個</b>（詞內逗號會保留，如 Diabetes, Gestational）。對應：MeSH→MEDLINE(各平台)·PubMed·Cochrane；Emtree→Embase(各平台)；CINAHL Headings→CINAHL(EBSCOhost)；WoS·Scopus 無控制詞彙。<br><b>進階寫法</b>：控制詞彙可用 <code>AND</code>／<code>OR</code>／括號 組合；加次標目寫成 <code>詞/dg</code>（如 <code>Optic Nerve/dg</code>）；不含下位詞寫成 <code>詞(不含狹義詞)</code>（如 <code>Algorithms(不含狹義詞)</code>）。例：<code>Optic&nbsp;Nerve</code>〔換行〕<code>AND</code>〔換行〕<code>(Ultrasonography</code>〔換行〕<code>Optic&nbsp;Nerve/dg)</code>。</span><span data-en>Chinese synonyms are for planning only and are not included in the output. Tidy English synonyms in the Proximity Builder first. One controlled term per line (commas inside a term are kept, e.g. Diabetes, Gestational). Mapping: MeSH→MEDLINE(all platforms)·PubMed·Cochrane; Emtree→Embase(all platforms); CINAHL Headings→CINAHL(EBSCOhost); WoS·Scopus have none.<br><b>Advanced</b>: controlled terms may use <code>AND</code>／<code>OR</code>／parentheses; add a subheading as <code>term/dg</code> (e.g. <code>Optic Nerve/dg</code>); non-exploded as <code>term(不含狹義詞)</code>. e.g. <code>Optic Nerve</code> ⏎ <code>AND</code> ⏎ <code>(Ultrasonography</code> ⏎ <code>Optic Nerve/dg)</code>.</span></div>
+    <details class="ccbox" id="pasteBox" style="margin:0 0 12px">
+      <summary style="cursor:pointer;font-weight:600;font-size:13px;color:var(--brand2)"><span data-zh>⎘ 貼上 AI 整理的表格（免經 Word）</span><span data-en>⎘ Paste an AI-made table (skip Word)</span></summary>
+      <div style="margin-top:8px">
+        <div class="sub" style="font-size:12px;color:var(--mut);margin-bottom:6px">
+          <span data-zh>從 ChatGPT／Word／Excel 複製<b>整個表格</b>後，點進下方框按 <b>Ctrl+V</b> 貼上，工具會依欄位標題自動對應、填入下方 PICO 表（<b>會覆蓋</b>目前內容；可用「↩ 還原上次內容」救回）。表格請含一列標題（概念／中文／English／MeSH／Emtree／CINAHL；順序不拘）。控制詞彙一格多個會保留換行。</span>
+          <span data-en>Copy the <b>whole table</b> from ChatGPT/Word/Excel, click the box below and press <b>Ctrl+V</b>. Columns are auto-mapped by header and fill the PICO table below (<b>replaces</b> current content; use “↩ Restore last” to recover). Include a header row (Concept / Chinese / English / MeSH / Emtree / CINAHL; any order).</span>
+        </div>
+        <textarea id="pasteZone" spellcheck="false" rows="3" style="width:100%;border:1px dashed var(--brand);border-radius:8px;padding:9px 11px;font-size:13px" placeholder="在此按 Ctrl+V 貼上表格… · Press Ctrl+V here…"></textarea>
+        <div id="pasteMsg" style="font-size:12.5px;margin-top:6px"></div>
+      </div>
+    </details>
     <table class="pico">
       <thead>
         <tr>
@@ -1174,6 +1185,71 @@ if (typeof module !== "undefined" && module.exports) {
   if(restoreBtn) restoreBtn.onclick=function(){ var s=snapshotState(); if(stateNonEmpty(s)){ applyState(s); saveDraft(); restoreBtn.style.display="none"; } };
 
   $("#addRow").onclick=function(){ addRow(""); saveDraftDebounced(); };
+
+  // ===== 貼上 AI 表格：解析剪貼簿的 HTML 表格（或 Tab 分隔文字），依標題自動對欄填入 =====
+  var pasteZone=$("#pasteZone"), pasteMsg=$("#pasteMsg");
+  function cellClean(s){ return String(s||"").replace(/ /g," ").replace(/[↗↪⧉➚🔗⇱]/g,"").split(/\r?\n/).map(function(x){return x.replace(/[ \t]+/g," ").trim();}).filter(function(x){return x!=="";}).join("\n").trim(); }
+  function labClean(s){ var f=String(s||"").split("\n")[0].trim(); var m=f.match(/^[PICOSET]\b/i); if(m) return m[0].toUpperCase(); return f.split(/[\s(（:：]/)[0].slice(0,4); }
+  function parsePaste(html, text){
+    var rows=[];
+    if(html && /<t(able|r)\b/i.test(html)){
+      var doc=new DOMParser().parseFromString(html,"text/html");
+      Array.prototype.forEach.call(doc.querySelectorAll("tr"), function(tr){
+        var cells=[]; Array.prototype.forEach.call(tr.querySelectorAll("th,td"), function(td){
+          var h=td.innerHTML.replace(/<br\s*\/?>/gi,"\n").replace(/<\/(p|div|li)>/gi,"\n");
+          var tmp=document.createElement("div"); tmp.innerHTML=h; cells.push(cellClean(tmp.textContent));
+        });
+        if(cells.length) rows.push(cells);
+      });
+    }
+    if(!rows.length && text){ text.split(/\r?\n/).forEach(function(l){ if(l.trim()==="")return; rows.push(l.split("\t").map(cellClean)); }); }
+    return rows;
+  }
+  function mapCols(hdr){
+    var idx={label:-1,zh:-1,ft:-1,mesh:-1,emtree:-1,cinahl:-1};
+    hdr.forEach(function(h,i){
+      var s=String(h).toLowerCase().replace(/[\s（）()【】]/g,"");
+      if(idx.mesh<0 && /mesh/.test(s)){idx.mesh=i;return;}
+      if(idx.emtree<0 && /emtree/.test(s)){idx.emtree=i;return;}
+      if(idx.cinahl<0 && /cinahl/.test(s)){idx.cinahl=i;return;}
+      if(idx.zh<0 && /(中文|chinese|中譯)/.test(s)){idx.zh=i;return;}
+      if(idx.ft<0 && /(english|英文|自由詞|同義詞|synonym|free-?text|keyword|term)/.test(s)){idx.ft=i;return;}
+      if(idx.label<0 && /(pico|概念|類別|category|element|欄位)/.test(s)){idx.label=i;return;}
+    });
+    return idx;
+  }
+  function doPasteFill(html,text){
+    var en=isEn(), rows=parsePaste(html,text);
+    function warn(m){ pasteMsg.style.color="#b45309"; pasteMsg.textContent=m; }
+    if(rows.length<1){ warn(en?"No table detected. Copy the table cells (not a screenshot) and try again.":"沒有偵測到表格。請複製表格內容（不是截圖）再貼一次。"); return; }
+    var hdr=mapCols(rows[0]);
+    var hasHeader=(hdr.mesh>=0||hdr.emtree>=0||hdr.cinahl>=0||hdr.ft>=0||hdr.zh>=0||hdr.label>=0);
+    var data, col;
+    if(hasHeader){ data=rows.slice(1); col=hdr; }
+    else { data=rows; col={label:0,zh:1,ft:2,emtree:3,mesh:4,cinahl:5}; }
+    var g=function(c,i){ return (i>=0&&i<c.length)?c[i]:""; };
+    var filled=[];
+    data.forEach(function(c){ if(!c.length||c.every(function(x){return !x;}))return; filled.push({label:labClean(g(c,col.label)),zh:g(c,col.zh),ft:g(c,col.ft),mesh:g(c,col.mesh),emtree:g(c,col.emtree),cinahl:g(c,col.cinahl)}); });
+    if(!filled.length){ warn(en?"Table has no data rows.":"表格沒有資料列。"); return; }
+    var pre=serializeState(); if(stateNonEmpty(pre)){ try{ localStorage.setItem(SNAP_KEY, JSON.stringify(pre)); }catch(e){} }  // 貼上前內容 → 供「還原上次」救回
+    picoBody.innerHTML="";
+    filled.forEach(function(r){ addRow(r.label||"", r.zh||"", r.ft||"", r.mesh||"", r.emtree||"", r.cinahl||""); });
+    if(!picoBody.querySelector("tr")) seedEmpty();
+    saveDraft(); offerRestore();
+    var miss=[]; ["ft","mesh","emtree","cinahl"].forEach(function(k){ if(col[k]<0) miss.push(k); });
+    var missZh={ft:"英文同義詞",mesh:"MeSH",emtree:"Emtree",cinahl:"CINAHL"};
+    pasteMsg.style.color="#166534";
+    pasteMsg.textContent=(en?("Filled "+filled.length+" row(s)."+(hasHeader?"":" (no header found — used default column order)")):("已填入 "+filled.length+" 列。"+(hasHeader?"":"（未偵測到標題，改用預設欄序）")))
+      +(miss.length?(en?(" Columns not matched: "+miss.join(", ")+"."):("　未對應到的欄："+miss.map(function(k){return missZh[k];}).join("、"))):"");
+    var pb=$("#pasteBox"); if(pb) pb.open=false; pasteZone.value="";
+  }
+  if(pasteZone){
+    pasteZone.addEventListener("paste", function(e){
+      var cd=e.clipboardData||window.clipboardData; if(!cd) return;
+      var html=cd.getData&&cd.getData("text/html"), text=cd.getData&&cd.getData("text/plain");
+      if(html||text){ e.preventDefault(); srCount('pico-paste-table','PICO-貼上表格'); doPasteFill(html,text); }
+    });
+  }
   $("#clearBtn").onclick=function(){ picoBody.innerHTML=""; ["P","I","C","O"].forEach(function(l){ addRow(l); }); outs.innerHTML=""; if(picoWarn)picoWarn.style.display="none"; lastGen=null; try{ localStorage.removeItem("sr_pico_inbox"); }catch(e){} clearPersist(); if(restoreBtn) restoreBtn.style.display="none"; };
 
   // ---- 上傳 Word 讀取檢索詞（純瀏覽器解析 .docx，使用原生 DecompressionStream，可離線）----
