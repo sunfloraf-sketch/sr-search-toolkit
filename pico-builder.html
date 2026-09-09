@@ -25,7 +25,7 @@
   label.fld{display:block;font-weight:600;font-size:13px;margin-bottom:6px;color:var(--mut)}
   .controls{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
   select{font-family:inherit;font-size:14px;border:1px solid var(--line);border-radius:8px;padding:9px 11px;color:var(--ink);background:linear-gradient(180deg,#FFFFFF,#F7F9FA);min-width:210px;cursor:pointer}
-  .dbchecks{display:grid;grid-template-columns:repeat(4,max-content);gap:8px 26px}
+  .dbchecks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px 20px;max-width:880px}
   .dbchecks label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink);cursor:pointer;white-space:nowrap}
   .dbchecks input{width:15px;height:15px;cursor:pointer}
   .dbchecks input,.hlopts input,.cvvallrow input{appearance:none;-webkit-appearance:none;background:#fff;border:1.5px solid #55504B;border-radius:3px;position:relative}
