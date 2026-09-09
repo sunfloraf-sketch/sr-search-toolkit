@@ -5,28 +5,28 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>鄰近字組合器 · Proximity Builder</title>
 <style>
-  :root{--bg:#f4f6f9;--card:#fff;--ink:#1c2733;--mut:#5b6b7b;--line:#e2e8f0;--brand:#6d28d9;--brand2:#5b21b6;--accent:#f3eefe;--code:#0f172a;--codebg:#f8fafc;--warn:#b45309;--warnbg:#fff7ed}
+  :root{--bg:#F2F4F6;--card:#FFFFFF;--ink:#23282D;--mut:#66717A;--line:#D5DCE2;--brand:#DDE3E7;--brand2:#617B76;--accent:#EEF2F5;--code:#1E2327;--codebg:#FAFBFC;--warn:#7B6840;--warnbg:#F3F1E6;--ok:#4E6065;--deco:#7E9994;--deco2:#617B76}
   *{box-sizing:border-box}
   body{margin:0;font-family:-apple-system,"Segoe UI","Noto Sans TC",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;font-size:15px}
-  header{background:linear-gradient(135deg,#4b5563,#374151);color:#fff;padding:20px 24px;font-family:-apple-system,"Segoe UI","PingFang TC","Microsoft JhengHei","Noto Sans TC",Roboto,Arial,sans-serif}
+  header{background:linear-gradient(135deg,#1D2328 0%, #374047 45%, #606B74 100%);color:#fff;padding:20px 24px;font-family:-apple-system,"Segoe UI","PingFang TC","Microsoft JhengHei","Noto Sans TC",Roboto,Arial,sans-serif;box-shadow:inset 0 1px 0 rgba(255,255,255,.10), inset 0 -1px 0 rgba(255,255,255,.06)}
   header .row{max-width:1080px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
   header h1{margin:0;font-size:20px;font-weight:650}
   header p{margin:4px 0 0;font-size:13px;opacity:.9}
   .toplinks{display:flex;gap:10px;align-items:center}
-  .navlink{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.4);color:#fff;padding:6px 14px;border-radius:20px;cursor:pointer;font-size:13px;font-weight:600;text-decoration:none}
-  .navlink:hover{background:rgba(255,255,255,.3)}
+  .navlink{background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(231,236,240,.94));border:1px solid rgba(255,255,255,.96);color:#25292D;padding:6px 14px;border-radius:20px;cursor:pointer;font-size:13px;font-weight:600;text-decoration:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 1px 3px rgba(0,0,0,.10)}
+  .navlink:hover{background:linear-gradient(180deg,#FFFFFF,#E8EEF1)}
   main{max-width:1080px;margin:0 auto;padding:22px 24px 60px}
-  .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:18px}
+  .panel{background:linear-gradient(180deg,#FFFFFF 0%, #FCFDFD 100%);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:18px;position:relative}
   .panel h2{margin:0 0 4px;font-size:15px;color:var(--brand2)}
   .panel .sub{font-size:12px;color:var(--mut);margin-bottom:10px}
   label.fld{display:block;font-weight:600;font-size:13px;margin-bottom:6px;color:var(--mut)}
   .controls{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-end}
-  select,textarea,input[type=text]{font-family:inherit;font-size:14px;border:1px solid var(--line);border-radius:8px;padding:9px 11px;color:var(--ink);background:#fff}
+  select,textarea,input[type=text]{font-family:inherit;font-size:14px;border:1px solid var(--line);border-radius:8px;padding:9px 11px;color:var(--ink);background:linear-gradient(180deg,#FFFFFF,#F7F9FA)}
   select{min-width:170px;cursor:pointer}
   .autobar{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
   .autobar textarea{flex:1;min-width:280px;min-height:120px;line-height:1.6;font-family:"SF Mono",Consolas,monospace;font-size:13px}
-  .gobtn{background:var(--brand);color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap}
-  .gobtn:hover{background:var(--brand2)}
+  .gobtn{background:linear-gradient(180deg,#F1F4F6,#D7DEE3);color:#25292D;border:1px solid #BFC8CF;border-radius:8px;padding:10px 18px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 2px 5px rgba(0,0,0,.08)}
+  .gobtn:hover{background:linear-gradient(180deg,#F7F9FA,#CDD6DC)}
   .review{margin-top:12px;font-size:12.5px;color:var(--mut)}
   .review table{border-collapse:collapse;width:100%;margin-top:6px}
   .review td{border:1px solid var(--line);padding:5px 9px;vertical-align:top}
@@ -42,7 +42,7 @@
   .stackcol{flex:1 1 0;min-width:150px}
   .stackcol label{display:block;font-weight:600;font-size:13px;margin-bottom:6px;color:var(--brand2)}
   .stackcol textarea{width:100%;min-height:130px;resize:vertical;line-height:1.7;font-family:"SF Mono",Consolas,monospace;font-size:13px}
-  .opmid{display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--brand);font-size:13px;white-space:nowrap;padding:0 2px;align-self:center}
+  .opmid{display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--ok);font-size:13px;white-space:nowrap;padding:0 2px;align-self:center}
   .splithint{background:#fff4e5;border:1px solid #f0a24b;border-left:5px solid #e67700;border-radius:10px;padding:12px 16px;margin-bottom:14px;color:#7a3d00;font-size:13px}
   .splithint .shh{font-weight:700;font-size:14px;margin-bottom:5px;color:#b34700}
   .splithint p{margin:4px 0}
@@ -51,13 +51,13 @@
   .solowrap textarea{min-height:42px;resize:vertical;line-height:1.55}
   .hint{font-size:12px;color:var(--mut);margin-top:8px}
   .out{background:var(--card);border:1px solid var(--line);border-radius:11px;overflow:hidden;margin-bottom:14px}
-  .out h3{margin:0;padding:11px 14px;font-size:14px;background:var(--accent);color:var(--brand2);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+  .out h3{margin:0;padding:11px 14px;font-size:14px;background:linear-gradient(180deg,#F4F7F8,#E9EEF1);color:#32383D;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;box-shadow:inset 3px 0 0 var(--deco)}
   .out pre{margin:0;padding:13px 14px;white-space:pre-wrap;word-break:break-word;font-family:"SF Mono",Consolas,monospace;font-size:13px;color:var(--code);background:var(--codebg);min-height:40px}
   .btnrow{display:flex;gap:8px}
-  .copy{background:var(--brand);color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer;font-weight:600}
-  .copy:hover{background:var(--brand2)}.copy.done{background:#16a34a}
-  .sendbtn{background:#0d6e6e;color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer;font-weight:600;text-decoration:none;display:inline-block}
-  .sendbtn:hover{background:#0a5757}
+  .copy{background:linear-gradient(180deg,#F3F6F7,#DCE3E7);color:#25292D;border:1px solid #C6CFD5;border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer;font-weight:600;box-shadow:inset 0 1px 0 rgba(255,255,255,.88),0 1px 3px rgba(0,0,0,.08)}
+  .copy:hover{background:linear-gradient(180deg,#FAFBFC,#D3DBE0)}.copy.done{background:linear-gradient(180deg,#EEF2F4,#D7DEE2);color:#25292D}
+  .sendbtn{background:var(--deco2);color:#fff;border:1px solid #55706B;border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer;font-weight:600;text-decoration:none;display:inline-block}
+  .sendbtn:hover{background:#55706B}
   .pmnote{padding:8px 14px;background:var(--warnbg);color:var(--warn);font-size:12px;border-top:1px dashed var(--line)}
   .foot{font-size:12px;color:var(--mut);margin-top:20px;text-align:center;line-height:1.7}
   /* ---- 統一導覽列 ---- */
@@ -65,9 +65,9 @@
   .brand{text-decoration:none;color:#fff;flex-shrink:0}
   .brand h1{margin:0;font-size:20px;font-weight:700;letter-spacing:.3px;white-space:nowrap}
   .toolnav{display:flex;gap:8px;flex-wrap:wrap;flex:1;margin-left:4px}
-  .toolbtn{text-decoration:none;color:#fff;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.35);padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;white-space:nowrap;transition:background .15s}
-  .toolbtn:hover{background:rgba(255,255,255,.24)}
-  .toolbtn.active{background:#fff;color:#0d6e6e;border-color:#fff;box-shadow:0 1px 8px rgba(0,0,0,.2);cursor:default}
+  .toolbtn{text-decoration:none;color:rgba(255,255,255,.90);background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.26);padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;white-space:nowrap;transition:background .15s,color .15s}
+  .toolbtn:hover{background:rgba(255,255,255,.20);color:#fff}
+  .toolbtn.active{background:#FFFFFF;color:#1D2328;border:1px solid #FFFFFF;box-shadow:0 2px 10px rgba(0,0,0,.28);cursor:default;font-weight:700}
   .subtitle{max-width:1200px;margin:10px auto 0;font-size:13px;opacity:.92;color:#fff}
   [data-en]{display:none}
   body.en [data-zh]{display:none} body.en [data-en]{display:revert}
@@ -78,9 +78,9 @@
   <div class="hbar">
     <a class="brand" href="index.html"><h1><span data-zh>SR 檢索工具組</span><span data-en>SR Search Toolkit</span></h1></a>
     <nav class="toolnav">
-      <a class="toolbtn active" href="proximity-builder.html" aria-current="page"><span data-zh>鄰近字組合器</span><span data-en>Proximity Builder</span></a>
       <a class="toolbtn" href="pico-builder.html"><span data-zh>PICO 檢索策略產生器</span><span data-en>PICO Strategy Builder</span></a>
       <a class="toolbtn" href="syntax-converter.html"><span data-zh>資料庫檢索語法轉換器</span><span data-en>Search Syntax Converter</span></a>
+      <a class="toolbtn active" href="proximity-builder.html" aria-current="page"><span data-zh>鄰近字組合器</span><span data-en>Proximity Builder</span></a>
     </nav>
     <button class="navlink" id="langBtn" onclick="toggleLang()">English</button>
   </div>
@@ -122,8 +122,8 @@
       <textarea id="before" spellcheck="false" placeholder="GDM&#10;gestational diabetes mellitus&#10;gestational diabetes&#10;gestational DM&#10;diabetes in pregnancy&#10;pregnancy-induced diabetes&#10;pregnancy associated diabetes&#10;diabetes mellitus gravidarum"></textarea>
       <div style="display:flex;flex-direction:column;gap:8px">
         <button class="gobtn" onclick="autoSplit()"><span data-zh>自動分堆 →</span><span data-en>Auto-split →</span></button>
-        <button class="gobtn" style="background:#0d6e6e" onclick="loadExample()"><span data-zh>載入範例</span><span data-en>Load example</span></button>
-        <button class="gobtn" style="background:#64748b" onclick="clearProx()"><span data-zh>清空</span><span data-en>Clear</span></button>
+        <button class="gobtn" style="background:linear-gradient(180deg,#FBFCFC,#E8EDF0);color:#25292D;border:1px solid #CCD4DA;font-weight:600" onclick="loadExample()"><span data-zh>載入範例</span><span data-en>Load example</span></button>
+        <button class="gobtn" style="background:linear-gradient(180deg,#FBFCFC,#E8EDF0);color:#25292D;border:1px solid #CCD4DA;font-weight:600" onclick="clearProx()"><span data-zh>清空</span><span data-en>Clear</span></button>
       </div>
     </div>
     <div id="splitHint"></div>
@@ -149,7 +149,7 @@
     <span data-en>Runs locally; nothing is uploaded. Auto-split is only a suggestion — always verify truncation points and grouping.</span><br>
     <span data-zh>引用建議: 方靜如（2026）。SR 檢索工具組: 鄰近字組合器、PICO 檢索策略產生器、資料庫檢索語法轉換器。Zenodo. <a href="https://doi.org/10.5281/zenodo.21960702" target="_blank" rel="noopener">https://doi.org/10.5281/zenodo.21960702</a><br></span>
     <span>Cite as: Fang CJ (2026). <i>SR Search Toolkit: Proximity Builder, PICO Strategy Builder, and Search Syntax Converter</i>. Zenodo. <a href="https://doi.org/10.5281/zenodo.21960702" target="_blank" rel="noopener">https://doi.org/10.5281/zenodo.21960702</a></span><br>
-    © 2026 Ching-Ju Fang · All rights reserved · v2.0.4
+    © 2026 Ching-Ju Fang · All rights reserved · v2.2.0
   </div>
 </main>
 
