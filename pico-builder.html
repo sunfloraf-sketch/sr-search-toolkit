@@ -25,8 +25,7 @@
   label.fld{display:block;font-weight:600;font-size:13px;margin-bottom:6px;color:var(--mut)}
   .controls{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
   select{font-family:inherit;font-size:14px;border:1px solid var(--line);border-radius:8px;padding:9px 11px;color:var(--ink);background:linear-gradient(180deg,#FFFFFF,#F7F9FA);min-width:210px;cursor:pointer}
-  .dbchecks{display:flex;flex-direction:column;gap:8px;max-width:820px}
-  .dbchecks .dbrow{display:flex;flex-wrap:wrap;gap:7px 22px}
+  .dbchecks{display:grid;grid-template-columns:repeat(4,max-content);gap:8px 26px}
   .dbchecks label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink);cursor:pointer;white-space:nowrap}
   .dbchecks input{width:15px;height:15px;cursor:pointer}
   .dbchecks input,.hlopts input,.cvvallrow input{appearance:none;-webkit-appearance:none;background:#fff;border:1.5px solid #55504B;border-radius:3px;position:relative}
@@ -1285,24 +1284,20 @@ if (typeof module !== "undefined" && module.exports) {
 
   // 輸出資料庫勾選（依家族分列：Embase／MEDLINE／其他／台灣）
   var DB_LAYOUT = [
-    ["embase_com","embase_ovid"],
-    ["medline_ovid","pubmed","medline_ebsco"],
+    ["embase_com","embase_ovid",null,null],
+    ["medline_ovid","pubmed","medline_ebsco",null],
     ["cochrane","cinahl_ebsco","wos","scopus"],
-    ["airiti","ndltd"]
+    ["airiti","ndltd",null,null]
   ];
   var DB_UNCHECKED = { pubmed:1, embase_ovid:1, medline_ebsco:1, airiti:1, ndltd:1 };  // 預設不勾（避免重複搜同一資料庫；中文資料庫預設不勾）
-  DB_LAYOUT.forEach(function(row){
-    var rd=document.createElement("div"); rd.className="dbrow";
-    row.forEach(function(id){
-      if(!id) return;
-      var tg=TARGET_BY_ID[id];
-      var lb=document.createElement("label");
-      var cb=document.createElement("input"); cb.type="checkbox"; cb.value=tg.id; cb.checked=!DB_UNCHECKED[tg.id];
-      var sp=document.createElement("span"); sp.textContent=tg.label;
-      lb.appendChild(cb); lb.appendChild(sp); rd.appendChild(lb);
-    });
-    dbchecks.appendChild(rd);
-  });
+  DB_LAYOUT.forEach(function(row){ row.forEach(function(id){
+    if(!id){ dbchecks.appendChild(document.createElement("span")); return; }
+    var tg=TARGET_BY_ID[id];
+    var lb=document.createElement("label");
+    var cb=document.createElement("input"); cb.type="checkbox"; cb.value=tg.id; cb.checked=!DB_UNCHECKED[tg.id];
+    var sp=document.createElement("span"); sp.textContent=tg.label;
+    lb.appendChild(cb); lb.appendChild(sp); dbchecks.appendChild(lb);
+  }); });
 
   function refreshLvlNote(){ lvlnote.textContent = LVL_NOTE[isEn()?"en":"zh"][levelSel.value]; }
   function setLevelLabels(){ var m=LEVEL_LABELS[isEn()?"en":"zh"]; Array.prototype.forEach.call(levelSel.options, function(o){ o.textContent=m[o.value]||o.value; }); }
