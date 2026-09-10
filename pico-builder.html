@@ -45,6 +45,8 @@
   table.pico td.lab .ccode{text-align:center}
   table.pico textarea{width:100%;min-height:116px;resize:vertical;border:1px solid #E1E6E9;border-radius:6px;padding:6px 7px;font-family:inherit;font-size:12.5px;line-height:1.45;color:var(--ink);background:#FFFFFF;box-shadow:inset 0 1px 2px rgba(20,28,34,.025)}
   table.pico td.free textarea{min-height:116px;font-family:"SF Mono","Cascadia Code",Consolas,monospace;font-size:12px}
+  /* 控制詞彙欄：一詞一行、不自動斷詞（過長改水平捲動，避免單一詞彙被折成兩行看似兩詞） */
+  table.pico td.cv textarea{white-space:pre;overflow-x:auto;overflow-wrap:normal}
   table.pico th:last-child,table.pico td:last-child{border-right:0}
   table.pico tbody tr:last-child td{border-bottom:0}
   table.pico tbody tr:hover td{background-color:rgba(96,113,122,.018)}
@@ -377,7 +379,7 @@ Optic Nerve/dg)</pre>
     <span data-en>A pure web-based tool with no AI — it runs and is cached entirely in your browser and never uploads any of your research data. Please human-check the generated strategy and test it in each database before use.</span><br>
     <span data-zh>引用建議: 方靜如（2026）。SR 檢索工具組: 鄰近字組合器、PICO 檢索策略產生器、資料庫檢索語法轉換器。Zenodo. <a href="https://doi.org/10.5281/zenodo.21960702" target="_blank" rel="noopener">https://doi.org/10.5281/zenodo.21960702</a><br></span>
     <span>Cite as: Fang CJ (2026). <i>SR Search Toolkit: Proximity Builder, PICO Strategy Builder, and Search Syntax Converter</i>. Zenodo. <a href="https://doi.org/10.5281/zenodo.21960702" target="_blank" rel="noopener">https://doi.org/10.5281/zenodo.21960702</a></span><br>
-    © 2026 Ching-Ju Fang · All rights reserved · v2.2.0
+    © 2026 Ching-Ju Fang <a href="https://orcid.org/0000-0002-7892-8840" target="_blank" rel="noopener" title="ORCID iD" style="text-decoration:none;white-space:nowrap;color:inherit" onclick="try{if(window.goatcounter&&window.goatcounter.count)window.goatcounter.count({path:'author-orcid',title:'作者-ORCID',event:true})}catch(e){}"><svg width="13" height="13" viewBox="0 0 256 256" style="vertical-align:-2px;margin-right:3px" aria-hidden="true"><circle cx="128" cy="128" r="128" fill="#A6CE39"/><g fill="#fff"><path d="M86.3 186.2H70.9V79.1h15.4v107.1z"/><path d="M108.9 79.1h41.6c39.6 0 57 28.3 57 53.6 0 27.5-21.5 53.6-56.8 53.6h-41.8V79.1zm15.4 93.3h24.5c34.9 0 42.9-26.5 42.9-39.7 0-21.5-13.7-39.7-43.7-39.7h-23.7v79.4z"/><circle cx="78.6" cy="56.8" r="10.1"/></g></svg>https://orcid.org/0000-0002-7892-8840</a> · All rights reserved · v2.2.0
   </div>
 </main>
 
@@ -1344,7 +1346,7 @@ if (typeof module !== "undefined" && module.exports) {
     P:{ zh:"((妊娠\n孕期\n懷孕)\nAND\n糖尿病)", ft:"GDM\n((gestation*\npregnan*\ngravid*)\nNEAR/4\n(diabet*\nT2DM\nNIDDM))", mesh:"Diabetes, Gestational\nPregnancy in Diabetics", emtree:"maternal diabetes", cinahl:"Pregnancy in Diabetes" },
     I:{ zh:"身體活動\n體能活動\n運動\n訓練\n走路", ft:"physical activit*\nexercise*\nkinesio*\nsport*\ntraining\nfitness\nwalk*", mesh:"Exercise\nExercise Therapy", emtree:"exercise\nkinesiotherapy\nphysical activity", cinahl:"Exercise\nTherapeutic Exercise" }
   };
-  function mkCell(cls, ph){ var td=document.createElement("td"); if(cls)td.className=cls; var ta=document.createElement("textarea"); ta.spellcheck=false; if(ph)ta.placeholder=ph; td.appendChild(ta); return {td:td, ta:ta}; }
+  function mkCell(cls, ph){ var td=document.createElement("td"); if(cls)td.className=cls; var ta=document.createElement("textarea"); ta.spellcheck=false; if(cls&&/\bcv\b/.test(cls)) ta.wrap="off"; if(ph)ta.placeholder=ph; td.appendChild(ta); return {td:td, ta:ta}; }
   // 可重複使用的 ⓘ 浮動說明（滑過浮出；點擊固定顯示，再點別處收起）。未來其他區塊的詳細說明比照此法。
   function makeInfoTip(html){
     var s=document.createElement("span"); s.className="infotip"; s.textContent="ⓘ";
@@ -1500,29 +1502,42 @@ if (typeof module !== "undefined" && module.exports) {
   }
   function mapCols(hdr){
     var idx={label:-1,zh:-1,ft:-1,mesh:-1,emtree:-1,cinahl:-1};
-    hdr.forEach(function(h,i){
-      var s=String(h).toLowerCase().replace(/[\s（）()【】]/g,"");
-      if(idx.mesh<0 && /mesh/.test(s)){idx.mesh=i;return;}
-      if(idx.emtree<0 && /emtree/.test(s)){idx.emtree=i;return;}
-      if(idx.cinahl<0 && /cinahl/.test(s)){idx.cinahl=i;return;}
-      if(idx.zh<0 && /(中文|chinese|中譯)/.test(s)){idx.zh=i;return;}
-      if(idx.ft<0 && /(english|英文|自由詞|同義詞|synonym|free-?text|keyword|term)/.test(s)){idx.ft=i;return;}
-      if(idx.label<0 && /(pico|概念|類別|category|element|欄位)/.test(s)){idx.label=i;return;}
-    });
+    var find=function(re,exclude){ for(var i=0;i<hdr.length;i++){ var s=String(hdr[i]||""); if(!s)continue; if(exclude&&exclude.test(s))continue; if(re.test(s)) return i; } return -1; };
+    idx.mesh=find(/mesh/i);
+    idx.emtree=find(/emtree/i);
+    idx.cinahl=find(/cinahl/i);
+    idx.zh=find(/中文|chinese|中譯/i);
+    // 自由詞（英文同義詞）：優先「After／處理後」欄；否則英文同義詞欄（排除 Before/處理前、中文欄）；再否則取 Before 欄的右一欄
+    idx.ft=find(/after|處理後|處理過/i);
+    if(idx.ft<0) idx.ft=find(/english|英文|自由詞|同義詞|synonym|free-?text|keyword|term/i, /before|處理前|中文|chinese/i);
+    if(idx.ft<0){ var b=find(/before|處理前/i); if(b>=0 && b+1<hdr.length) idx.ft=b+1; }
+    idx.label=find(/pico|主題概念|概念|切出|類別|category|element|欄位/i);
+    if(idx.label<0 && idx.zh>0) idx.label=0;   // 概念欄常因表頭垂直合併在此列留空 → 取最左欄
     return idx;
   }
   function doPasteFill(html,text){
     var en=isEn(), rows=parsePaste(html,text);
     function warn(m){ pasteMsg.style.color="#b45309"; pasteMsg.textContent=m; }
     if(rows.length<1){ warn(en?"No table detected. Copy the table cells (not a screenshot) and try again.":"沒有偵測到表格。請複製表格內容（不是截圖）再貼一次。"); return; }
-    var hdr=mapCols(rows[0]);
-    var hasHeader=(hdr.mesh>=0||hdr.emtree>=0||hdr.cinahl>=0||hdr.ft>=0||hdr.zh>=0||hdr.label>=0);
-    var data, col;
-    if(hasHeader){ data=rows.slice(1); col=hdr; }
-    else { data=rows; col={label:0,zh:1,ft:2,emtree:3,mesh:4,cinahl:5}; }
+    // 找真正的表頭列：含 mesh 與 cinahl 的那一列（你的教學表頭為「群組列＋子列」兩層，表頭不一定在第一列）
+    var hrow=-1;
+    for(var hr=0; hr<Math.min(rows.length,5); hr++){
+      var rl=rows[hr];
+      if(rl.some(function(c){return /mesh/i.test(String(c||""));}) && rl.some(function(c){return /cinahl/i.test(String(c||""));})){ hrow=hr; break; }
+    }
+    var hdr, hasHeader, data, col;
+    if(hrow>=0){ hdr=mapCols(rows[hrow]); col=hdr; data=rows.slice(hrow+1); hasHeader=true; }
+    else {
+      hdr=mapCols(rows[0]);
+      hasHeader=(hdr.mesh>=0||hdr.emtree>=0||hdr.cinahl>=0||hdr.ft>=0||hdr.zh>=0||hdr.label>=0);
+      if(hasHeader){ data=rows.slice(1); col=hdr; }
+      else { data=rows; col={label:0,zh:1,ft:2,emtree:3,mesh:4,cinahl:5}; }
+    }
     var g=function(c,i){ return (i>=0&&i<c.length)?c[i]:""; };
+    var _isHdrLike=/^(概念|主題概念|主題|concept|中文同義|chinese|english|自由詞|控制詞|before|after|emtree|mesh|cinahl|範例|example)/i;
     var filled=[];
-    data.forEach(function(c){ if(!c.length||c.every(function(x){return !x;}))return; filled.push({label:labClean(g(c,col.label)),zh:toLines(g(c,col.zh),false),ft:toLines(g(c,col.ft),false),mesh:toLines(g(c,col.mesh),true),emtree:toLines(g(c,col.emtree),true),cinahl:toLines(g(c,col.cinahl),true)}); });
+    data.forEach(function(c){ if(!c.length||c.every(function(x){return !x;}))return; var _lab=String(g(c,col.label)||"").trim(); if(_isHdrLike.test(_lab)) return;  // 略過殘留的表頭／群組列
+      filled.push({label:labClean(g(c,col.label)),zh:toLines(g(c,col.zh),false),ft:toLines(g(c,col.ft),false),mesh:toLines(g(c,col.mesh),true),emtree:toLines(g(c,col.emtree),true),cinahl:toLines(g(c,col.cinahl),true)}); });
     if(!filled.length){ warn(en?"Table has no data rows.":"表格沒有資料列。"); return; }
     var pre=serializeState(); if(stateNonEmpty(pre)){ try{ localStorage.setItem(SNAP_KEY, JSON.stringify(pre)); }catch(e){} }  // 貼上前內容 → 供「還原上次」救回
     picoBody.innerHTML="";
