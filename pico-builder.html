@@ -1486,7 +1486,7 @@ if (typeof module !== "undefined" && module.exports) {
   function cellClean(s){ return String(s||"").replace(/ /g," ").replace(/[\u2028\u2029\u0085\u000B\u000C]/g,"\n").replace(/<br\s*\/?>/gi,"\n").replace(/<\/?(p|div|li|tr|ul|ol|h[1-6]|blockquote)\b[^>]*>/gi,"\n").replace(/<\/?[a-z][^>]*>/gi,"").replace(/[↗↪⧉➚🔗⇱]/g,"").split(/\r?\n/).map(function(x){return x.replace(/[ \t]+/g," ").trim();}).filter(function(x){return x!=="";}).join("\n").trim(); }
   function labClean(s){ var f=String(s||"").split("\n")[0].trim(); var m=f.match(/^[PICOSET]\b/i); if(m) return m[0].toUpperCase(); return f.split(/[\s(（:：]/)[0].slice(0,4); }
   // 同義詞／控制詞彙一格多個 → 拆成「一行一個」。keepComma=true 時保留詞內半形逗號（如 Diabetes, Gestational），只以 、；;／換行 斷行；同義詞欄則連半形逗號也斷。
-  function toLines(s, keepComma){ var re = keepComma ? /[、；;\n]+/ : /[、，,；;\n]+/; return cellClean(s).split(re).map(function(x){return x.trim();}).filter(Boolean).join("\n"); }
+  function toLines(s, keepComma){ var t=cellClean(s); if(keepComma) t=t.replace(/,[ \t]*\n[ \t]*/g, ", "); var re = keepComma ? /[、；;\n]+/ : /[、，,；;\n]+/; return t.split(re).map(function(x){return x.trim();}).filter(Boolean).join("\n"); }
   function _tdText(td){
     var h=td.innerHTML.replace(/<br\s*\/?>/gi,"\n").replace(/<\/?(p|div|li|tr|ul|ol|h[1-6]|blockquote)\b[^>]*>/gi,"\n");
     var tmp=document.createElement("div"); tmp.innerHTML=h; return cellClean(tmp.textContent);
