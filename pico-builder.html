@@ -1338,7 +1338,9 @@ if (typeof module !== "undefined" && module.exports) {
 
   function refreshLvlNote(){ lvlnote.textContent = LVL_NOTE[isEn()?"en":"zh"][levelSel.value]; }
   function setLevelLabels(){ var m=LEVEL_LABELS[isEn()?"en":"zh"]; Array.prototype.forEach.call(levelSel.options, function(o){ o.textContent=m[o.value]||o.value; }); }
-  levelSel.onchange = refreshLvlNote;
+  function autoRegen(){ if(outs && outs.children.length) $("#genBtn").click(); }   // 已生成策略時，異動即自動更新
+  var _arT; function autoRegenDebounced(){ clearTimeout(_arT); _arT=setTimeout(autoRegen, 500); }
+  levelSel.onchange = function(){ refreshLvlNote(); autoRegen(); };
 
   // ---- PICO 列 ----
   // GDM 範例資料（供「載入 GDM 範例」與空白表格的灰字預覽共用）
@@ -1436,7 +1438,7 @@ if (typeof module !== "undefined" && module.exports) {
     rm.onclick=function(){ tr.remove(); }; rmTd.appendChild(rm);
     tr.appendChild(labTd); tr.appendChild(c0.td); tr.appendChild(c1.td); tr.appendChild(c3.td); tr.appendChild(c2.td); tr.appendChild(c4.td); tr.appendChild(rmTd);
     tr._get=function(){ return { label:labIn.value.trim()||"?", zh:c0.ta.value.trim(), ft:c1.ta.value.trim(), mesh:c2.ta.value.trim(), emtree:c3.ta.value.trim(), cinahl:c4.ta.value.trim() }; };
-    rm.onclick=function(){ tr.remove(); updateCodes(); if(typeof saveDraftDebounced==="function") saveDraftDebounced(); };
+    rm.onclick=function(){ tr.remove(); updateCodes(); if(typeof saveDraftDebounced==="function") saveDraftDebounced(); autoRegen(); };
     picoBody.appendChild(tr);
     updateCodes();
     return tr;
@@ -1768,7 +1770,7 @@ if (typeof module !== "undefined" && module.exports) {
     RENDER_OPTS.variants = (db==="pubmed" ? (PM_VARIANTS||null) : null);
     RENDER_OPTS.fieldExpand=false;   // strippedRoots 由 buildForTarget 於整份策略開始時重置、跨概念行累積
     // 中文鄰近字：「鄰(近)N個(單)字」→ NEAR/(N + 該庫offset)，再交給引擎依各庫轉換
-    freetext = String(freetext||"").replace(/鄰\s*近?\s*(\d+)(?:\s*個)?(?:\s*單)?(?:\s*字)?/g, function(m,n){ return " NEAR/"+(parseInt(n,10)+(SYNTAX_MAP.proximityOffset[startDB]||0))+" "; });
+    freetext = String(freetext||"").replace(/鄰\s*近?\s*(\d+)(?:\s*個)?(?:\s*單)?(?:\s*字)?(?:\s*(?:以|之)?內)?/g, function(m,n){ return " NEAR/"+(parseInt(n,10)+(SYNTAX_MAP.proximityOffset[startDB]||0))+" "; });
     // 英文同義詞：Enter 換行 → 相鄰「詞」之間插 OR；若前一行結尾為「(」或運算子、或下一行開頭為「)」或運算子，則只接空白(保留使用者的括號/鄰近字結構)
     var _lns = freetext.split(/\r?\n/).map(function(l){return l.trim();}).filter(Boolean);
     var _OP = "(?:OR|AND|NOT|ADJ\\d*|NEAR(?:\\/\\d+)?|NEXT(?:\\/\\d+)?|PRE\\/\\d+|W\\/?\\d+|N\\/?\\d+)";
@@ -2128,6 +2130,9 @@ if (typeof module !== "undefined" && module.exports) {
     setLangPlaceholders();
   };
 
+  // 已生成策略時：切換輸出資料庫、增刪／編輯檢索詞 → 自動更新
+  if(dbchecks) dbchecks.addEventListener("change", autoRegen);
+  if(picoBody) picoBody.addEventListener("input", autoRegenDebounced);
   if(cbColor) cbColor.addEventListener("change", function(){ if(outs.children.length) $("#genBtn").click(); });
   if(cbBracket) cbBracket.addEventListener("change", function(){ if(outs.children.length) $("#genBtn").click(); });
   if(cbFlat) cbFlat.addEventListener("change", function(){ if(outs.children.length) $("#genBtn").click(); });
