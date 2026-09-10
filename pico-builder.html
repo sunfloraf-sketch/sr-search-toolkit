@@ -377,8 +377,8 @@ Optic Nerve/dg)</pre>
   <div class="foot">
     <span data-zh>此工具為純網頁程式，未使用到AI運作，僅在您的瀏覽器本機執行與暫存，不會上傳任何研究資料到網路。產出的檢索策略請人工覆核並於資料庫實測後再使用。</span>
     <span data-en>A pure web-based tool with no AI — it runs and is cached entirely in your browser and never uploads any of your research data. Please human-check the generated strategy and test it in each database before use.</span><br>
-    <span data-zh>引用建議: 方靜如（2026）。SR 檢索工具組: 鄰近字組合器、PICO 檢索策略產生器、資料庫檢索語法轉換器。Zenodo. <a href="https://doi.org/10.5281/zenodo.21960702" target="_blank" rel="noopener">https://doi.org/10.5281/zenodo.21960702</a><br></span>
-    <span>Cite as: Fang CJ (2026). <i>SR Search Toolkit: Proximity Builder, PICO Strategy Builder, and Search Syntax Converter</i>. Zenodo. <a href="https://doi.org/10.5281/zenodo.21960702" target="_blank" rel="noopener">https://doi.org/10.5281/zenodo.21960702</a></span><br>
+    <span data-zh>引用建議: 方靜如（2026）。SR 檢索工具組: PICO 檢索策略產生器、資料庫檢索語法轉換器、鄰近字組合器。Zenodo. <a href="https://doi.org/10.5281/zenodo.21960702" target="_blank" rel="noopener">https://doi.org/10.5281/zenodo.21960702</a><br></span>
+    <span>Cite as: Fang CJ (2026). <i>SR Search Toolkit: PICO Strategy Builder, Search Syntax Converter, and Proximity Builder</i>. Zenodo. <a href="https://doi.org/10.5281/zenodo.21960702" target="_blank" rel="noopener">https://doi.org/10.5281/zenodo.21960702</a></span><br>
     © 2026 Ching-Ju Fang <a href="https://orcid.org/0000-0002-7892-8840" target="_blank" rel="noopener" title="ORCID iD" style="text-decoration:none;white-space:nowrap;color:inherit" onclick="try{if(window.goatcounter&&window.goatcounter.count)window.goatcounter.count({path:'author-orcid',title:'作者-ORCID',event:true})}catch(e){}"><svg width="13" height="13" viewBox="0 0 256 256" style="vertical-align:-2px;margin-right:3px" aria-hidden="true"><circle cx="128" cy="128" r="128" fill="#A6CE39"/><g fill="#fff"><path d="M86.3 186.2H70.9V79.1h15.4v107.1z"/><path d="M108.9 79.1h41.6c39.6 0 57 28.3 57 53.6 0 27.5-21.5 53.6-56.8 53.6h-41.8V79.1zm15.4 93.3h24.5c34.9 0 42.9-26.5 42.9-39.7 0-21.5-13.7-39.7-43.7-39.7h-23.7v79.4z"/><circle cx="78.6" cy="56.8" r="10.1"/></g></svg>https://orcid.org/0000-0002-7892-8840</a> · All rights reserved · v2.3.0
   </div>
 </main>
@@ -1485,16 +1485,36 @@ if (typeof module !== "undefined" && module.exports) {
   function labClean(s){ var f=String(s||"").split("\n")[0].trim(); var m=f.match(/^[PICOSET]\b/i); if(m) return m[0].toUpperCase(); return f.split(/[\s(（:：]/)[0].slice(0,4); }
   // 同義詞／控制詞彙一格多個 → 拆成「一行一個」。keepComma=true 時保留詞內半形逗號（如 Diabetes, Gestational），只以 、；;／換行 斷行；同義詞欄則連半形逗號也斷。
   function toLines(s, keepComma){ var re = keepComma ? /[、；;\n]+/ : /[、，,；;\n]+/; return cellClean(s).split(re).map(function(x){return x.trim();}).filter(Boolean).join("\n"); }
+  function _tdText(td){
+    var h=td.innerHTML.replace(/<br\s*\/?>/gi,"\n").replace(/<\/?(p|div|li|tr|ul|ol|h[1-6]|blockquote)\b[^>]*>/gi,"\n");
+    var tmp=document.createElement("div"); tmp.innerHTML=h; return cellClean(tmp.textContent);
+  }
   function parsePaste(html, text){
     var rows=[];
     if(html && /<t(able|r)\b/i.test(html)){
       var doc=new DOMParser().parseFromString(html,"text/html");
+      // 依 colspan／rowspan 展開為對齊的網格（Word 表頭常把「主題概念」設 rowspan、群組標題設 colspan，
+      // 不展開會導致表頭列比資料列少一欄、整列右移錯位）
+      var pending={};   // key=起始欄 → {text, colspan, rowsLeft}
       Array.prototype.forEach.call(doc.querySelectorAll("tr"), function(tr){
-        var cells=[]; Array.prototype.forEach.call(tr.querySelectorAll("th,td"), function(td){
-          var h=td.innerHTML.replace(/<br\s*\/?>/gi,"\n").replace(/<\/?(p|div|li|tr|ul|ol|h[1-6]|blockquote)\b[^>]*>/gi,"\n");
-          var tmp=document.createElement("div"); tmp.innerHTML=h; cells.push(cellClean(tmp.textContent));
-        });
-        if(cells.length) rows.push(cells);
+        var cells=tr.querySelectorAll("th,td"); if(!cells.length) return;
+        var row=[], col=0, ci=0;
+        while(true){
+          if(pending[col] && pending[col].rowsLeft>0){                 // 上一列 rowspan 佔用此欄
+            var pc=pending[col], start=col;
+            for(var j=0;j<pc.colspan;j++){ row[col]=(j===0?pc.text:""); col++; }
+            pc.rowsLeft--; if(pc.rowsLeft<=0) delete pending[start];
+            continue;
+          }
+          if(ci>=cells.length) break;
+          var td=cells[ci++], t=_tdText(td);
+          var cs=parseInt(td.getAttribute("colspan"),10); if(!(cs>0))cs=1;
+          var rs=parseInt(td.getAttribute("rowspan"),10); if(!(rs>0))rs=1;
+          var startCol=col;
+          for(var j2=0;j2<cs;j2++){ row[col]=(j2===0?t:""); col++; }
+          if(rs>1) pending[startCol]={text:t, colspan:cs, rowsLeft:rs-1};
+        }
+        if(row.length) rows.push(row);
       });
     }
     if(!rows.length && text){ text.split(/\r?\n/).forEach(function(l){ if(l.trim()==="")return; rows.push(l.split("\t").map(cellClean)); }); }
@@ -1601,15 +1621,66 @@ if (typeof module !== "undefined" && module.exports) {
       }
       return out.replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'").replace(/[ \t]+\n/g,"\n").replace(/\n{2,}/g,"\n").replace(/\n+$/,"").replace(/^\n+/,"").trim();
     };
-    var _parseTable=function(xml,keepGray){
-      var t=xml.match(/<w:tbl[\s>][\s\S]*?<\/w:tbl>/); if(!t) return [];
-      var rows=[], trRe=/<w:tr[\s>][\s\S]*?<\/w:tr>/g, tr;
-      while((tr=trRe.exec(t[0]))){
-        var cells=[], tcRe=/<w:tc[\s>][\s\S]*?<\/w:tc>/g, tc;
-        while((tc=tcRe.exec(tr[0]))) cells.push(_cellText(tc[0],keepGray));
-        rows.push(cells);
+    // 解析文件中「所有」表格（前後可含其他表格／段落）；回傳表格陣列，每個表格為列陣列
+    var _allTables=function(xml,keepGray){
+      var tables=[], tblRe=/<w:tbl[\s>][\s\S]*?<\/w:tbl>/g, tm;
+      while((tm=tblRe.exec(xml))){
+        var rows=[], trRe=/<w:tr[\s>][\s\S]*?<\/w:tr>/g, tr;
+        while((tr=trRe.exec(tm[0]))){
+          var cells=[], tcRe=/<w:tc[\s>][\s\S]*?<\/w:tc>/g, tc;
+          while((tc=tcRe.exec(tr[0]))) cells.push(_cellText(tc[0],keepGray));
+          rows.push(cells);
+        }
+        tables.push(rows);
       }
-      return rows;
+      return tables;
+    };
+    // 從多個表格中挑出「檢索詞表」：優先含 MeSH＋CINAHL 的表頭列；其次含中文＋英文/After 欄；再不行取欄數最多者
+    var _pickSearchTable=function(tables){
+      for(var i=0;i<tables.length;i++){ if(tables[i].some(function(r){ return r.some(function(c){return /mesh/i.test(c);}) && r.some(function(c){return /cinahl/i.test(c);}); })) return i; }
+      for(var j=0;j<tables.length;j++){ if(tables[j].some(function(r){return r.some(function(c){return /中文|chinese/i.test(c);});}) && tables[j].some(function(r){return r.some(function(c){return /english|英文|after|處理後|synonym|自由詞/i.test(c);});})) return j; }
+      var best=-1,bw=-1; tables.forEach(function(rr,idx){ var w=0; rr.forEach(function(r){ if(r.length>w)w=r.length; }); if(rr.length>1 && w>bw){bw=w;best=idx;} });
+      return best;
+    };
+    // 顏色分類（僅 Word 上傳）：橘=Emtree、紅=MeSH、綠=CINAHL；灰/黑/其他=略過（純筆記）
+    var _colorClass=function(hex){
+      if(!hex) return "";
+      var R=parseInt(hex.substr(0,2),16),G=parseInt(hex.substr(2,2),16),B=parseInt(hex.substr(4,2),16);
+      var mx=Math.max(R,G,B),mn=Math.min(R,G,B),d=mx-mn;
+      if(d<30) return "";                          // 灰/黑/白：非目標色 → 略過
+      var h; if(mx===R)h=((G-B)/d)%6; else if(mx===G)h=(B-R)/d+2; else h=(R-G)/d+4; h*=60; if(h<0)h+=360;
+      if(h>=75&&h<=180) return "cinahl";           // 綠 #00B050
+      if(h>=15&&h<45)   return "emtree";           // 橘 #E36C0A／#FF6600
+      if(h<15||h>=330)  return "mesh";             // 紅 #C0504D
+      return "";
+    };
+    // 讀取 tc 內每段落（<w:p>＝一行）的文字與顏色分類
+    var _cellColorLines=function(tc){
+      var lines=[], pRe=/<w:p\b[\s\S]*?<\/w:p>/g, pm;
+      while((pm=pRe.exec(tc))){
+        var seg=pm[0], txt="", tre=/<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>/g, mm;
+        while((mm=tre.exec(seg))) txt+=mm[1];
+        txt=txt.replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'").replace(/\s+/g," ").trim();
+        if(!txt) continue;
+        var cm=seg.match(/<w:color[^>]*w:val="([0-9A-Fa-f]{6})"/);
+        lines.push({text:txt, cls: cm?_colorClass(cm[1]):""});
+      }
+      return lines;
+    };
+    // 取第 ti 個表格的原始 tc 網格（與 _allTables 的列／欄索引一致，供顏色判讀）
+    var _nthTableTc=function(xml, ti){
+      var tblRe=/<w:tbl[\s>][\s\S]*?<\/w:tbl>/g, tm, n=0;
+      while((tm=tblRe.exec(xml))){
+        if(n++!==ti) continue;
+        var rows=[], trRe=/<w:tr[\s>][\s\S]*?<\/w:tr>/g, tr;
+        while((tr=trRe.exec(tm[0]))){
+          var cells=[], tcRe=/<w:tc[\s>][\s\S]*?<\/w:tc>/g, tc;
+          while((tc=tcRe.exec(tr[0]))) cells.push(tc[0]);
+          rows.push(cells);
+        }
+        return rows;
+      }
+      return [];
     };
     var _SKIP=/^(概念|主題概念|concept|中文同義|chinese|english|before|after|emtree|mesh|cinahl|範例|example)/i;
     uploadBtn.onclick=function(){ wordFile.click(); };
@@ -1619,8 +1690,12 @@ if (typeof module !== "undefined" && module.exports) {
       try{
         var buf=new Uint8Array(await f.arrayBuffer());
         var xml=await _extractXml(buf);
-        var rowsRaw=_parseTable(xml,true);    // 表頭偵測用：保留灰字，避免表頭被誤刪
-        var rows=_parseTable(xml,false);      // 資料匯入用：灰字（提示/備註）略過
+        // 檔案前後可含其他表格／項目：解析所有表格，挑出檢索詞表（同一索引用於 raw 與 clean）
+        var tablesRaw=_allTables(xml,true), tablesClean=_allTables(xml,false);
+        if(!tablesRaw.length){ alert(isEn()?"No table found in the file.":"檔案中找不到表格。"); ev.target.value=""; return; }
+        var _ti=_pickSearchTable(tablesRaw); if(_ti<0) _ti=0;
+        var rowsRaw=tablesRaw[_ti];           // 表頭偵測用：保留灰字，避免表頭被誤刪
+        var rows=tablesClean[_ti]||rowsRaw;   // 資料匯入用：灰字（提示/備註）略過
         // 依表頭自動對應欄位（支援 6 欄樣板與你原本含 Before/After 的樣板）
         var maxCols=0; rowsRaw.forEach(function(r){ if(r.length>maxCols)maxCols=r.length; });
         var hi=-1, hdr=null;
@@ -1643,10 +1718,30 @@ if (typeof module !== "undefined" && module.exports) {
                           : { concept:0, zh:1, ft:2, emtree:3, mesh:4, cinahl:5 };
         }
         var data=[];
-        for(var k2=(hi>=0?hi+1:0); k2<rows.length; k2++){ var r=rows[k2], lab=(r[ci.concept]||"").replace(/\s+/g," ").trim(); if(!lab || _SKIP.test(lab)) continue; data.push(r); }
+        for(var k2=(hi>=0?hi+1:0); k2<rows.length; k2++){ var r=rows[k2], lab=(r[ci.concept]||"").replace(/\s+/g," ").trim(); if(!lab || _SKIP.test(lab)) continue; data.push(k2); }
         if(!data.length){ alert(isEn()?"No term rows found — please check the file uses the term template.":"找不到可匯入的檢索詞列 —— 請確認檔案為檢索詞樣板格式。"); ev.target.value=""; return; }
+        // 判斷控制詞彙是「顏色分類單欄（舊版）」還是「分列三欄」：三欄→依欄位；單欄且有目標色→依顏色分流
+        var tcRows=_nthTableTc(xml, _ti);
+        var cvIdx=[ci.emtree,ci.mesh,ci.cinahl].filter(function(x){return x>=0;});
+        var cvStart=cvIdx.length?Math.min.apply(null,cvIdx):(ci.ft>=0?ci.ft+1:(ci.zh>=0?ci.zh+1:2));
+        var colUsed={}, seen={};
+        data.forEach(function(k2){
+          cvIdx.forEach(function(x){ if(((rows[k2]||[])[x]||"").trim()) colUsed[x]=1; });
+          var tcr=tcRows[k2]||[]; for(var i=cvStart;i<tcr.length;i++){ _cellColorLines(tcr[i]).forEach(function(ln){ if(ln.cls) seen[ln.cls]=1; }); }
+        });
+        var colorStyle = (Object.keys(colUsed).length<=1) && (Object.keys(seen).length>=1);
+        function _colorSplit(k2){
+          var buckets={emtree:[],mesh:[],cinahl:[]}, tcr=tcRows[k2]||[];
+          for(var i=cvStart;i<tcr.length;i++){ _cellColorLines(tcr[i]).forEach(function(ln){ if(buckets[ln.cls]) buckets[ln.cls].push(ln.text); }); }
+          return { emtree:buckets.emtree.join("\n"), mesh:buckets.mesh.join("\n"), cinahl:buckets.cinahl.join("\n") };
+        }
         picoBody.innerHTML="";
-        data.forEach(function(r){ var g=function(i){ return (i>=0 && r[i]!=null)?r[i]:""; }; addRow(g(ci.concept).replace(/\s+/g," ").trim(), g(ci.zh), g(ci.ft), g(ci.mesh), g(ci.emtree), g(ci.cinahl)); });
+        data.forEach(function(k2){
+          var r=rows[k2], g=function(i){ return (i>=0 && r[i]!=null)?r[i]:""; };
+          var em=g(ci.emtree), me=g(ci.mesh), cn=g(ci.cinahl);
+          if(colorStyle){ var cs=_colorSplit(k2); em=cs.emtree; me=cs.mesh; cn=cs.cinahl; }
+          addRow(g(ci.concept).replace(/\s+/g," ").trim(), g(ci.zh), g(ci.ft), me, em, cn);
+        });
         if(picoWarn) picoWarn.style.display="none";
       }catch(e){ alert((isEn()?"Read failed: ":"讀取失敗：")+e.message); }
       ev.target.value="";
@@ -2017,7 +2112,7 @@ if (typeof module !== "undefined" && module.exports) {
     });
     var title=en?"PICO Search Strategy":"PICO 檢索策略";
     var subline=(en?"Field level: ":"欄位完整度：")+wesc(lastGen.level);
-    var cite=(en?"Cite this tool: ":"工具引用：")+"Fang CJ (2026). SR Search Toolkit: Proximity Builder, PICO Strategy Builder, and Search Syntax Converter. Zenodo. https://doi.org/10.5281/zenodo.21960702";
+    var cite=(en?"Cite this tool: ":"工具引用：")+"Fang CJ (2026). SR Search Toolkit: PICO Strategy Builder, Search Syntax Converter, and Proximity Builder. Zenodo. https://doi.org/10.5281/zenodo.21960702";
     var html="<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body style=\""+msoF+"\"><h2>"+fspan(title)+"</h2><p>"+fspan(subline)+"</p><table border='1' cellspacing='0' style='border-collapse:collapse;width:100%;border:1px solid #999;mso-padding-alt:0.1cm 0.2cm 0.1cm 0.2cm'><tr><td style='"+th+"'>"+fspan(en?"Database":"資料庫 Database")+"</td><td style='"+th+";text-align:center'>"+fspan("#")+"</td><td style='"+th+"'>"+fspan(en?"Search syntax":"搜尋語法 Search syntax")+"</td></tr>"+rows+"</table><p style='margin-top:14px;font-size:9pt;color:#555'>"+fspan(wesc(cite))+"</p></body></html>";
     var blob=new Blob(["\ufeff"+html],{type:"application/msword"});
     var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="pico_strategy.doc"; document.body.appendChild(a); a.click(); a.remove();
