@@ -32,13 +32,15 @@
   .dbchecks input:focus,.coloropts input:focus{outline:none;box-shadow:0 0 0 3px rgba(120,115,109,.12)}
   select,textarea{font-family:inherit;font-size:14px;border:1px solid var(--line);border-radius:8px;padding:9px 11px;color:var(--ink);background:linear-gradient(180deg,#FFFFFF,#F7F9FA)}
   select{min-width:230px;cursor:pointer}
-  textarea{width:100%;min-height:96px;resize:vertical;margin-top:4px;line-height:1.55}
+  textarea{width:100%;min-height:130px;resize:vertical;margin-top:4px;line-height:1.55}
   .hint{font-size:12px;color:var(--mut);margin-top:6px}
-  .examples{margin-top:14px}
-  .exhead{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+  .examples{margin-top:8px}
+  .paste-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .exhead{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap}
   .exlabel{font-size:12.5px;color:var(--mut);font-weight:600}
   .exload{background:linear-gradient(180deg,#FBFCFC,#E8EDF0);color:#25292D;border:1px solid #CCD4DA;border-radius:8px;padding:6px 15px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 1px 2px rgba(0,0,0,.06)}
   .exload:hover{background:linear-gradient(180deg,#FFFFFF,#E2E8EC)}
+  .exload:disabled,.exload:disabled:hover{background:linear-gradient(180deg,#F4F6F7,#ECEFF1);color:#AAB2B8;border-color:#DDE3E7;box-shadow:none;cursor:not-allowed;opacity:.7}
   .expreview{background:var(--codebg);border:1px dashed var(--line);border-radius:8px;padding:10px 12px;font-family:"SF Mono","Cascadia Code",Consolas,monospace;font-size:12.5px;color:var(--code);line-height:1.6}
   .exline{display:flex;gap:10px;white-space:pre-wrap;word-break:break-word}
   .exn{color:var(--mut);font-weight:700;flex-shrink:0;min-width:26px}
@@ -79,9 +81,13 @@
   .mwwarn ul{margin:6px 0 0;padding-left:20px}
   .mwwarn li{margin:3px 0}
   .mwwarn code{background:#ffe8cc;padding:1px 5px;border-radius:4px;font-family:"SF Mono",Consolas,monospace;font-size:12px}
-  .toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
-  .wordbtn{background:linear-gradient(180deg,#FBFCFC,#E8EDF0);color:#25292D;border:1px solid #CCD4DA;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 1px 2px rgba(0,0,0,.06)}
-  .wordbtn:hover{background:linear-gradient(180deg,#FFFFFF,#E2E8EC)}
+  .toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;padding-right:21px}
+  /* ---- 下載 Word 深綠描金（與 PICO #wordBtn 一致） ---- */
+  .wordbtn{background:linear-gradient(180deg,#6F8578 0%,#4F6658 45%,#35483C 100%);color:#F5F3EA;border:1px solid #9A8A58;border-radius:9px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.15px;text-shadow:0 1px 1px rgba(0,0,0,.28);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -1px 0 rgba(0,0,0,.18),0 3px 8px rgba(35,49,40,.22);position:relative;overflow:hidden}
+  .wordbtn:hover{background:linear-gradient(180deg,#7B9183 0%,#5B7162 45%,#3E5144 100%);border-color:#B09A55;color:#FFFDF6;box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 -1px 0 rgba(0,0,0,.16),0 5px 12px rgba(35,49,40,.26),0 0 10px rgba(176,154,85,.12);transform:translateY(-1px)}
+  .wordbtn:active{transform:translateY(1px);background:linear-gradient(180deg,#5F7467 0%,#465B4E 50%,#314138 100%);box-shadow:inset 0 2px 5px rgba(0,0,0,.22),0 1px 4px rgba(35,49,40,.16)}
+  .wordbtn::before{content:"";position:absolute;inset:1px;border-radius:8px;background:linear-gradient(115deg,rgba(255,255,255,0) 25%,rgba(255,244,200,.22) 43%,rgba(255,255,255,0) 60%);transform:translateX(-140%);transition:transform .75s ease;pointer-events:none}
+  .wordbtn:hover::before{transform:translateX(140%)}
   /* ---- syntax-color options + input highlight overlay ---- */
   .coloropts{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
   .coloropts label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mut);font-weight:600;cursor:pointer}
@@ -153,13 +159,15 @@
         <label class="fld"><span data-zh>起始資料庫 (你的檢索式是用哪個資料庫寫的？)</span><span data-en>Starting database (which database is your query written for?)</span></label>
         <select id="src"></select>
       </div>
-      <button class="swap" onclick="cycleSrc()" title="切換起始資料庫 / next" style="margin-top:19px">↻ <span data-zh>換起始庫</span><span data-en>next</span></button>
       <div class="dbcheckwrap">
         <label class="fld"><span data-zh>輸出資料庫（勾選要產生的）</span><span data-en>Output databases (tick to generate)</span></label>
         <div class="dbchecks" id="dbchecks"></div>
       </div>
     </div>
-    <label class="fld" style="margin-top:14px"><span data-zh>貼上檢索式 (可多行；用 #1 #2 引用行號)</span><span data-en>Paste your query (multi-line OK; reference lines with #1 #2)</span></label>
+    <div class="paste-head" style="margin-top:14px">
+      <label class="fld" style="margin:0"><span data-zh>貼上檢索式 (可多行；用 #1 #2 引用行號)</span><span data-en>Paste your query (multi-line OK; reference lines with #1 #2)</span></label>
+      <span id="loadSlot"></span>
+    </div>
     <div class="in-wrap"><div id="inhl" class="in-backdrop" aria-hidden="true"></div><textarea id="in" placeholder="" spellcheck="false"></textarea></div>
     <div class="quotewarn" id="quoteWarn" style="display:none"></div>
     <div class="hint" data-zh>提示：兩個字以上的詞請自行決定關係(片語加雙引號、或用鄰近字 adj/near/N)，以統一各庫策略。</div>
@@ -1242,28 +1250,34 @@ if (typeof module !== "undefined" && module.exports) {
     scopus:   'title-abs (GDM OR ((gestation* OR pregnan* OR gravid*) W/3 (diabet* OR T2DM OR NIDDM)))',
   };
 
+  let clrBtn=null;
+  function syncClear(){ if(clrBtn) clrBtn.disabled = !(inp.value && inp.value.trim()); }   // 無資料時「清空」不可按
   function refreshExamples(){
     const src = TARGET_BY_ID[srcSel.value].engine;
     const conf = EXAMPLES[src] || {lines:[]};
     const ex = conf.lines || [];
-    exWrap.innerHTML="";
+    const loadSlot=$("#loadSlot");
+    exWrap.innerHTML=""; if(loadSlot) loadSlot.innerHTML=""; clrBtn=null;
     const numbered = ex.map(function(t,i){ return "#"+(i+1)+" "+t; });
     if(conf.combine) numbered.push("#"+(ex.length+1)+" "+conf.combine);   // 完整範例：加上組合行
     const loadText = numbered.join("\n");
     // 灰色預覽：把範例放進輸入框的 placeholder（像鄰近字組合器的灰字預載）
     inp.placeholder = loadText;
     if(!ex.length) return;
-    // 載入範例按鈕（不含說明文字）
-    const head=document.createElement("div"); head.className="exhead";
+    // 載入範例按鈕移到輸入框右上（與「清空」靠右對齊）
     const load=document.createElement("button"); load.type="button"; load.className="exload";
     load.innerHTML='<span data-zh>⬇ 載入範例</span><span data-en>⬇ Load example</span>';
-    const clr=document.createElement("button"); clr.type="button"; clr.className="exload"; clr.style.marginLeft="8px";
+    if(loadSlot) loadSlot.appendChild(load);
+    // 「清空」留在輸入框下方、靠右
+    const head=document.createElement("div"); head.className="exhead";
+    const clr=document.createElement("button"); clr.type="button"; clr.className="exload";
     clr.innerHTML='<span data-zh>清空</span><span data-en>Clear</span>';
-    head.appendChild(load); head.appendChild(clr); exWrap.appendChild(head);
+    head.appendChild(clr); exWrap.appendChild(head);
+    clrBtn=clr; syncClear();
     // 真實載入：把完整範例(含行號與組合行)放進輸入框並轉換
-    load.onclick=function(){ srCount('conv-example','轉換器-載入範例'); userTouched=true; inp.value=loadText; run(); paintInput(); inp.focus(); };
+    load.onclick=function(){ srCount('conv-example','轉換器-載入範例'); userTouched=true; inp.value=loadText; run(); paintInput(); syncClear(); inp.focus(); };
     // 清空：清掉輸入內容與灰字預覽
-    clr.onclick=function(){ userTouched=true; inp.value=""; inp.placeholder=""; run(); paintInput(); inp.focus(); };
+    clr.onclick=function(){ userTouched=true; inp.value=""; inp.placeholder=""; run(); paintInput(); syncClear(); inp.focus(); };
   }
 
   function run(){
@@ -1510,7 +1524,7 @@ if (typeof module !== "undefined" && module.exports) {
   function escapeHtml(s){return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
 
   srcSel.addEventListener("change",()=>{ refreshExamples(); run(); paintInput(); });
-  inp.addEventListener("input",()=>{ userTouched=true; paintInput(); clearTimeout(window.__t); window.__t=setTimeout(run,180); });
+  inp.addEventListener("input",()=>{ userTouched=true; paintInput(); syncClear(); clearTimeout(window.__t); window.__t=setTimeout(run,180); });
   inp.addEventListener("scroll",()=>{ if(inhl){ inhl.scrollTop=inp.scrollTop; inhl.scrollLeft=inp.scrollLeft; } });
   if(cbColor) cbColor.addEventListener("change",()=>{ paintInput(); run(); });
   if(cbBracket) cbBracket.addEventListener("change",()=>{ paintInput(); run(); });
@@ -1529,6 +1543,7 @@ if (typeof module !== "undefined" && module.exports) {
   buildRefTable();
   run();
   paintInput();
+  syncClear();
   window.__rerender=function(){ try{buildRefTable();}catch(e){} try{run();}catch(e){} try{paintInput();}catch(e){} };
 })();
 
