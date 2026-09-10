@@ -2063,6 +2063,8 @@ if (typeof module !== "undefined" && module.exports) {
   refreshLvlNote();
   try{ if(localStorage.getItem("sr_lang")==="en") window.toggleLang(); }catch(e){}
   setLangPlaceholders();
+  // 統計介面語言使用（等 GoatCounter 載入後送出 lang-en／lang-zh 事件）
+  (function countLang(){ var lang=document.body.classList.contains("en")?"en":"zh"; var n=0;(function f(){ if(window.goatcounter&&window.goatcounter.count){window.goatcounter.count({path:"lang-"+lang,title:"介面語言-"+lang,event:true});}else if(n++<40){setTimeout(f,250);} })(); })();
 })();
 </script>
 <script data-goatcounter="https://sr-toolkit.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
