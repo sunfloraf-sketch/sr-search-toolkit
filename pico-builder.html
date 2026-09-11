@@ -83,6 +83,11 @@
   .rem div{margin:2px 0}
   .pmopt{display:flex;align-items:center;gap:7px;padding:9px 14px;border-top:1px dashed var(--line);background:#EEF2F5;font-size:12.5px;color:var(--ok);cursor:pointer}
   .pmopt input{cursor:pointer;width:15px;height:15px}
+  .cvpaste{border-top:1px dashed var(--line);background:#F5FAF8;padding:10px 14px}
+  .cvpaste-hd{font-size:12px;color:var(--ok);margin-bottom:8px;line-height:1.5}
+  .cvpaste-row{display:flex;gap:8px;align-items:flex-start;margin-bottom:6px}
+  .cvpaste-lb{flex:0 0 auto;min-width:44px;font-weight:700;color:var(--deco2);font-size:12px;padding-top:7px}
+  .cvpaste-ta{flex:1 1 auto;min-width:0;font-family:"SF Mono",Consolas,monospace;font-size:12px;line-height:1.45;border:1px solid var(--line);border-radius:6px;padding:5px 8px;resize:vertical;min-height:34px;background:#fff;color:var(--ink)}
   .pmnote{padding:7px 14px;background:var(--warnbg);color:var(--warn);font-size:12px;border-top:1px dashed var(--line)}
   .pmvar{padding:10px 14px;border-top:1px dashed var(--line);background:#F4F7F8;font-size:12.5px}
   .pmvarhd{font-weight:600;color:var(--deco2);margin-bottom:8px}
@@ -423,6 +428,8 @@ var TARGETS = [
   { id:"scopus",        label:"Scopus",              engine:"scopus",   vocab:null     },
   { id:"airiti",        label:"華藝線上圖書館",       engine:"airiti",   vocab:null, outputOnly:true },
   { id:"ndltd",         label:"臺灣博碩士論文（國圖）", engine:"ndltd",    vocab:null, outputOnly:true },
+  { id:"ageline",       label:"AgeLine (EBSCOhost)", engine:"ebsco",    vocab:null, pasteCV:true, outputOnly:true },
+  { id:"eric",          label:"ERIC (EBSCOhost)",    engine:"ebsco",    vocab:null, pasteCV:true, outputOnly:true },
 ];
 var TARGET_BY_ID = {}; TARGETS.forEach(function(t){ TARGET_BY_ID[t.id]=t; });
 
@@ -1324,9 +1331,9 @@ if (typeof module !== "undefined" && module.exports) {
     ["embase_com","embase_ovid",null,null],
     ["medline_ovid","pubmed","medline_ebsco",null],
     ["cochrane","cinahl_ebsco","wos","scopus"],
-    ["airiti","ndltd",null,null]
+    ["airiti","ndltd","ageline","eric"]
   ];
-  var DB_UNCHECKED = { pubmed:1, embase_ovid:1, medline_ebsco:1, airiti:1, ndltd:1 };  // 預設不勾（避免重複搜同一資料庫；中文資料庫預設不勾）
+  var DB_UNCHECKED = { pubmed:1, embase_ovid:1, medline_ebsco:1, airiti:1, ndltd:1, ageline:1, eric:1 };  // 預設不勾（避免重複搜同一資料庫；中文資料庫、AgeLine／ERIC 預設不勾）
   DB_LAYOUT.forEach(function(row){ row.forEach(function(id){
     if(!id){ dbchecks.appendChild(document.createElement("span")); return; }
     var tg=TARGET_BY_ID[id];
@@ -1338,6 +1345,7 @@ if (typeof module !== "undefined" && module.exports) {
 
   function refreshLvlNote(){ lvlnote.textContent = LVL_NOTE[isEn()?"en":"zh"][levelSel.value]; }
   function setLevelLabels(){ var m=LEVEL_LABELS[isEn()?"en":"zh"]; Array.prototype.forEach.call(levelSel.options, function(o){ o.textContent=m[o.value]||o.value; }); }
+  var PASTE_CV = {};   // AgeLine／ERIC 等「貼上即用」控制詞彙：PASTE_CV[targetId][概念列索引] = 使用者貼上的檢索式（原樣帶入）
   function autoRegen(){ if(outs && outs.children.length) $("#genBtn").click(); }   // 已生成策略時，異動即自動更新
   var _arT; function autoRegenDebounced(){ clearTimeout(_arT); _arT=setTimeout(autoRegen, 500); }
   levelSel.onchange = function(){ refreshLvlNote(); autoRegen(); };
@@ -1818,6 +1826,7 @@ if (typeof module !== "undefined" && module.exports) {
   var CV_NOEXP_RE=/[（(]\s*不含[^)）]{0,12}[)）]/;                    // (不含狹義詞)/(不含下位詞)…
   function cvTermRender(term, eng, level, noexp){
     term=String(term).replace(/^[,;]+|[,;]+$/g,"").trim();
+    term=term.replace(/^["'“”‘’]+\s*([\s\S]*?)\s*["'“”‘’]+$/,"$1").trim();  // 移除使用者自行加的外層引號，避免與各庫模板引號重複（"exercise therapy" → exercise therapy）
     var mk=term.match(CV_NOEXP_RE);
     if(mk){ noexp=true; term=term.replace(mk[0],"").trim(); }
     var sub=null;
@@ -1909,7 +1918,7 @@ if (typeof module !== "undefined" && module.exports) {
     var tg = TARGET_BY_ID[targetId], eng = tg.engine, vocab = tg.vocab;
     if(eng==="pubmed") RENDER_OPTS.strippedRoots=[];   // 跨概念行累積 PubMed 展開的切截字根
     var lineNum=1, qlines=[], finalParts=[], reminders=[], conceptRefs=[];
-    rows.forEach(function(r){
+    rows.forEach(function(r, _ri){
       var refs=[];
       if(eng==="airiti"||eng==="ndltd"){
         var twLine = buildTaiwanLine(r.zh, r.ft, eng, level, reminders, tg.label, startEng);
@@ -1941,11 +1950,15 @@ if (typeof module !== "undefined" && module.exports) {
             : (r.label+" 概念未填 "+VOCAB_LABEL[vocab]+"，"+tg.label+" 僅用自由詞")));
         }
       }
+      if(tg.pasteCV){                        // AgeLine／ERIC：控制詞彙為使用者在卡片內貼上的完整檢索式，原樣帶入
+        var _pc=((PASTE_CV[targetId]||{})[_ri]||"").replace(/\s+$/,"").replace(/^\s+/,"");
+        if(_pc){ qlines.push({n:lineNum, text:_pc}); refs.push("#"+lineNum); lineNum++; }
+      }
       var grp = refs.length ? (refs.length>1 ? "("+refs.join(" OR ")+")" : refs[0]) : null;
       conceptRefs.push(grp);                 // 對齊 rows 順序（空概念為 null），供 C1/C2… 自訂組合對應
       if(grp) finalParts.push(grp);
     });
-    if(!vocab && rows.some(function(r){return r.mesh||r.emtree||r.cinahl;})){
+    if(!vocab && !tg.pasteCV && rows.some(function(r){return r.mesh||r.emtree||r.cinahl;})){
       reminders.push(isEn() ? (tg.label+" has no controlled vocabulary — free-text only")
                             : (tg.label+" 無控制詞彙，僅用自由詞彙"));
     }
@@ -2046,6 +2059,26 @@ if (typeof module !== "undefined" && module.exports) {
         acb.onchange=function(){ AIRITI_INC=acb.checked; $("#genBtn").click(); };
       }
       var pre=document.createElement("pre"); allRows.forEach(function(x){ var ln=document.createElement("div"); ln.className="qline"; var gn=document.createElement("span"); gn.className="qn"; gn.textContent=(x.n!=null?"#"+x.n:""); var gs=document.createElement("span"); gs.className="qs"; if((cbColor&&cbColor.checked)||(cbBracket&&cbBracket.checked)||(cbLinks&&cbLinks.checked)){ gs.innerHTML=hlHighlight(x.text, tg.engine, cbColor&&cbColor.checked, cbBracket&&cbBracket.checked, tg.vocab, cbLinks&&cbLinks.checked).html; } else { gs.textContent=x.text; } ln.appendChild(gn); ln.appendChild(gs); pre.appendChild(ln); }); card.appendChild(pre);
+      // AgeLine／ERIC：控制詞彙「貼上即用」區——坐落在該庫檢索策略下方，逐概念貼入 DE "…" OR …（原樣帶入，與自由詞組合）
+      if(tg.pasteCV){
+        PASTE_CV[tid]=PASTE_CV[tid]||{};
+        var cvw=document.createElement("div"); cvw.className="cvpaste";
+        var chd=document.createElement("div"); chd.className="cvpaste-hd";
+        chd.textContent=isEn()
+          ? 'Paste this database’s controlled-vocabulary expression per concept — used verbatim (syntax unchanged), then OR-combined with the free-text line above.'
+          : '貼上此資料庫的控制詞彙檢索式（逐概念，例如 DE "…" OR DE "…"）：原樣帶入、不改語法，並與上方自由詞自動以 OR 組合。';
+        cvw.appendChild(chd);
+        rows.forEach(function(r,_ri){
+          if(!(r.ft||r.zh||r.mesh||r.emtree||r.cinahl)) return;   // 空概念不顯示
+          var rw=document.createElement("div"); rw.className="cvpaste-row";
+          var lb=document.createElement("span"); lb.className="cvpaste-lb"; lb.textContent="C"+(_ri+1)+(r.label?(" "+r.label):"");
+          var ta=document.createElement("textarea"); ta.className="cvpaste-ta"; ta.spellcheck=false; ta.rows=2;
+          ta.placeholder='DE "…" OR DE "…"'; ta.value=(PASTE_CV[tid][_ri]||"");
+          ta.onchange=function(){ PASTE_CV[tid][_ri]=ta.value; $("#genBtn").click(); };
+          rw.appendChild(lb); rw.appendChild(ta); cvw.appendChild(rw);
+        });
+        card.appendChild(cvw);
+      }
       // PubMed：鄰近字語法（展開群組配對）＋字尾候選（比照轉換器；預設鄰近改用 AND）
       if(tg.engine==="pubmed"){
         var opt=document.createElement("label"); opt.className="pmopt";
