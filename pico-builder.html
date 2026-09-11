@@ -1488,8 +1488,21 @@ if (typeof module !== "undefined" && module.exports) {
   // 同義詞／控制詞彙一格多個 → 拆成「一行一個」。keepComma=true 時保留詞內半形逗號（如 Diabetes, Gestational），只以 、；;／換行 斷行；同義詞欄則連半形逗號也斷。
   function toLines(s, keepComma){ var t=cellClean(s); if(keepComma) t=t.replace(/,[ \t]*\n[ \t]*/g, ", "); var re = keepComma ? /[、；;\n]+/ : /[、，,；;\n]+/; return t.split(re).map(function(x){return x.trim();}).filter(Boolean).join("\n"); }
   function _tdText(td){
-    var h=td.innerHTML.replace(/<br\s*\/?>/gi,"\n").replace(/<\/?(p|div|li|tr|ul|ol|h[1-6]|blockquote)\b[^>]*>/gi,"\n");
-    var tmp=document.createElement("div"); tmp.innerHTML=h; return cellClean(tmp.textContent);
+    // 區塊界線（<br>、</p>…）與「Unicode 換行」(U+2028/2029/0085) 才算真正換行；
+    // ASCII 排版空白（原始碼折行、縮排）一律收攏為空白，避免單一詞（Diabetes, Gestational）被原始碼折行誤拆，
+    // 同時保留 ChatGPT 複製鈕以 Unicode 換行分隔的多個詞（不會黏成一串）。
+    var BR="\uE000";
+    var h=td.innerHTML
+      .replace(/<br\s*\/?>/gi,BR)
+      .replace(/<\/(p|div|li|tr|ul|ol|h[1-6]|blockquote)>/gi,BR)
+      .replace(/<(p|div|li|tr|ul|ol|h[1-6]|blockquote)\b[^>]*>/gi,BR)
+      .replace(/<\/a>\s*(?=<a\b)/gi, "</a>"+BR);   // 相鄰的連結＝各自一個詞（ChatGPT 複製表格：<a>詞1</a><a>詞2</a> 中間無分隔）
+    var tmp=document.createElement("div"); tmp.innerHTML=h;
+    var t=tmp.textContent
+      .replace(/[\u2028\u2029\u0085]/g,BR)
+      .replace(/[ \t\r\n\u00a0\u000b\u000c]+/g," ")
+      .split(BR).join("\n");
+    return cellClean(t);
   }
   function parsePaste(html, text){
     var rows=[];

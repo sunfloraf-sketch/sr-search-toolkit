@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>貼上診斷 Paste Diagnose</title>
+<style>
+  body{font-family:-apple-system,"Segoe UI","PingFang TC","Microsoft JhengHei",sans-serif;max-width:900px;margin:24px auto;padding:0 16px;color:#23282d;line-height:1.6}
+  h1{font-size:19px} h2{font-size:15px;margin-top:22px}
+  textarea{width:100%;min-height:90px;border:2px dashed #7c9a7c;border-radius:8px;padding:10px;font-size:14px}
+  pre{background:#f6f8f9;border:1px solid #d5dce2;border-radius:8px;padding:12px;white-space:pre-wrap;word-break:break-word;font-family:"SF Mono",Consolas,monospace;font-size:12px;max-height:340px;overflow:auto}
+  button{background:linear-gradient(180deg,#6F8578,#35483C);color:#f5f3ea;border:1px solid #9A8A58;border-radius:8px;padding:8px 16px;font-size:14px;font-weight:600;cursor:pointer;margin:8px 0}
+  .hint{color:#66717a;font-size:13px}
+  .ok{color:#2e6a4f;font-weight:600}
+</style></head><body>
+<h1>貼上診斷 · 抓取 Word 剪貼簿內容</h1>
+<p class="hint">步驟：① 在你的 Word 檢索詞表格「選取整個表格」→ 複製 ② 點一下下面的框、按 <b>Ctrl+V</b> 貼上 ③ 按「複製診斷結果」→ 貼回對話給我。</p>
+<textarea id="z" placeholder="在此按 Ctrl+V 貼上你從 Word 複製的表格…"></textarea>
+<button id="copyBtn" type="button">複製診斷結果</button>
+<span id="msg" class="ok"></span>
+<h2>① 剪貼簿 HTML（原始）</h2>
+<pre id="html">（尚未貼上）</pre>
+<h2>② 純文字（plain text）</h2>
+<pre id="text">（尚未貼上）</pre>
+<h2>③ 各儲存格解析（依 colspan/rowspan 展開，每格內以 ⏎ 標示換行）</h2>
+<pre id="grid">（尚未貼上）</pre>
+<script>
+var lastHtml="", lastText="", lastGrid="";
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function cellClean(s){ return String(s||"").replace(/\u00a0/g," ").replace(/[\u2028\u2029\u0085\u000B\u000C]/g,"\n").replace(/<br\s*\/?>/gi,"\n").replace(/<\/?(p|div|li|tr|ul|ol|h[1-6]|blockquote)\b[^>]*>/gi,"\n").replace(/<\/?[a-z][^>]*>/gi,"").split(/\r?\n/).map(function(x){return x.replace(/[ \t]+/g," ").trim();}).filter(function(x){return x!=="";}).join("\n").trim(); }
+function tdText(td){ var h=td.innerHTML.replace(/<br\s*\/?>/gi,"\n").replace(/<\/?(p|div|li|tr|ul|ol|h[1-6]|blockquote)\b[^>]*>/gi,"\n"); var tmp=document.createElement("div"); tmp.innerHTML=h; return cellClean(tmp.textContent); }
+function parseGrid(html){
+  if(!(html && /<t(able|r)\b/i.test(html))) return "（沒有 HTML 表格，可能是純文字貼上）";
+  var doc=new DOMParser().parseFromString(html,"text/html"), out=[], pending={};
+  Array.prototype.forEach.call(doc.querySelectorAll("tr"),function(tr){
+    var cells=tr.querySelectorAll("th,td"); if(!cells.length) return;
+    var row=[],col=0,ci=0;
+    while(true){
+      if(pending[col]&&pending[col].rowsLeft>0){var pc=pending[col],st=col;for(var j=0;j<pc.colspan;j++){row[col]=(j===0?pc.text:"");col++;}pc.rowsLeft--;if(pc.rowsLeft<=0)delete pending[st];continue;}
+      if(ci>=cells.length)break;
+      var td=cells[ci++],t=tdText(td),cs=parseInt(td.getAttribute("colspan"),10);if(!(cs>0))cs=1;var rs=parseInt(td.getAttribute("rowspan"),10);if(!(rs>0))rs=1;var sc=col;
+      for(var k=0;k<cs;k++){row[col]=(k===0?t:"");col++;}
+      if(rs>1)pending[sc]={text:t,colspan:cs,rowsLeft:rs-1};
+    }
+    out.push(row);
+  });
+  return out.map(function(r,i){return "列"+i+":\n"+r.map(function(c,j){return "  ["+j+"] "+JSON.stringify(c).replace(/\\n/g," ⏎ ");}).join("\n");}).join("\n\n");
+}
+document.getElementById("z").addEventListener("paste",function(e){
+  var cd=e.clipboardData||window.clipboardData; if(!cd) return;
+  e.preventDefault();
+  lastHtml=cd.getData("text/html")||""; lastText=cd.getData("text/plain")||"";
+  lastGrid=parseGrid(lastHtml);
+  document.getElementById("html").textContent=lastHtml||"（無 text/html）";
+  document.getElementById("text").textContent=lastText||"（無純文字）";
+  document.getElementById("grid").textContent=lastGrid;
+  document.getElementById("z").value="（已擷取，請按「複製診斷結果」）";
+});
+document.getElementById("copyBtn").onclick=function(){
+  var payload="=== HTML ===\n"+lastHtml+"\n\n=== TEXT ===\n"+lastText+"\n\n=== GRID ===\n"+lastGrid;
+  navigator.clipboard.writeText(payload).then(function(){document.getElementById("msg").textContent="已複製，貼回對話給我即可";},function(){document.getElementById("msg").textContent="無法自動複製，請手動全選上面三區複製";});
+};
+</script>
+</body></html>
