@@ -2,9 +2,9 @@
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21960702.svg)](https://doi.org/10.5281/zenodo.21960702)
 
-Three independent, browser-based tools for systematic-review (SR) literature searching. Everything runs in your browser — nothing is uploaded — and every page links to the other two.
+Three independent, browser-based tools for systematic-review (SR) literature searching. Everything runs in your browser by default, and every page links to the other two. If you explicitly request a PubMed result-count estimate in the PICO Builder, that query is sent to the official NCBI E-utilities API.
 
-三個獨立、在瀏覽器中執行的系統性文獻回顧（SR）檢索小工具。全部在瀏覽器本機執行、不上傳任何資料，每一頁都能跳到另外兩個工具。
+三個獨立、在瀏覽器中執行的系統性文獻回顧（SR）檢索小工具。資料預設只在瀏覽器本機處理，每一頁都能跳到另外兩個工具；只有使用者主動要求 PICO 產生器估算 PubMed 結果數時，檢索式才會送至 NCBI 官方 E-utilities API。
 
 ## Use it online · 線上使用
 
@@ -16,14 +16,15 @@ Just open the link in any modern browser (Chrome, Edge, Firefox, Safari) — no 
 
 ## Tools · 工具
 
-The three tools are **not sequential** — use whichever you need.
+The three tool families are **not sequential** — use whichever you need. The PICO Strategy Builder has separate medical and non-medical pages.
 
-三個工具**沒有先後順序**，依需要挑選使用。
+三個工具類型**沒有先後順序**，依需要挑選使用；PICO 檢索策略產生器分為醫學與非醫學兩個頁面。
 
 | Tool | 工具 | What it does |
 |------|------|--------------|
 | **Proximity Builder** | 鄰近字組合器 | Turn stacks of synonyms into a proximity (adj/near/N) fragment, or auto-split a *Before* list into stacks. Choose ordered or unordered, and adjacent (0). Can send the result straight to the PICO Builder or the Converter. |
-| **PICO Strategy Builder** | PICO 檢索策略產生器 | Fill in free-text and controlled terms per PICO concept, pick a field level, and generate line-numbered strategies for each database, with MeSH / Emtree / CINAHL Headings mapping. Import a filled Word template if you have one. |
+| **PICO Strategy Builder** | PICO 檢索策略產生器 | Fill in free-text and controlled terms per PICO concept, pick a field level, and generate line-numbered strategies for each database, with MeSH / Emtree / CINAHL Headings mapping. Import a filled Word template, compare PubMed counts, run the expanded final strategy directly in PubMed, or copy it and open another database's official search page. |
+| **Non-medical PICO Builder** | 非醫學領域 PICO 產生器 | Build strategies for Web of Science, Scopus, ProQuest PQDT, Academic Search Complete, Business Source Complete, ERIC, a custom EBSCOhost database, Ei Compendex, and IEEE Xplore. Platform-native controlled-vocabulary expressions are carried through verbatim; IEEE output includes official-rule compatibility checks. |
 | **Search Syntax Converter** | 資料庫檢索語法轉換器 | Paste a query written for any starting database and generate syntax for seven databases/platforms in one click; reference lines with `#1 #2`, and export to Word. |
 
 Supported databases/platforms: MEDLINE (Ovid), PubMed, Cochrane, Embase, CINAHL (EBSCOhost), Web of Science, Scopus.
