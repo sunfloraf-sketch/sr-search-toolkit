@@ -23,8 +23,15 @@
   .tool h2{margin:0 0 2px;font-size:19px}
   .tool .sub{font-size:12.5px;color:var(--mut);font-weight:600;margin-bottom:10px}
   .tool p{margin:0 0 16px;font-size:13.5px;color:var(--mut);flex:1}
-  .go{align-self:flex-start;background:var(--head);color:#fff;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700}
-  .tool:hover .go{background:var(--head2)}
+  .go{align-self:flex-end;width:38px;height:38px;border-radius:50%;background:var(--head);color:#fff;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:700;line-height:1;transition:background .15s,transform .15s}
+  .tool:hover .go{background:var(--head2);transform:translateX(2px)}
+  /* ---- PICO 雙按鈕卡片 ---- */
+  .tool-pico:hover{transform:none;box-shadow:0 8px 24px rgba(15,23,42,.10);border-color:#cbd5e1}
+  .gorow{display:flex;gap:10px;flex-wrap:wrap;margin-top:2px}
+  .gobtn{display:inline-flex;align-items:center;gap:5px;background:var(--head);color:#fff;border-radius:8px;padding:9px 20px;font-size:14px;font-weight:700;text-decoration:none;transition:background .15s}
+  .gobtn:hover{background:var(--head2)}
+  .gobtn .g-lbl{font-size:12px;font-weight:600;opacity:.85;margin-left:5px}
+  .gobtn.disabled{opacity:1;cursor:not-allowed;pointer-events:none;background:#f1f3f4;color:#98a2a9;border:1px solid #dde3e7}
   footer{max-width:1040px;margin:0 auto;padding:0 24px 40px;color:var(--mut);font-size:12.5px}
   footer code{background:var(--codebg);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:12px}
   /* ---- 統一導覽列 ---- */
@@ -57,32 +64,28 @@
   </div>
 
   <div class="grid">
-    <a class="tool" href="pico-builder.html">
-      <h2><span data-zh>PICO 檢索策略產生器｜醫學領域</span><span data-en>PICO Strategy Builder | Medical</span></h2>
-      <div class="sub" data-zh>PICO Strategy Builder · Medical</div>
-      <p><span data-zh>在 PICO 概念表填入自由詞彙與控制詞彙，選欄位決定完整度，一鍵生成各資料庫的檢索策略，並可透過 NCBI API 比較 PubMed 各行與組合式的文章數（MeSH／Emtree／CINAHL Headings 對應需自理）。</span><span data-en>Fill free-text and controlled terms into the PICO table, choose a field level for completeness, generate each database's strategy, and compare PubMed result counts for individual lines and combinations via the NCBI API (you supply the MeSH / Emtree / CINAHL Headings mappings yourself).</span></p>
-      <span class="go" data-zh>開啟工具 →</span><span class="go" data-en>Open tool →</span>
-    </a>
-
-    <a class="tool" href="pico-builder-nonmedical.html">
-      <h2><span data-zh>PICO 檢索策略產生器｜非醫學領域</span><span data-en>PICO Strategy Builder | Non-medical</span></h2>
-      <div class="sub" data-zh>PICO Strategy Builder · Non-medical</div>
-      <p><span data-zh>產生 Web of Science、Scopus、EBSCOhost、Ei Compendex 與 IEEE Xplore 策略；EBSCOhost、Compendex、IEEE 的控制詞彙原生語法可直接帶入。</span><span data-en>Build strategies for Web of Science, Scopus, EBSCOhost, Ei Compendex, and IEEE Xplore, with verbatim native controlled-vocabulary syntax for EBSCOhost, Compendex, and IEEE.</span></p>
-      <span class="go" data-zh>開啟工具 →</span><span class="go" data-en>Open tool →</span>
-    </a>
+    <div class="tool tool-pico">
+      <h2><span data-zh>PICO 檢索策略產生器</span><span data-en>PICO Strategy Builder</span></h2>
+      <div class="sub" data-zh>PICO Strategy Builder</div>
+      <p><span data-zh>在 PICO 概念表填入自由詞彙與控制詞彙，選欄位決定完整度，一鍵生成各資料庫的檢索策略。並可利用 PubMed API（內建官方輕量版）簡易測試潛在文章數量與組合，幫助發展檢索策略。</span><span data-en>Fill free-text and controlled terms into the PICO table, choose a field level, and generate each database's strategy in one click. You can also use the PubMed API (a built-in, official lightweight edition) to quickly test potential article counts and combinations, helping you develop your search strategy.</span></p>
+      <div class="gorow">
+        <a class="gobtn" href="pico-builder.html"><span data-zh>醫學領域</span><span data-en>Medical</span> →</a>
+        <span class="gobtn disabled" aria-disabled="true" title="整理中，暫未開放"><span data-zh>非醫學領域</span><span data-en>Non-medical</span></span>
+      </div>
+    </div>
 
     <a class="tool" href="syntax-converter.html">
       <h2><span data-zh>資料庫檢索語法轉換器</span><span data-en>Search Syntax Converter</span></h2>
       <div class="sub" data-zh>Search Syntax Converter</div>
       <p><span data-zh>貼上任一起始資料庫的檢索式，一鍵轉出各大資料庫／平台的語法，並可下載 Word。但是控制詞彙要自理喔！</span><span data-en>Paste a query from any starting database and convert it to the syntax of the major databases/platforms in one click, with Word export. Note: controlled vocabulary is up to you!</span></p>
-      <span class="go" data-zh>開啟工具 →</span><span class="go" data-en>Open tool →</span>
+      <span class="go" aria-hidden="true">→</span>
     </a>
 
     <a class="tool" href="proximity-builder.html">
       <h2><span data-zh>鄰近字組合器</span><span data-en>Proximity Builder</span></h2>
       <div class="sub" data-zh>Proximity Builder</div>
       <p><span data-zh>把多堆同義詞組成鄰近字（ADJ/NEAR/N）；也能貼一份 Before 清單自動分堆，整理好可直接送進 PICO 檢索策略產生器或語法轉換器。</span><span data-en>Combine stacks of synonyms into a proximity fragment (ADJ/NEAR/N); or paste a Before list to auto-split into stacks, then send the result straight to the PICO Strategy Builder or the Search Syntax Converter.</span></p>
-      <span class="go" data-zh>開啟工具 →</span><span class="go" data-en>Open tool →</span>
+      <span class="go" aria-hidden="true">→</span>
     </a>
   </div>
 </main>

@@ -160,6 +160,7 @@
   .domain-switch{display:flex;gap:8px;align-items:center;margin-bottom:16px}
   .domain-switch a{padding:7px 14px;border:1px solid #BFC8CF;border-radius:18px;color:#364149;text-decoration:none;background:#fff;font-size:13px;font-weight:650}
   .domain-switch a.active{background:#4F6658;color:#fff;border-color:#4F6658}
+  .domain-switch a.disabled{opacity:.4;cursor:not-allowed;pointer-events:none;background:#F1F3F4;color:#98A2A9;border-color:#DDE3E7}
   .out h3{box-shadow:inset 3px 0 0 var(--deco)}
   .note{border-left:4px solid #D9E4E1}
   summary:hover{color:var(--deco2)}
@@ -256,7 +257,7 @@
   <p class="subtitle"><span data-zh>醫學領域：填入各概念的自由詞彙與控制詞彙，產生醫學與健康科學資料庫檢索策略</span><span data-en>Medical fields: enter free-text and controlled terms to build strategies for medical and health-science databases</span></p>
 </header>
 <main>
-  <div class="domain-switch"><span class="fld" style="margin:0"><span data-zh>領域版本：</span><span data-en>Domain:</span></span><a class="active" href="pico-builder.html"><span data-zh>醫學領域</span><span data-en>Medical</span></a><a href="pico-builder-nonmedical.html"><span data-zh>非醫學領域</span><span data-en>Non-medical</span></a></div>
+  <div class="domain-switch"><span class="fld" style="margin:0"><span data-zh>領域版本：</span><span data-en>Domain:</span></span><a class="active" href="pico-builder.html"><span data-zh>醫學領域</span><span data-en>Medical</span></a><a class="disabled" aria-disabled="true" title="整理中，暫未開放"><span data-zh>非醫學領域</span><span data-en>Non-medical</span></a></div>
   <div class="panel">
     <div class="controls">
       <div>
@@ -392,8 +393,8 @@ Optic Nerve/dg)</pre>
   <div id="outs"></div>
 
   <div class="foot">
-    <span data-zh>此工具為純網頁程式，未使用 AI。資料預設只在瀏覽器本機執行與暫存；只有按下「PubMed 估算文章數」時，對應檢索式與選填的聯絡 email 才會傳送至 NCBI E-utilities。產出的檢索策略請人工覆核並於資料庫實測後再使用。</span>
-    <span data-en>A pure web-based tool with no AI. Data stays in your browser by default; only when you click “Estimate PubMed counts” are the relevant queries and optional contact email sent to NCBI E-utilities. Please human-check and test the generated strategy before use.</span><br>
+    <span data-zh>此工具為純網頁程式，未使用 AI。資料預設只在瀏覽器本機執行與暫存；只有按下「PubMed 估算文章數」時，對應檢索式才會傳送至 NCBI E-utilities（不含 email）。產出的檢索策略請人工覆核並於資料庫實測後再使用。</span>
+    <span data-en>A pure web-based tool with no AI. Data stays in your browser by default; only when you click “Estimate PubMed counts” are the relevant queries sent to NCBI E-utilities (no email). Please human-check and test the generated strategy before use.</span><br>
     <span data-zh>引用建議: 方靜如（2026）。SR 檢索工具組: PICO 檢索策略產生器、資料庫檢索語法轉換器、鄰近字組合器。Zenodo. <a href="https://doi.org/10.5281/zenodo.21960702" target="_blank" rel="noopener">https://doi.org/10.5281/zenodo.21960702</a><br></span>
     <span>Cite as: Fang CJ (2026). <i>SR Search Toolkit: PICO Strategy Builder, Search Syntax Converter, and Proximity Builder</i>. Zenodo. <a href="https://doi.org/10.5281/zenodo.21960702" target="_blank" rel="noopener">https://doi.org/10.5281/zenodo.21960702</a></span><br>
     © 2026 Ching-Ju Fang <a href="https://orcid.org/0000-0002-7892-8840" target="_blank" rel="noopener" title="ORCID iD" style="text-decoration:none;white-space:nowrap;color:inherit" onclick="try{if(window.goatcounter&&window.goatcounter.count)window.goatcounter.count({path:'author-orcid',title:'作者-ORCID',event:true})}catch(e){}"><svg width="13" height="13" viewBox="0 0 256 256" style="vertical-align:-2px;margin-right:3px" aria-hidden="true"><circle cx="128" cy="128" r="128" fill="#A6CE39"/><g fill="#fff"><path d="M86.3 186.2H70.9V79.1h15.4v107.1z"/><path d="M108.9 79.1h41.6c39.6 0 57 28.3 57 53.6 0 27.5-21.5 53.6-56.8 53.6h-41.8V79.1zm15.4 93.3h24.5c34.9 0 42.9-26.5 42.9-39.7 0-21.5-13.7-39.7-43.7-39.7h-23.7v79.4z"/><circle cx="78.6" cy="56.8" r="10.1"/></g></svg>https://orcid.org/0000-0002-7892-8840</a> · All rights reserved · v2.3.0
@@ -1345,7 +1346,7 @@ if (typeof module !== "undefined" && module.exports) {
     ["cochrane","cinahl_ebsco","wos","scopus"],
     ["airiti","ndltd","ageline","eric"]
   ];
-  var DB_UNCHECKED = { pubmed:1, embase_ovid:1, medline_ebsco:1, airiti:1, ndltd:1, ageline:1, eric:1 };  // 預設不勾（避免重複搜同一資料庫；中文資料庫、AgeLine／ERIC 預設不勾）
+  var DB_UNCHECKED = { embase_ovid:1, medline_ebsco:1, airiti:1, ndltd:1, ageline:1, eric:1 };  // 預設不勾（避免重複搜同一資料庫；中文資料庫、AgeLine／ERIC 預設不勾）。PubMed 預設打勾。
   DB_LAYOUT.forEach(function(row){ row.forEach(function(id){
     if(!id){ dbchecks.appendChild(document.createElement("span")); return; }
     var tg=TARGET_BY_ID[id];
@@ -2018,8 +2019,8 @@ if (typeof module !== "undefined" && module.exports) {
 
   var DB_OPEN_URLS={
     embase_com:"https://www.embase.com/results",
-    embase_ovid:"https://ovidsp.ovid.com/",
-    medline_ovid:"https://ovidsp.ovid.com/",
+    embase_ovid:"https://research.lib.ncku.edu.tw/er/geter/DB000000228",
+    medline_ovid:"https://research.lib.ncku.edu.tw/er/geter/DB000000228",
     medline_ebsco:"https://search.ebscohost.com/",
     cochrane:"https://www.cochranelibrary.com/advanced-search/search-manager",
     cinahl_ebsco:"https://search.ebscohost.com/",
@@ -2109,7 +2110,28 @@ if (typeof module !== "undefined" && module.exports) {
       exportData.push({label:tg.label, engine:tg.engine, vocab:tg.vocab, isStart:(tid===startDB), rows:allRows});
       var copyText = allRows.map(function(x){return x.text;}).join("\n");
       cp.onclick=function(){ navigator.clipboard.writeText(copyText); cp.textContent="✓"; cp.classList.add("done"); setTimeout(function(){cp.innerHTML=COPYSVG;cp.classList.remove("done");},1400); };
-      h.appendChild(nm); h.appendChild(cp); card.appendChild(h);
+      // 右側按鈕群：複製圖示 ＋（非 PubMed）「複製最終策略並開啟資料庫」——移到複製圖示右側
+      var hr=document.createElement("span"); hr.style.cssText="display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end";
+      hr.appendChild(cp);
+      if(tg.engine!=="pubmed" && DB_OPEN_URLS[tid]){
+        var OPENSVG='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>';
+        var openBtn=document.createElement("button"); openBtn.className="copy copyicon"; openBtn.innerHTML=OPENSVG;
+        var _openTitle=(isEn()?"Copy final strategy & open ":"複製最終策略並開啟 ")+tg.label+" ↗";
+        openBtn.title=_openTitle;
+        openBtn.onclick=function(){
+          try{
+            var finalRow=allRows[allRows.length-1];
+            if(!finalRow) throw new Error(isEn()?"No strategy to send":"沒有可傳送的檢索策略");
+            var full=expandNumberedQuery(finalRow,allRows), url=DB_OPEN_URLS[tid];
+            var link=document.createElement("a");link.href=url;link.target="_blank";link.rel="noopener noreferrer";document.body.appendChild(link);link.click();link.remove();
+            srCount('pico-db-open-'+tid,'PICO-開啟資料庫-'+tid);
+            copyTextForPush(full).then(function(){ openBtn.innerHTML="✓"; openBtn.classList.add("done"); openBtn.title=isEn()?"Copied — paste into the search box":"已複製，請貼入搜尋框"; setTimeout(function(){openBtn.innerHTML=OPENSVG;openBtn.classList.remove("done");openBtn.title=_openTitle;},1600); })
+              .catch(function(){ openBtn.title=isEn()?"Opened, but automatic copy failed":"已開啟，但自動複製失敗"; });
+          }catch(err){ openBtn.title=String(err&&err.message||err); }
+        };
+        hr.appendChild(openBtn);
+      }
+      h.appendChild(nm); h.appendChild(hr); card.appendChild(h);
       if(b.reminders.length){ var rem=document.createElement("div"); rem.className="rem"; var _lblRe=new RegExp("^"+String(tg.label).replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"\\s*[：:]?\\s*"); b.reminders.forEach(function(m){ var d=document.createElement("div"); d.textContent="⚠ "+String(m).replace(_lblRe,""); rem.appendChild(d); }); card.appendChild(rem); }
       // Embase.com：排除「純 MEDLINE 收錄」（去重行）—— 移到該庫卡片
       if(tg.engine==="embase"){
@@ -2131,30 +2153,13 @@ if (typeof module !== "undefined" && module.exports) {
       }
       var countEls=[];
       var pre=document.createElement("pre"); allRows.forEach(function(x){ var ln=document.createElement("div"); ln.className="qline"; var gn=document.createElement("span"); gn.className="qn"; gn.textContent=(x.n!=null?"#"+x.n:""); var gs=document.createElement("span"); gs.className="qs"; if((cbColor&&cbColor.checked)||(cbBracket&&cbBracket.checked)||(cbLinks&&cbLinks.checked)){ gs.innerHTML=hlHighlight(x.text, tg.engine, cbColor&&cbColor.checked, cbBracket&&cbBracket.checked, tg.vocab, cbLinks&&cbLinks.checked).html; } else { gs.textContent=x.text; } ln.appendChild(gn); ln.appendChild(gs); if(tg.engine==="pubmed"){var ct=document.createElement("span");ct.className="pmcount";ct.textContent="—";ln.appendChild(ct);countEls.push(ct);} pre.appendChild(ln); }); card.appendChild(pre);
-      if(tg.engine!=="pubmed" && DB_OPEN_URLS[tid]){
-        var push=document.createElement("div");push.className="dbpush";
-        var pushBtn=document.createElement("button");pushBtn.className="btn ghost";pushBtn.type="button";pushBtn.textContent=(isEn()?"Copy final strategy & open ":"複製最終策略並開啟 ")+tg.label+" ↗";
-        var pushStatus=document.createElement("span");pushStatus.className="dbpush-status";
-        push.appendChild(pushBtn);push.appendChild(pushStatus);card.appendChild(push);
-        pushBtn.onclick=function(){
-          try{
-            var finalRow=allRows[allRows.length-1];
-            if(!finalRow) throw new Error(isEn()?"No strategy to send":"沒有可傳送的檢索策略");
-            var full=expandNumberedQuery(finalRow,allRows), url=DB_OPEN_URLS[tid];
-            copyTextForPush(full).then(function(){pushStatus.className="dbpush-status";pushStatus.textContent=isEn()?"Copied — paste into the search box":"已複製，請貼入搜尋框";}).catch(function(){pushStatus.className="dbpush-status err";pushStatus.textContent=isEn()?"Opened, but automatic copy failed":"已開啟，但自動複製失敗";});
-            var link=document.createElement("a");link.href=url;link.target="_blank";link.rel="noopener noreferrer";document.body.appendChild(link);link.click();link.remove();
-            srCount('pico-db-open-'+tid,'PICO-開啟資料庫-'+tid);
-          }catch(err){pushStatus.className="dbpush-status err";pushStatus.textContent=String(err&&err.message||err);}
-        };
-      }
       if(tg.engine==="pubmed"){
         var est=document.createElement("div"); est.className="pmestimate";
         var sendBtn=document.createElement("button"); sendBtn.className="btn ghost"; sendBtn.type="button"; sendBtn.textContent=isEn()?"Run final strategy in PubMed ↗":"在 PubMed 執行最終策略 ↗";
         var estBtn=document.createElement("button"); estBtn.className="btn ghost"; estBtn.type="button"; estBtn.textContent=isEn()?"Estimate PubMed counts":"估算 PubMed 文章數";
-        var em=document.createElement("input"); em.type="email"; em.autocomplete="email"; em.placeholder=isEn()?"Contact email (recommended by NCBI)":"聯絡 email（NCBI 建議填寫）"; em.value=localStorage.getItem("srPubmedEmail")||"";
         var st=document.createElement("span"); st.className="pmstatus";
         var nt=document.createElement("div"); nt.className="pmestimate-note"; nt.textContent=isEn()?"Queries are sent one at a time to NCBI ESearch (no API key; ≤3 requests/second). Counts reflect PubMed at query time and may change.":"逐筆送至 NCBI ESearch（未使用 API key，每秒不超過 3 次）。數量以查詢當下的 PubMed 為準，之後可能變動。";
-        est.appendChild(sendBtn);est.appendChild(estBtn);est.appendChild(em);est.appendChild(st);est.appendChild(nt);card.appendChild(est);
+        est.appendChild(sendBtn);est.appendChild(estBtn);est.appendChild(st);est.appendChild(nt);card.appendChild(est);
         sendBtn.onclick=function(){
           try{
             var finalRow=allRows[allRows.length-1];
@@ -2168,21 +2173,18 @@ if (typeof module !== "undefined" && module.exports) {
         };
         estBtn.onclick=async function(){
           srCount('pico-pubmed-count','PICO-PubMed估算文章數');
-          var email=em.value.trim();
-          if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){st.textContent=isEn()?"Check the email format":"請檢查 email 格式";st.className="pmstatus err";em.focus();return;}
-          try{localStorage.setItem("srPubmedEmail",email);}catch(_e){}
-          estBtn.disabled=true;em.disabled=true;st.className="pmstatus";var failures=0;
+          estBtn.disabled=true;st.className="pmstatus";var failures=0;
           for(var ci=0;ci<allRows.length;ci++){
             var cel=countEls[ci]; cel.textContent=isEn()?"checking…":"查詢中…";cel.className="pmcount";
             st.textContent=(ci+1)+" / "+allRows.length;
             try{
               var full=expandNumberedQuery(allRows[ci],allRows);
-              var n=await fetchPubmedCount(full,email);
+              var n=await fetchPubmedCount(full);
               cel.textContent=n.toLocaleString()+(isEn()?" records":" 篇");cel.className="pmcount ok";
             }catch(err){failures++;cel.textContent=isEn()?"failed":"查詢失敗";cel.className="pmcount err";cel.title=String(err&&err.message||err);}
             if(ci<allRows.length-1) await waitMs(400);
           }
-          estBtn.disabled=false;em.disabled=false;st.className="pmstatus"+(failures?" err":"");st.textContent=failures?(isEn()?(failures+" failed"):(failures+" 行查詢失敗")):(isEn()?"Completed":"估算完成");
+          estBtn.disabled=false;st.className="pmstatus"+(failures?" err":"");st.textContent=failures?(isEn()?(failures+" failed"):(failures+" 行查詢失敗")):(isEn()?"Completed":"估算完成");
         };
       }
       // AgeLine／ERIC：控制詞彙「貼上即用」區——坐落在該庫檢索策略下方，逐概念貼入 DE "…" OR …（原樣帶入，與自由詞組合）
