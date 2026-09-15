@@ -280,6 +280,7 @@
           <label class="sdf" style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" name="sdfilter" value="qualitative"><span>Qualitative</span></label>
           <label class="sdf" style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" name="sdfilter" value="sr"><span>SR</span></label>
           <label class="sdf" style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" name="sdfilter" value="guideline"><span>Guideline</span></label>
+          <span style="color:var(--mut);font-size:12px;flex-basis:100%"><span data-zh>適用 SR 於（高敏感度／文章數量多）；若欲臨床實證使用，建議在資料庫使用內建 Limits／Filters。</span><span data-en>Suited for systematic reviews (high sensitivity / large result volume); for clinical / evidence-based use, prefer the database’s built-in Limits / Filters.</span></span>
           <span style="color:var(--mut);font-size:12px;flex-basis:100%"><span data-zh>尚未整理部份資料庫（平台）語法者，將於檢索策略標示「請自行確認 Filters」</span><span data-en>Databases (platforms) whose filter syntax isn’t compiled yet are flagged “please verify Filters yourself” in the strategy.</span></span>
         </div>
       </div>
@@ -324,7 +325,7 @@
           <pre style="margin:2px 0 6px 2.4em;padding:8px 10px;background:var(--codebg);border:1px solid var(--line);border-radius:6px;font-family:'SF Mono',Consolas,monospace;font-size:12px;line-height:1.5;white-space:pre;width:fit-content;max-width:100%">Optic Nerve
 AND
 (Ultrasonography
-Optic Nerve/dg)</pre>
+Optical Imaging)</pre>
           <div style="padding-left:1.4em;margin-top:4px">‧ 不欲包含狹義詞時，請標註「不含狹義詞」、「不狹」、「noexp」或「no exp」</div>
           <div style="padding-left:2.4em">例：<code>Algorithms (不含狹義詞)</code>、<code>Algorithms (不狹)</code>、<code>Algorithms (noexp)</code></div>
         </div>
@@ -339,7 +340,7 @@ Optic Nerve/dg)</pre>
           <pre style="margin:2px 0 6px 2.4em;padding:8px 10px;background:var(--codebg);border:1px solid var(--line);border-radius:6px;font-family:'SF Mono',Consolas,monospace;font-size:12px;line-height:1.5;white-space:pre;width:fit-content;max-width:100%">Optic Nerve
 AND
 (Ultrasonography
-Optic Nerve/dg)</pre>
+Optical Imaging)</pre>
           <div style="padding-left:1.4em;margin-top:4px">‧ To exclude narrower terms, mark it as non-exploded — <code>(不含狹義詞)</code>, <code>(不狹)</code>, <code>(noexp)</code> or <code>(no exp)</code>.</div>
           <div style="padding-left:2.4em">e.g. <code>Algorithms (noexp)</code></div>
         </div>
@@ -397,7 +398,7 @@ Optic Nerve/dg)</pre>
       <label title="把最後一行的 #行號組合展開，串成一條可直接貼入單一檢索框的長檢索式"><input type="checkbox" id="cbFlat"><span data-zh>整併為單一長式</span><span data-en>One combined query</span></label>
       <span style="display:inline-flex;align-items:center;gap:8px"><label title="英文同義詞裡的多字片語：預設加引號當片語（如 &quot;gestational diabetes&quot;）；勾選則改用鄰近字（如 gestational NEAR/2 diabetes）。鄰近距離可在右方數字框設定（預設 2）。強烈建議先用「鄰近字組合器」把同義詞分堆整理乾淨再貼入。" style="display:inline-flex;align-items:center;gap:5px"><input type="checkbox" id="cbNearPhrase"><span data-zh>片語改用鄰近字</span><span data-en>Phrases as proximity</span></label><span style="display:inline-flex;align-items:center;gap:3px;color:var(--mut)"><span data-zh>鄰</span><span data-en>within&nbsp;</span><input type="number" id="nearN" min="0" max="20" value="2" title="鄰近距離：幾個單字內（預設 2）" style="width:46px;font-size:12px;padding:4px 5px;border:1px solid var(--line);border-radius:6px"><span data-zh>單字</span><span data-en>&nbsp;words</span></span><span style="font-size:11px;color:var(--mut)"><span data-zh>（再依起始資料庫改語法）</span><span data-en>(operator adapts to the starting database)</span></span></span>
       <label title="產出的控制詞彙(MeSH/Emtree/CINAHL)加上可點的詞表查核連結；Word 下載也內嵌超連結。連結只供核對，複製的檢索式仍為純文字。"><input type="checkbox" id="cbLinks" checked><span data-zh>控制詞彙查核連結</span><span data-en>Vocab verify links</span></label>
-      <span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--mut)" title="你機構的 EBSCO 專屬代碼（research.ebsco.com/c/XXXX/ 中的 XXXX，如 shmie4）；填了 CINAHL 控制詞彙才會有查核連結。只存在你的瀏覽器本機。"><span data-zh>CINAHL 機構碼</span><span data-en>CINAHL inst.</span><input type="text" id="cinahlInst" placeholder="e.g. shmie4" style="width:90px;font-size:12px;padding:6px 8px;border:1px solid var(--line);border-radius:6px"></span>
+      <span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--mut)" title="你機構的 EBSCO 專屬代碼（research.ebsco.com/c/XXXX/ 中的 XXXX，如 shmie4）；填了 CINAHL 控制詞彙才會有查核連結。只存在你的瀏覽器本機。"><span data-zh>CINAHL 機構碼</span><span data-en>CINAHL inst.</span><input type="text" id="cinahlInst" placeholder="e.g. shmie4（成大專用）" style="width:150px;font-size:12px;padding:6px 8px;border:1px solid var(--line);border-radius:6px"><span data-zh title="您可自行連線貴機構 CINAHL，從網址來確認機構碼（目前不適用：非 Basic 版本、院外透過 Proxy 認證登入資料庫者）。" style="cursor:help;color:var(--brand2);font-weight:700">ⓘ</span><span data-en title="Log in to your institution’s CINAHL and read the code from the URL to confirm it. (Not applicable to: non-Basic versions, or off-campus users authenticating through a proxy.)" style="cursor:help;color:var(--brand2);font-weight:700">ⓘ</span></span>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn primary" id="genBtn"><span data-zh>▶ 生成檢索策略</span><span data-en>▶ Generate strategies</span></button>
