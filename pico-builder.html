@@ -280,7 +280,7 @@
           <label class="sdf" style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" name="sdfilter" value="qualitative"><span>Qualitative</span></label>
           <label class="sdf" style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" name="sdfilter" value="sr"><span>SR</span></label>
           <label class="sdf" style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" name="sdfilter" value="guideline"><span>Guideline</span></label>
-          <span style="color:var(--mut);font-size:12px;flex-basis:100%"><span data-zh>僅支援特定資料庫</span><span data-en>Applied only to supported databases.</span></span>
+          <span style="color:var(--mut);font-size:12px;flex-basis:100%"><span data-zh>尚未整理部份資料庫（平台）語法者，將於檢索策略標示「請自行確認 Filters」</span><span data-en>Databases (platforms) whose filter syntax isn’t compiled yet are flagged “please verify Filters yourself” in the strategy.</span></span>
         </div>
       </div>
     </div>
@@ -325,8 +325,8 @@
 AND
 (Ultrasonography
 Optic Nerve/dg)</pre>
-          <div style="padding-left:1.4em;margin-top:4px">‧ 不欲包含狹義詞時，請標註「不含狹義詞」</div>
-          <div style="padding-left:2.4em">例：<code>Algorithms (不含狹義詞)</code></div>
+          <div style="padding-left:1.4em;margin-top:4px">‧ 不欲包含狹義詞時，請標註「不含狹義詞」、「不狹」、「noexp」或「no exp」</div>
+          <div style="padding-left:2.4em">例：<code>Algorithms (不含狹義詞)</code>、<code>Algorithms (不狹)</code>、<code>Algorithms (noexp)</code></div>
         </div>
         <div data-en>
           <div>• Synonyms & controlled terms (Emtree, MeSH, CINAHL Heading): one term per line.</div>
@@ -340,8 +340,8 @@ Optic Nerve/dg)</pre>
 AND
 (Ultrasonography
 Optic Nerve/dg)</pre>
-          <div style="padding-left:1.4em;margin-top:4px">‧ To exclude narrower terms, mark it as non-exploded.</div>
-          <div style="padding-left:2.4em">e.g. <code>Algorithms (不含狹義詞)</code></div>
+          <div style="padding-left:1.4em;margin-top:4px">‧ To exclude narrower terms, mark it as non-exploded — <code>(不含狹義詞)</code>, <code>(不狹)</code>, <code>(noexp)</code> or <code>(no exp)</code>.</div>
+          <div style="padding-left:2.4em">e.g. <code>Algorithms (noexp)</code></div>
         </div>
       </div>
     </details>
@@ -1879,7 +1879,7 @@ if (typeof module !== "undefined" && module.exports) {
   var CV_SUB = { pubmed:'"%T/%S"[mh]', ovid:'exp "%T"/%S', embase:'"%T"/%S', cochrane:'[mh "%T"/%S]', ebsco:'(MH "%T/%S")' };
   // 不展開（不含下位／狹義詞）
   var CV_NOEXP = { pubmed:'"%T"[mh:noexp]', ovid:'%T/', embase:'"%T"/de', cochrane:'[mh ^"%T"]', ebsco:'MH ("%T")' };
-  var CV_NOEXP_RE=/[（(]\s*不含[^)）]{0,12}[)）]/;                    // (不含狹義詞)/(不含下位詞)…
+  var CV_NOEXP_RE=/[（(]\s*(?:不含[^)）]{0,12}|不狹[義詞]{0,2}|no[\s-]?exp\w*)\s*[)）]|(?:^|\s)no[\s-]?exp(?=\s|$)/i;  // (不含狹義詞)/(不含下位詞)/(不狹)/(noexp)/(no exp) 或行末 noexp、no exp
   function cvTermRender(term, eng, level, noexp){
     term=String(term).replace(/^[,;]+|[,;]+$/g,"").trim();
     term=term.replace(/^["'“”‘’]+\s*([\s\S]*?)\s*["'“”‘’]+$/,"$1").trim();  // 移除使用者自行加的外層引號，避免與各庫模板引號重複（"exercise therapy" → exercise therapy）
@@ -2220,7 +2220,8 @@ if (typeof module !== "undefined" && module.exports) {
         allRows = baseRows;
       }
       allRows = _appendFilter(allRows, FILTER_SEL, tid);   // 研究設計篩選（可複選）
-      exportData.push({tid:tid, label:tg.label, engine:tg.engine, vocab:tg.vocab, isStart:(tid===startDB), rows:allRows});
+      var vfMiss=_designMiss(FILTER_SEL, tid);   // 尚未整理此資料庫語法的設計 → 標示「請自行確認 Filters」
+      exportData.push({tid:tid, label:tg.label, engine:tg.engine, vocab:tg.vocab, isStart:(tid===startDB), rows:allRows, verify:vfMiss});
       var copyText = allRows.map(function(x){return x.text;}).join("\n");
       cp.onclick=function(){ navigator.clipboard.writeText(copyText); cp.textContent="✓"; cp.classList.add("done"); setTimeout(function(){cp.innerHTML=COPYSVG;cp.classList.remove("done");},1400); };
       // 右側按鈕群：複製圖示 ＋（非 PubMed）「複製最終策略並開啟資料庫」——移到複製圖示右側
@@ -2264,6 +2265,7 @@ if (typeof module !== "undefined" && module.exports) {
       }
       h.appendChild(nm); h.appendChild(hr); card.appendChild(h);
       if(b.reminders.length){ var rem=document.createElement("div"); rem.className="rem"; var _lblRe=new RegExp("^"+String(tg.label).replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"\\s*[：:]?\\s*"); b.reminders.forEach(function(m){ var d=document.createElement("div"); d.textContent="⚠ "+String(m).replace(_lblRe,""); rem.appendChild(d); }); card.appendChild(rem); }
+      if(vfMiss.length){ var vrem=document.createElement("div"); vrem.className="rem"; var vrd=document.createElement("div"); vrd.textContent=_verifyNote(vfMiss); vrem.appendChild(vrd); card.appendChild(vrem); }   // 尚未整理語法的資料庫：提示統一放在資料庫名稱下方（與其他 ⚠ 提示並列）
       // Embase.com：排除「純 MEDLINE 收錄」（去重行）—— 移到該庫卡片
       if(tg.engine==="embase"){
         var eopt=document.createElement("label"); eopt.className="pmopt";
@@ -2415,9 +2417,11 @@ if (typeof module !== "undefined" && module.exports) {
     var rows="";
     lastGen.data.forEach(function(c){
       var lab=wesc(c.label)+(c.isStart?(en?" (start)":"（起始）"):"");
+      var vf=(c.verify||[]), span=c.rows.length+(vf.length?1:0);
       c.rows.forEach(function(x,i){
-        rows+="<tr>"+(i===0?("<td rowspan='"+c.rows.length+"' style='"+tdb+"'>"+fspan(lab)+"</td>"):"")+"<td style='"+tnum+"'>"+fspan(x.n!=null?String(x.n):"")+"</td><td style='"+tsyn+"'>"+synCell(x.text, c.engine, c.vocab)+"</td></tr>";
+        rows+="<tr>"+(i===0?("<td rowspan='"+span+"' style='"+tdb+"'>"+fspan(lab)+"</td>"):"")+"<td style='"+tnum+"'>"+fspan(x.n!=null?String(x.n):"")+"</td><td style='"+tsyn+"'>"+synCell(x.text, c.engine, c.vocab)+"</td></tr>";
       });
+      if(vf.length){ rows+="<tr><td style='"+tnum+"'></td><td style='"+tsyn+";color:#b45309'>"+fspan(wesc(_verifyNote(vf)))+"</td></tr>"; }   // 尚未整理語法的資料庫：標示「請自行確認 Filters」
     });
     var title=en?"PICO Search Strategy":"PICO 檢索策略";
     var subline=(en?"Field level: ":"欄位完整度：")+wesc(lastGen.level);
@@ -2445,7 +2449,20 @@ if (typeof module !== "undefined" && module.exports) {
   // ===== \u56de\u586b\u6aa2\u7d22\u7d00\u9304\u8868\uff1a\u628a\u751f\u6210\u7684\u6aa2\u7d22\u7b56\u7565\u5beb\u56de\u4f7f\u7528\u8005\u4e0a\u50b3\u7684 Word\uff08\u5c31\u5730\u7de8\u8f2f word/document.xml\uff0c\u539f\u751f zip \u8b80\u5beb\uff0c\u53ef\u96e2\u7dda\uff09 =====
   function updateRecordBtn(){ var b=$("#recordBtn"); if(!b) return; b.style.display=(recordDocx && lastGen && lastGen.data && lastGen.data.length)?"":"none"; }
   // 研究設計篩選（可複選）：每個選到且該庫有語法的設計＝獨立一行「最終組合 AND (篩選)」；
-  // 選超過一個時，再加一行聯集 = 各篩選行以 OR 合併（例：#6、#7、#8 → #9 = #6 OR #7 OR #8）。不支援的資料庫略過。
+  // 選超過一個時，再加一行聯集 = 各篩選行以 OR 合併（例：#6、#7、#8 → #9 = #6 OR #7 OR #8）。尚未整理語法的資料庫另以「請自行確認 Filters」標示（見 _designMiss／_verifyNote）。
+  // 尚未整理研究設計篩選語法的資料庫（此設計在 STUDY_FILTERS 無對應）→ 回傳這些設計 key，供標示「請自行確認 Filters」
+  function _designMiss(sels, tid){
+    if(!sels || !sels.length) return [];
+    return sels.filter(function(s){ return !(STUDY_FILTERS[s] && STUDY_FILTERS[s][tid]); });
+  }
+  function _verifyNote(keys){
+    var en=isEn();
+    var DL=en?{rct:"RCT",quasi:"Quasi-experimental",cohort:"Cohort",casecontrol:"Case-control",crosssectional:"Cross-sectional",qualitative:"Qualitative",sr:"SR",guideline:"Guideline"}
+             :{rct:"RCT",quasi:"類實驗 Quasi",cohort:"Cohort",casecontrol:"Case-control",crosssectional:"Cross-sectional",qualitative:"質性 Qualitative",sr:"SR",guideline:"指引 Guideline"};
+    var names=(keys||[]).map(function(k){return DL[k]||k;}).join(en?", ":"、");
+    return en ? ("⚠ Please verify Filters yourself — filter syntax not yet compiled for this database"+(names?(" ("+names+")"):""))
+             : ("⚠ 請自行確認 Filters（本工具尚未整理此資料庫／平台的研究設計篩選語法"+(names?("："+names):"")+"）");
+  }
   function _appendFilter(allRows, sels, tid){
     if(!sels || !sels.length || !allRows.length) return allRows;
     var fx=[]; sels.forEach(function(s){ if(STUDY_FILTERS[s] && STUDY_FILTERS[s][tid]) fx.push(STUDY_FILTERS[s][tid]); });
@@ -2531,8 +2548,8 @@ if (typeof module !== "undefined" && module.exports) {
     if(tcs.length>=4){ _cellSetText(doc, tcs[3], ""); }
     return clone;
   }
-  // \u56de\u586b\uff1a\u53ea\u8986\u84cb\u300cX\u81ea\u7531\u8a5e\u5f59\uff0fX\u63a7\u5236\u8a5e\u5f59\u300d\u9019\u985e\u6982\u5ff5\u63d0\u793a\u683c\uff08\u4f9d\u6982\u5ff5\u00d7\u81ea\u7531/\u63a7\u5236\u5c0d\u61c9\uff09\uff0c\u9ed1\u5b57\u8986\u84cb\u539f\u63d0\u793a\uff1b
-  // \u7d44\u5408\u884c\u3001Filter \u884c\u3001\u64cd\u4f5c\u8aaa\u660e\u5217\u4e00\u5f8b\u8df3\u904e\u4e0d\u52d5\uff08\u4fdd\u7559\u4f7f\u7528\u8005\u6a23\u677f\uff09\u3002
+  // \u56de\u586b\uff1a\u628a\u8a72\u5eab\u5728\u5de5\u5177\u751f\u6210\u7684\u6574\u4efd\u6aa2\u7d22\u5f0f\uff08\u6982\u5ff5\u884c\uff0b\u7d44\u5408\u884c\uff0bFilter \u884c\uff0c\u8207\u756b\u9762\u76f8\u540c\uff09\u4f9d\u5e8f\u9ed1\u5b57\u586b\u5165\u300c\u975e\u64cd\u4f5c\u8aaa\u660e\u300d\u7684\u53ef\u586b\u5217\uff0c
+  // \u8986\u84cb\u539f\u672c\u7684\u63d0\u793a\u5b57\uff08X\u81ea\u7531\u8a5e\u5f59\u2026\uff09\uff1b\u884c\u6578\u4e0d\u8db3\u81ea\u52d5\u65b0\u589e\u3001\u904e\u591a\u79fb\u9664\uff1b\u64cd\u4f5c\u8aaa\u660e\u5217\uff08\u7528\u9078\u55ae\uff0f\u9808\u5207\u63db\u2026\uff09\u4e00\u5f8b\u8df3\u904e\u4fdd\u7559\u3002
   function fillRecordForm(xml){
     var doc=new DOMParser().parseFromString(xml,"application/xml");
     if(doc.getElementsByTagName("parsererror").length) throw new Error("XML parse error");
@@ -2541,7 +2558,6 @@ if (typeof module !== "undefined" && module.exports) {
     if(!target) return {ok:false, reason:"noTable"};
     var trs=_dchild(target,"tr"), filled=0, dbHit={};
     var _isInstr=function(s){ return /\u7528\u9078\u55ae|\u9808\u5207\u63db|\u5207\u63db\u5230|\u6253\u52fe|\u9ede\u64ca|\u8907\u88fd|\u53d6\u4ee3|\u5c0b\u627e\u76ee\u6a19|\u8cbc\u5165|\u8cbc\u4e0a|Ctrl|Basic Search|Combine|Search History|Limits|\u52fe\u9078/i.test(s||""); };
-    var _rowNum=function(it){ var n=parseInt((it.tcs[1]?_recCellText(it.tcs[1]):"").replace(/[^\d]/g,""),10); return isNaN(n)?null:n; };
     // \u4f9d\u8cc7\u6599\u5eab\u5206\u5340\u584a\uff08\u5217\u9996\u8cc7\u6599\u5eab\u6b04\u6709\u6587\u5b57\uff1d\u65b0\u5340\u584a\uff09
     var blocks=[], cur=null;
     for(var ri=1; ri<trs.length; ri++){
@@ -2550,43 +2566,120 @@ if (typeof module !== "undefined" && module.exports) {
       if(t0){ cur={tid:_recMapDB(t0), rows:[trs[ri]]}; blocks.push(cur); }
       else if(cur){ cur.rows.push(trs[ri]); }
     }
-    var selFilters=(lastGen&&lastGen.filters)||[];
+    // \u6bcf\u500b\u8cc7\u6599\u5eab\u5728\u5de5\u5177\u751f\u6210\u7684\u6574\u4efd\u6aa2\u7d22\u5f0f\uff08\u542b\u6982\u5ff5\u884c\u3001\u7d44\u5408\u884c\u3001Filter \u884c\uff09\uff0c\u8207\u756b\u9762\u986f\u793a\u76f8\u540c
+    var LINES={}, VERIFY={}; ((lastGen&&lastGen.data)||[]).forEach(function(c){ if(c&&c.tid){ LINES[c.tid]=c.rows; VERIFY[c.tid]=(c.verify||[]); } });
     blocks.forEach(function(bk){
-      if(!bk.tid || !RECORD_FILL[bk.tid]) return;
-      // \u5148\u5206\u985e\uff08\u7528\u539f\u59cb\u63d0\u793a\u5b57\uff09\uff0c\u518d\u586b\uff0c\u4ee5\u514d\u8986\u84cb\u5f8c\u5224\u65b7\u5931\u6e96
-      var info=bk.rows.map(function(tr){ var tcs=_dchild(tr,"tc"); var label=_paraLabel(tcs[2]).replace(/\s+/g,"").trim(); var c2=_recCellText(tcs[2]);
-        return {tr:tr, tcs:tcs, label:label, c2:c2, kind:/\u81ea\u7531\u8a5e/.test(label)?"ft":(/\u63a7\u5236\u8a5e/.test(label)?"cv":null), instr:_isInstr(c2+" "+(tcs[3]?_recCellText(tcs[3]):""))}; });
-      // 1) \u53ea\u8986\u84cb\u6982\u5ff5\u63d0\u793a\u683c\uff08X\u81ea\u7531\u8a5e\u5f59\uff0fX\u63a7\u5236\u8a5e\u5f59\uff09\uff0c\u9ed1\u5b57\u6574\u683c\u8986\u84cb
-      info.forEach(function(it){ if(!it.kind) return; var cm=it.label.match(/[PICO]/i); if(!cm) return;
-        var concept=cm[0].toUpperCase(), slots=RECORD_FILL[bk.tid].slots, syntax=null;
-        for(var key in slots){ if(key && key.charAt(0).toUpperCase()===concept && slots[key][it.kind]){ syntax=slots[key][it.kind]; break; } }
-        if(syntax==null||syntax==="") return; _cellSetText(doc, it.tcs[2], syntax); filled++; dbHit[bk.tid]=1; });
-      // 2) \u7814\u7a76\u8a2d\u8a08\u7be9\u9078\uff1a\u586b\u5165 Filter \u5217\uff08\u8986\u84cb\u65e2\u6709 Filter \u63d0\u793a\u683c\uff1b\u4e0d\u8db3\u65b0\u589e\u3001\u904e\u591a\u79fb\u9664\uff1b\u64cd\u4f5c\u8aaa\u660e\u5217\u8df3\u904e\u4fdd\u7559\uff09
-      var fx=selFilters.filter(function(d){ return STUDY_FILTERS[d] && STUDY_FILTERS[d][bk.tid]; });
-      if(!fx.length) return;
-      var combo=null; for(var ci=0;ci<info.length;ci++){ var it=info[ci]; if(it.kind||it.instr) continue; if(/\bOR\b|\bAND\b/.test(it.c2) && /\d/.test(it.c2)){ combo=it; break; } }
-      var prefix = combo? (/S\s*\d/.test(combo.c2)?"S":(/#\s*\d/.test(combo.c2)?"#":"")) : "#";
-      var baseRef = combo && _rowNum(combo)!=null ? (prefix+_rowNum(combo)) : null;
-      var started = combo?false:true, slots2=[];
-      info.forEach(function(it){ if(combo && it===combo){ started=true; return; } if(!started) return; if(it.kind||it.instr) return; slots2.push(it); });
-      var runMax=0; info.forEach(function(it){ var n=_rowNum(it); if(n!=null&&n>runMax) runMax=n; });
-      var anchor = combo? combo.tr : (slots2.length?slots2[0].tr:bk.rows[bk.rows.length-1]);
-      var lastPlaced=anchor, refs=[];
-      fx.forEach(function(d,i){
-        var tr, num;
-        if(i<slots2.length){ tr=slots2[i].tr; num=(_rowNum(slots2[i])!=null)?_rowNum(slots2[i]):(++runMax); }
-        else { tr=_cloneRowCont(doc, anchor); lastPlaced.parentNode.insertBefore(tr, lastPlaced.nextSibling); num=++runMax; }
-        var tcs=_dchild(tr,"tc"); _cellSetText(doc, tcs[1], String(num));
-        _cellSetText(doc, tcs[2], baseRef?(baseRef+" AND ("+STUDY_FILTERS[d][bk.tid]+")"):STUDY_FILTERS[d][bk.tid]);
-        lastPlaced=tr; refs.push(prefix+num); filled++;
-      });
-      if(fx.length>1){ var un=_cloneRowCont(doc, anchor); var t2=_dchild(un,"tc"); _cellSetText(doc, t2[1], String(++runMax)); _cellSetText(doc, t2[2], refs.join(" OR ")); lastPlaced.parentNode.insertBefore(un, lastPlaced.nextSibling); lastPlaced=un; }
-      for(var k=fx.length;k<slots2.length;k++){ slots2[k].tr.parentNode.removeChild(slots2[k].tr); }   // \u79fb\u9664\u591a\u9918\u7684 Filter \u6a23\u677f\u683c
+      var baseLines=LINES[bk.tid]; if(!bk.tid || !baseLines || !baseLines.length) return;
+      var _vf=VERIFY[bk.tid]||[];
+      var lines=_vf.length ? baseLines.concat([{n:null, text:_verifyNote(_vf)}]) : baseLines;   // 尚未整理語法的資料庫：多填一列「請自行確認 Filters」
+      // \u4fdd\u7559\u64cd\u4f5c\u8aaa\u660e\u5217\uff1b\u5176\u9918\uff08\u6982\u5ff5\u63d0\u793a\u3001\u7d44\u5408\u3001Filter \u6a23\u677f\u683c\uff09\uff1d\u53ef\u586b\u5217\uff0c\u4f9d\u756b\u9762\u9806\u5e8f\uff08#\u8207\u8a9e\u6cd5\uff09\u9010\u5217\u9ed1\u5b57\u586b\u5165
+      var fillable=[];
+      bk.rows.forEach(function(tr){ var tcs=_dchild(tr,"tc"); if(tcs.length<3) return; var c2=_recCellText(tcs[2]); if(_isInstr(c2)) return; fillable.push(tr); });   // \u53ea\u6536\u300c\u641c\u5c0b\u8a9e\u6cd5\u300d\u6b04\u53ef\u586b\u7684\u5b8c\u6574\u5217\uff08\u22653 \u6b04\u3001\u975e\u64cd\u4f5c\u8aaa\u660e\uff09\uff1b\u5408\u4f75\uff0f\u5168\u5bec\u5217\u8207\u8aaa\u660e\u5217\u4fdd\u7559\u4e0d\u52d5\uff0c\u907f\u514d\u5403\u6389\u884c
+      var M=lines.length, lastPlaced=null;
+      for(var i=0;i<M;i++){
+        var tr;
+        if(i<fillable.length){ tr=fillable[i]; }
+        else { var anc=lastPlaced||(fillable.length?fillable[fillable.length-1]:bk.rows[bk.rows.length-1]); tr=_cloneRowCont(doc, anc); anc.parentNode.insertBefore(tr, anc.nextSibling); }
+        var tcs=_dchild(tr,"tc"); if(tcs.length<3){ lastPlaced=tr; continue; }
+        _cellSetText(doc, tcs[1], lines[i].n!=null?String(lines[i].n):"");
+        _cellSetText(doc, tcs[2], lines[i].text);
+        lastPlaced=tr; filled++;
+      }
+      for(var j=fillable.length-1;j>=M;j--){ fillable[j].parentNode.removeChild(fillable[j]); }   // \u79fb\u9664\u591a\u9918\u7684\u53ef\u586b\u6a23\u677f\u5217\uff08\u4fdd\u7559\u64cd\u4f5c\u8aaa\u660e\u5217\uff09
       dbHit[bk.tid]=1;
     });
+    _insertConceptNote(doc);
     var out=new XMLSerializer().serializeToString(doc);
     if(!/^\s*<\?xml/i.test(out)) out='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n'+out;
     return {ok:true, filled:filled, dbs:Object.keys(dbHit).length, xml:out};
+  }
+  // 沒有搜尋策略表格時：把「下載 Word」的檢索策略表附加到文件末（保留原文其餘內容）
+  function _mkP(doc, runs){
+    var p=doc.createElementNS(_WNS,"w:p");
+    (runs||[]).forEach(function(rn){
+      var r=doc.createElementNS(_WNS,"w:r"), rpr=doc.createElementNS(_WNS,"w:rPr");
+      if(rn.bold) rpr.appendChild(doc.createElementNS(_WNS,"w:b"));
+      var col=doc.createElementNS(_WNS,"w:color"); col.setAttributeNS(_WNS,"w:val",rn.color||"000000"); rpr.appendChild(col);
+      if(rn.sz){ var s=doc.createElementNS(_WNS,"w:sz"); s.setAttributeNS(_WNS,"w:val",String(rn.sz)); rpr.appendChild(s); }
+      r.appendChild(rpr);
+      var t=doc.createElementNS(_WNS,"w:t"); t.setAttributeNS(_XMLNS,"xml:space","preserve"); t.textContent=(rn.text==null?"":rn.text); r.appendChild(t);
+      p.appendChild(r);
+    });
+    return p;
+  }
+  function _mkTc(doc, runs, o){ o=o||{};
+    var tc=doc.createElementNS(_WNS,"w:tc"), tcPr=doc.createElementNS(_WNS,"w:tcPr");
+    if(o.w){ var w=doc.createElementNS(_WNS,"w:tcW"); w.setAttributeNS(_WNS,"w:w",String(o.w)); w.setAttributeNS(_WNS,"w:type","dxa"); tcPr.appendChild(w); }
+    if(o.shd){ var s=doc.createElementNS(_WNS,"w:shd"); s.setAttributeNS(_WNS,"w:val","clear"); s.setAttributeNS(_WNS,"w:color","auto"); s.setAttributeNS(_WNS,"w:fill",o.shd); tcPr.appendChild(s); }
+    if(o.vmerge){ var vm=doc.createElementNS(_WNS,"w:vMerge"); if(o.vmerge==="restart") vm.setAttributeNS(_WNS,"w:val","restart"); tcPr.appendChild(vm); }
+    tc.appendChild(tcPr); tc.appendChild(_mkP(doc, runs)); return tc;
+  }
+  // 在概念表下方加註：檢索詞未由工具自動回填（避免與策略表誤會為同步）；具冪等性，不重覆加。
+  function _insertConceptNote(doc){
+    var en=isEn();
+    var ts=doc.getElementsByTagNameNS(_WNS,"t");
+    for(var i=0;i<ts.length;i++){ var tx=ts[i].textContent||""; if(tx.indexOf("未由工具自動回填")>=0 || tx.indexOf("not auto-filled")>=0) return; }   // 已加過就跳過
+    var tbls=doc.getElementsByTagNameNS(_WNS,"tbl"), ct=null;
+    for(var j=0;j<tbls.length;j++){ var txt=_recCellText(tbls[j]); if(/emtree/i.test(txt)&&/mesh/i.test(txt)&&/cinahl/i.test(txt)&&!/搜尋語法|Search syntax/.test(txt)){ ct=tbls[j]; break; } }
+    var note=_mkP(doc,[{text:(en?"※ Search terms (concept table) are NOT auto-filled by the tool — the version above is your own; please verify manually if you edited terms in the tool.":"※ 檢索詞（概念表）未由工具自動回填，上方為您自行整理的版本；若曾於工具內修改，請自行核對。"), color:"C00000", sz:18}]);
+    if(ct && ct.parentNode){ ct.parentNode.insertBefore(note, ct.nextSibling); }
+    else { var body=doc.getElementsByTagNameNS(_WNS,"body")[0]; if(body) body.insertBefore(note, body.firstChild); }
+  }
+  function appendStrategyToDoc(xml){
+    var doc=new DOMParser().parseFromString(xml,"application/xml");
+    if(doc.getElementsByTagName("parsererror").length) throw new Error("XML parse error");
+    var body=doc.getElementsByTagNameNS(_WNS,"body")[0]; if(!body) return {ok:false,reason:"noBody"};
+    var data=(lastGen&&lastGen.data)||[]; if(!data.length) return {ok:false,reason:"noData"};
+    var en=isEn();
+    var tbl=doc.createElementNS(_WNS,"w:tbl"), pr=doc.createElementNS(_WNS,"w:tblPr");
+    var tw=doc.createElementNS(_WNS,"w:tblW"); tw.setAttributeNS(_WNS,"w:w","0"); tw.setAttributeNS(_WNS,"w:type","auto"); pr.appendChild(tw);
+    var bd=doc.createElementNS(_WNS,"w:tblBorders");
+    ["top","left","bottom","right","insideH","insideV"].forEach(function(e){ var el=doc.createElementNS(_WNS,"w:"+e); el.setAttributeNS(_WNS,"w:val","single"); el.setAttributeNS(_WNS,"w:sz","4"); el.setAttributeNS(_WNS,"w:space","0"); el.setAttributeNS(_WNS,"w:color","999999"); bd.appendChild(el); });
+    pr.appendChild(bd); tbl.appendChild(pr);
+    var grid=doc.createElementNS(_WNS,"w:tblGrid"); [1500,600,7200].forEach(function(gw){ var gc=doc.createElementNS(_WNS,"w:gridCol"); gc.setAttributeNS(_WNS,"w:w",String(gw)); grid.appendChild(gc); }); tbl.appendChild(grid);
+    var th=doc.createElementNS(_WNS,"w:tr");
+    th.appendChild(_mkTc(doc,[{text:(en?"Database":"資料庫 Database"),bold:true,color:"FFFFFF"}],{shd:"5B21B6",w:1500}));
+    th.appendChild(_mkTc(doc,[{text:"#",bold:true,color:"FFFFFF"}],{shd:"5B21B6",w:600}));
+    th.appendChild(_mkTc(doc,[{text:(en?"Search syntax":"搜尋語法 Search syntax"),bold:true,color:"FFFFFF"}],{shd:"5B21B6",w:7200}));
+    tbl.appendChild(th);
+    var cnt=0;
+    data.forEach(function(c){ var rws=c.rows||[]; if(!rws.length) return;
+      var vf=(c.verify||[]);
+      rws.forEach(function(x,idx){
+        var tr=doc.createElementNS(_WNS,"w:tr");
+        tr.appendChild(_mkTc(doc,[{text:(idx===0?(c.label+(c.isStart?(en?" (start)":"（起始）"):"")):""),bold:true}],{vmerge:(idx===0?"restart":"cont"),w:1500}));
+        tr.appendChild(_mkTc(doc,[{text:(x.n!=null?String(x.n):"")}],{w:600}));
+        tr.appendChild(_mkTc(doc,[{text:x.text}],{w:7200}));
+        tbl.appendChild(tr); cnt++;
+      });
+      if(vf.length){   // 尚未整理語法的資料庫：多加一列「請自行確認 Filters」
+        var vtr=doc.createElementNS(_WNS,"w:tr");
+        vtr.appendChild(_mkTc(doc,[{text:""}],{vmerge:"cont",w:1500}));
+        vtr.appendChild(_mkTc(doc,[{text:""}],{w:600}));
+        vtr.appendChild(_mkTc(doc,[{text:_verifyNote(vf),color:"B45309"}],{w:7200}));
+        tbl.appendChild(vtr); cnt++;
+      }
+    });
+    // 篩選語法出處（若有勾選）
+    var srcPs=[];
+    if(lastGen.filters && lastGen.filters.length && typeof STUDY_FILTER_SRC!=="undefined"){
+      var DL={rct:"RCT",quasi:(en?"Quasi-experimental":"類實驗 Quasi"),qualitative:(en?"Qualitative":"質性 Qualitative"),sr:"SR",guideline:(en?"Guideline":"指引 Guideline")};
+      lastGen.filters.forEach(function(dz){ if(!STUDY_FILTER_SRC[dz]) return; var g={},ord=[];
+        data.forEach(function(c){ var s=STUDY_FILTER_SRC[dz][c.tid]; if(s){ if(!g[s]){g[s]=[];ord.push(s);} g[s].push(c.label); } });
+        if(!ord.length) return; var parts=ord.map(function(s){ return g[s].join("、")+" — "+s; });
+        srcPs.push(_mkP(doc,[{text:(DL[dz]||dz)+"："+parts.join("；"), sz:18, color:"444444"}]));
+      });
+    }
+    var head=_mkP(doc,[{text:(en?"Search strategy (generated by SR Search Toolkit)":"搜尋策略（SR 檢索工具組產生）"),bold:true}]);
+    var lvl=_mkP(doc,[{text:(en?"Field level: ":"欄位完整度：")+((lastGen&&lastGen.level)||""), sz:18, color:"555555"}]);
+    var tail=_mkP(doc,[{text:""}]);
+    var nodes=[head, lvl, tbl].concat(srcPs.length?[_mkP(doc,[{text:(en?"Study-design filter sources":"研究設計篩選語法出處"),bold:true,sz:18}])].concat(srcPs):[]).concat([tail]);
+    var sect=null, kids=body.childNodes; for(var i=kids.length-1;i>=0;i--){ if(kids[i].localName==="sectPr" && kids[i].namespaceURI===_WNS){ sect=kids[i]; break; } }
+    nodes.forEach(function(nd){ if(sect) body.insertBefore(nd, sect); else body.appendChild(nd); });
+    _insertConceptNote(doc);
+    var out=new XMLSerializer().serializeToString(doc);
+    if(!/^\s*<\?xml/i.test(out)) out='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n'+out;
+    return {ok:true, filled:cnt, xml:out, appended:true};
   }
   if($("#recordBtn")) $("#recordBtn").onclick=async function(){
     if(!recordDocx || !lastGen || !lastGen.data.length){ return; }
@@ -2598,7 +2691,9 @@ if (typeof module !== "undefined" && module.exports) {
       if(!de) throw new Error(en?"document.xml not found":"\u627e\u4e0d\u5230 document.xml");
       var xml = de.method===0 ? new TextDecoder().decode(de.data) : new TextDecoder().decode(await _inflateRaw(de.data));
       var res=fillRecordForm(xml);
-      if(!res.ok){ alert(en?"This file has no \u201c\u641c\u5c0b\u7b56\u7565\uff0fSearch syntax\u201d table to fill into.":"\u9019\u4efd\u6a94\u6848\u6c92\u6709\u53ef\u56de\u586b\u7684\u300c\u641c\u5c0b\u7b56\u7565\u300d\u8868\u683c\uff08\u8acb\u4e0a\u50b3\u542b\u641c\u5c0b\u7b56\u7565\u8868\u7684\u7d00\u9304\u8868\uff09\u3002"); btn.disabled=false; return; }
+      if(!res.ok && res.reason==="noTable"){ res=appendStrategyToDoc(xml); }   // \u6a94\u6848\u7121\u641c\u5c0b\u7b56\u7565\u8868 \u2192 \u6539\u9644\u52a0\u300c\u4e0b\u8f09 Word\u300d\u7684\u7b56\u7565\u8868\uff08\u5176\u9918\u5167\u5bb9\u4fdd\u7559\uff09
+      if(!res.ok){ alert(en?"Could not build the strategy for this file.":"\u7121\u6cd5\u70ba\u6b64\u6a94\u6848\u7522\u751f\u6aa2\u7d22\u7b56\u7565\u5167\u5bb9\u3002"); btn.disabled=false; return; }
+      if(!res.filled){ alert(en?"No matching rows were filled \u2014 check that the databases you generated match those listed in the form.":"\u6c92\u6709\u53ef\u5c0d\u61c9\u56de\u586b\u7684\u5217 \u2014\u2014 \u8acb\u78ba\u8a8d\u751f\u6210\u7684\u8cc7\u6599\u5eab\u8207\u7d00\u9304\u8868\u4e2d\u5217\u51fa\u7684\u8cc7\u6599\u5eab\u4e00\u81f4\u3002"); btn.disabled=false; return; }
       if(!res.filled){ alert(en?"No matching rows were filled \u2014 check that the databases you generated match those listed in the form.":"\u6c92\u6709\u53ef\u5c0d\u61c9\u56de\u586b\u7684\u5217 \u2014\u2014 \u8acb\u78ba\u8a8d\u751f\u6210\u7684\u8cc7\u6599\u5eab\u8207\u7d00\u9304\u8868\u4e2d\u5217\u51fa\u7684\u8cc7\u6599\u5eab\u4e00\u81f4\u3002"); btn.disabled=false; return; }
       var bytes=new TextEncoder().encode(res.xml);
       var crc=_crc32(bytes), comp;
