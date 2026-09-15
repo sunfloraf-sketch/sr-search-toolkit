@@ -270,6 +270,18 @@
       <div>
         <label class="fld"><span data-zh>輸出資料庫</span><span data-en>Output databases</span></label>
         <div class="dbchecks" id="dbchecks"></div>
+        <div id="filterOpt" style="margin-top:12px;display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;font-size:13px">
+          <span class="fld" style="margin:0" title="Study-design Filter (multi-select): for each ticked design, a line「final set AND (filter syntax)」is appended per supported database; ticking more than one adds a union (OR) line. RCT=App.2-1, Quasi=2-2, Observational=2-3, Qualitative=2-4, SR=2-5, Guideline=2-6. Cochrane CENTRAL (RCTs only) needs no filter."><span data-zh>研究設計篩選：</span><span data-en>Study-design Filter:</span></span>
+          <label class="sdf" style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" name="sdfilter" value="rct"><span>RCT</span></label>
+          <label class="sdf" style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" name="sdfilter" value="quasi"><span>Quasi-experimental</span></label>
+          <label class="sdf" style="display:flex;align-items:center;gap:4px;cursor:not-allowed;opacity:.45"><input type="checkbox" name="sdfilter" value="cohort" disabled><span>Cohort</span></label>
+          <label class="sdf" style="display:flex;align-items:center;gap:4px;cursor:not-allowed;opacity:.45"><input type="checkbox" name="sdfilter" value="casecontrol" disabled><span>Case-control</span></label>
+          <label class="sdf" style="display:flex;align-items:center;gap:4px;cursor:not-allowed;opacity:.45"><input type="checkbox" name="sdfilter" value="crosssectional" disabled><span>Cross-sectional</span></label>
+          <label class="sdf" style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" name="sdfilter" value="qualitative"><span>Qualitative</span></label>
+          <label class="sdf" style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" name="sdfilter" value="sr"><span>SR</span></label>
+          <label class="sdf" style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" name="sdfilter" value="guideline"><span>Guideline</span></label>
+          <span style="color:var(--mut);font-size:12px;flex-basis:100%"><span data-zh>僅支援特定資料庫</span><span data-en>Applied only to supported databases.</span></span>
+        </div>
       </div>
     </div>
   </div>
@@ -390,14 +402,15 @@ Optic Nerve/dg)</pre>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn primary" id="genBtn"><span data-zh>▶ 生成檢索策略</span><span data-en>▶ Generate strategies</span></button>
       <button class="btn ghost" id="wordBtn" disabled title="請先按「生成檢索策略」" data-tip-zh="請先按「生成檢索策略」" data-tip-en="Generate strategies first"><span data-zh>⬇ 下載 Word</span><span data-en>⬇ Download Word</span></button>
+      <button class="btn ghost" id="recordBtn" style="display:none" title="把生成的檢索策略回填到您上傳的紀錄表，下載完整 Word" data-tip-zh="把生成的檢索策略回填到您上傳的紀錄表，下載完整 Word" data-tip-en="Fill the generated strategies back into your uploaded record form and download the full Word"><span data-zh>⬇ 回填檢索紀錄表</span><span data-en>⬇ Fill in record form</span></button>
     </div>
   </div>
   <div class="inwarn" id="picoWarn" style="display:none"></div>
   <div id="outs"></div>
 
   <div class="foot">
-    <span data-zh>此工具為純網頁程式，未使用 AI。資料預設只在瀏覽器本機執行與暫存；只有按下「PubMed 估算文章數」時，對應檢索式才會傳送至 NCBI E-utilities（不含 email）。產出的檢索策略請人工覆核並於資料庫實測後再使用。</span>
-    <span data-en>A pure web-based tool with no AI. Data stays in your browser by default; only when you click “Estimate PubMed counts” are the relevant queries sent to NCBI E-utilities (no email). Please human-check and test the generated strategy before use.</span><br>
+    <span data-zh>此工具為純網頁程式，未使用 AI。資料預設只在瀏覽器本機執行與暫存；只有按下「PubMed 估算文章數」時，對應檢索式才會傳送至 NCBI E-utilities。產出的檢索策略請人工覆核並於資料庫實測後再使用。</span>
+    <span data-en>A pure web-based tool with no AI. Data stays in your browser by default; only when you click “Estimate PubMed counts” are the relevant queries sent to NCBI E-utilities. Please human-check and test the generated strategy before use.</span><br>
     <span data-zh>引用建議: 方靜如（2026）。SR 檢索工具組: PICO 檢索策略產生器、資料庫檢索語法轉換器、鄰近字組合器。Zenodo. <a href="https://doi.org/10.5281/zenodo.21960702" target="_blank" rel="noopener">https://doi.org/10.5281/zenodo.21960702</a><br></span>
     <span>Cite as: Fang CJ (2026). <i>SR Search Toolkit: PICO Strategy Builder, Search Syntax Converter, and Proximity Builder</i>. Zenodo. <a href="https://doi.org/10.5281/zenodo.21960702" target="_blank" rel="noopener">https://doi.org/10.5281/zenodo.21960702</a></span><br>
     © 2026 Ching-Ju Fang <a href="https://orcid.org/0000-0002-7892-8840" target="_blank" rel="noopener" title="ORCID iD" style="text-decoration:none;white-space:nowrap;color:inherit" onclick="try{if(window.goatcounter&&window.goatcounter.count)window.goatcounter.count({path:'author-orcid',title:'作者-ORCID',event:true})}catch(e){}"><svg width="13" height="13" viewBox="0 0 256 256" style="vertical-align:-2px;margin-right:3px" aria-hidden="true"><circle cx="128" cy="128" r="128" fill="#A6CE39"/><g fill="#fff"><path d="M86.3 186.2H70.9V79.1h15.4v107.1z"/><path d="M108.9 79.1h41.6c39.6 0 57 28.3 57 53.6 0 27.5-21.5 53.6-56.8 53.6h-41.8V79.1zm15.4 93.3h24.5c34.9 0 42.9-26.5 42.9-39.7 0-21.5-13.7-39.7-43.7-39.7h-23.7v79.4z"/><circle cx="78.6" cy="56.8" r="10.1"/></g></svg>https://orcid.org/0000-0002-7892-8840</a> · All rights reserved · v2.3.2
@@ -1642,7 +1655,7 @@ if (typeof module !== "undefined" && module.exports) {
       if(html||text){ e.preventDefault(); srCount('pico-paste-table','PICO-貼上表格'); doPasteFill(html,text); }
     });
   }
-  $("#clearBtn").onclick=function(){ if(!confirm(isEn()?"This can't be undone. Clear the whole table?":"動作無法復原，確認徹底清空嗎？")) return; picoBody.innerHTML=""; ["P","I","C","O"].forEach(function(l){ addRow(l); }); outs.innerHTML=""; if(picoWarn)picoWarn.style.display="none"; lastGen=null; if($("#wordBtn")) $("#wordBtn").disabled=true; try{ localStorage.removeItem("sr_pico_inbox"); }catch(e){} clearPersist(); if(restoreBtn) restoreBtn.style.display="none"; };
+  $("#clearBtn").onclick=function(){ if(!confirm(isEn()?"This can't be undone. Clear the whole table?":"動作無法復原，確認徹底清空嗎？")) return; picoBody.innerHTML=""; ["P","I","C","O"].forEach(function(l){ addRow(l); }); outs.innerHTML=""; if(picoWarn)picoWarn.style.display="none"; lastGen=null; if($("#wordBtn")) $("#wordBtn").disabled=true; try{ localStorage.removeItem("sr_pico_inbox"); }catch(e){} clearPersist(); if(restoreBtn) restoreBtn.style.display="none"; if(typeof updateRecordBtn==="function") updateRecordBtn(); };
 
   // ---- 上傳 Word 讀取檢索詞（純瀏覽器解析 .docx，使用原生 DecompressionStream，可離線）----
   var wordFile=$("#wordFile"), uploadBtn=$("#uploadBtn");
@@ -1806,6 +1819,8 @@ if (typeof module !== "undefined" && module.exports) {
           if(colorStyle){ var cs=_colorSplit(k2); em=cs.emtree; me=cs.mesh; cn=cs.cinahl; }
           addRow(g(ci.concept).replace(/\s+/g," ").trim(), g(ci.zh), g(ci.ft), me, em, cn);
         });
+        recordDocx={ buf:buf, name:(f.name||"SR檢索紀錄表.docx") };   // 保留原檔，供回填下載
+        if(typeof updateRecordBtn==="function") updateRecordBtn();
         if(picoWarn) picoWarn.style.display="none";
       }catch(e){ alert((isEn()?"Read failed: ":"讀取失敗：")+e.message); }
       ev.target.value="";
@@ -1972,14 +1987,14 @@ if (typeof module !== "undefined" && module.exports) {
       if(r.ft){
         var _w=[];
         var ft = scopeFreetext(r.ft, startEng, eng, level, _w);
-        qlines.push({n:lineNum, text:ft}); refs.push("#"+lineNum); lineNum++;
+        qlines.push({n:lineNum, text:ft, label:r.label, kind:"ft"}); refs.push("#"+lineNum); lineNum++;
         _w.forEach(function(m){ if(reminders.indexOf(m)<0) reminders.push(m); });
       }
       if(vocab){
         var terms = splitTerms(r[vocab]);
         if(terms.length){
           var cvr = renderCVCell(r[vocab], eng, level);
-          qlines.push({n:lineNum, text:cvr.text}); refs.push("#"+lineNum); lineNum++;
+          qlines.push({n:lineNum, text:cvr.text, label:r.label, kind:"cv"}); refs.push("#"+lineNum); lineNum++;
           if(cvr.hasSub){
             reminders.push(isEn()
               ? (tg.label+": a subheading (e.g. /dg) was used — its code is passed through unchanged and is NOT mapped across thesauri; verify against this database's subheadings.")
@@ -1993,7 +2008,7 @@ if (typeof module !== "undefined" && module.exports) {
       }
       if(tg.pasteCV){                        // AgeLine／ERIC：控制詞彙為使用者在卡片內貼上的完整檢索式，原樣帶入
         var _pc=((PASTE_CV[targetId]||{})[_ri]||"").replace(/\s+$/,"").replace(/^\s+/,"");
-        if(_pc){ qlines.push({n:lineNum, text:_pc}); refs.push("#"+lineNum); lineNum++; }
+        if(_pc){ qlines.push({n:lineNum, text:_pc, label:r.label, kind:"cv"}); refs.push("#"+lineNum); lineNum++; }
       }
       var grp = refs.length ? (refs.length>1 ? "("+refs.join(" OR ")+")" : refs[0]) : null;
       conceptRefs.push(grp);                 // 對齊 rows 順序（空概念為 null），供 C1/C2… 自訂組合對應
@@ -2059,6 +2074,73 @@ if (typeof module !== "undefined" && module.exports) {
     ageline:"https://search.ebscohost.com/",
     eric:"https://eric.ed.gov/?advanced"
   };
+  var recordDocx=null;   // 上傳 Word 的原始位元組（供「回填紀錄表」就地寫回）
+  var RECORD_FILL={};    // 產生檢索策略時：tid → { label, slots:{ 概念→{ft,cv} } }
+  // 研究設計篩選（Filter，選用）：RCT＝附錄2-1、SR＝附錄2-5；逐資料庫語法（成大醫圖彙整，原樣帶入）。
+  var STUDY_FILTERS={
+    rct:{
+      embase_com:"(\"randomized controlled trial\"/de or \"controlled clinical study\"/de or \"randomization\"/de or \"intermethod comparison\"/de or \"double blind procedure\"/de or \"human experiment\"/de OR (random* or placebo or \"parallel group$\" or crossover or \"cross over\" or assigned or allocated or volunteer or volunteers):ti,ab OR (open NEAR/1 label):ti,ab OR ((double or single or doubly or singly) NEAR/1 (blind or blinded or blindly)):ti,ab OR ((assign* or match or matched or allocation) NEAR/5 (alternate or group$ or intervention$ or patient$ or subject$ or participant$)):ti,ab OR (controlled NEAR/7 (study or design or trial)):ti,ab OR (compare or compared or comparison or trial):ti OR ((evaluated or evaluate or evaluating or assessed or assess) and (compare or compared or comparing or comparison)):ab) NOT (((random* NEAR/1 sampl* NEAR/7 (\"cross section*\" or questionnaire$ or survey* or database$)):ti,ab not (\"comparative study\"/de or \"controlled study\"/de or \"randomi$ed controlled\":ti,ab or \"randomly assigned\":ti,ab)) OR (\"cross-sectional study\"/de not (\"randomized controlled trial\"/de or \"controlled clinical study\"/de or \"controlled study\"/de or \"randomi$ed controlled\":ti,ab or \"control group$\":ti,ab)) OR ((((case NEAR/1 control*) and random*) not \"randomi$ed controlled\"):ti,ab) OR ((\"systematic review\" not (trial or study)):ti) OR ((nonrandom* not random*):ti,ab) OR (\"random field*\":ti,ab) OR ((\"random cluster\" NEAR/3 sampl*):ti,ab) OR ((review:ab and review/it) not trial:ti) OR (\"we searched\":ab and (review:ti or review/it)) OR (\"update review\":ab) OR ((databases NEAR/4 searched):ab) OR ((rat or rats or mouse or mice or swine or porcine or murine or sheep or lambs or pigs or piglets or rabbit or rabbits or cat or cats or dog or dogs or cattle or bovine or monkey or monkeys or trout or marmoset*):ti and \"animal experiment\"/de) OR (\"animal experiment\"/de not (\"human experiment\"/de or \"human\"/de)))",
+      embase_ovid:"((Randomized controlled trial/) OR (Controlled clinical study/) OR (random$.ti,ab.) OR (randomization/) OR (intermethod comparison/) OR (placebo.ti,ab.) OR ((compare or compared or comparison).ti.) OR (((evaluated or evaluate or evaluating or assessed or assess) and (compare or compared or comparing or comparison)).ab.) OR ((open adj label).ti,ab.) OR (((double or single or doubly or singly) adj (blind or blinded or blindly)).ti,ab.) OR (double blind procedure/) OR (parallel group$1.ti,ab.) OR ((crossover or cross over).ti,ab.) OR (((assign$ or match or matched or allocation) adj5 (alternate or group$1 or intervention$1 or patient$1 or subject$1 or participant$1)).ti,ab.) OR ((assigned or allocated).ti,ab.) OR ((controlled adj7 (study or design or trial)).ti,ab.) OR ((volunteer or volunteers).ti,ab.) OR (human experiment/) OR (trial.ti.)) NOT ((random$ adj sampl$ adj7 (\"cross section$\" or questionnaire$1 or survey$ or database$1).ti,ab.) not (comparative study/ or controlled study/ or randomi?ed controlled.ti,ab. or randomly assigned.ti,ab.) OR (Cross-sectional study/ not (randomized controlled trial/ or controlled clinical study/ or controlled study/ or randomi?ed controlled.ti,ab. or control group$1.ti,ab.)) OR ((((case adj control$) and random$) not randomi?ed controlled).ti,ab.) OR ((Systematic review not (trial or study)).ti.) OR ((nonrandom$ not random$).ti,ab.) OR (\"Random field$\".ti,ab.) OR ((random cluster adj3 sampl$).ti,ab.) OR ((review.ab. and review.pt.) not trial.ti.) OR (\"we searched\".ab. and (review.ti. or review.pt.)) OR (\"update review\".ab.) OR ((databases adj4 searched).ab.) OR ((rat or rats or mouse or mice or swine or porcine or murine or sheep or lambs or pigs or piglets or rabbit or rabbits or cat or cats or dog or dogs or cattle or bovine or monkey or monkeys or trout or marmoset$1).ti. and animal experiment/) OR (Animal experiment/ not (human experiment/ or human/)))",
+      medline_ovid:"(randomized controlled trial.pt. or controlled clinical trial.pt. or randomi*ed.ab. or placebo.ab. or drug therapy.fs. or randomly.ab. or trial.ab. or groups.ab. not (exp animals/ not humans.sh.))",
+      pubmed:"(randomized controlled trial[pt] OR controlled clinical trial[pt] OR randomi*ed[tiab] OR placebo[tiab] OR drug therapy[sh] OR randomly[tiab] OR trial[tiab] OR groups[tiab] NOT (animals[mh] NOT humans[mh]))",
+      cinahl_ebsco:"((MH (\"randomized controlled trials\" OR \"double-blind studies\" OR \"single‐blind studies\" OR \"random assignment\" OR \"pretest‐posttest design\" OR \"cluster sample\") OR TI (randomised OR randomized) OR AB (random*) OR TI (trial) OR (MH (sample size) AND AB (assigned OR allocated OR control)) OR MH (placebos) OR PT (randomized controlled trial) OR AB (control W5 group) OR MH (\"crossover design\" OR \"comparative studies\") OR AB (cluster W3 RCT)) NOT ((MH (\"animals+\" OR \"animal studies\") OR TI (animal model*)) NOT MH (human)))",
+      wos:"(TS= clinical trial* OR TS=research design OR TS=comparative stud* OR TS=evaluation stud* OR TS=controlled trial* OR TS=follow-up stud* OR TS=prospective stud* OR TS=random* OR TS=placebo* OR TS=(single blind*) OR TS=(double blind*))",
+      scopus:"(INDEXTERMS ( \"clinical trials\" OR \"clinical trials as a topic\" OR \"randomized controlled trial\" OR \"Randomized Controlled Trials as Topic\" OR \"controlled clinical trial\" OR \"Controlled Clinical Trials\" OR \"random allocation\" OR \"Double-Blind Method\" OR \"Single-Blind Method\" OR \"Cross-Over Studies\" OR \"Placebos\" OR \"multicenter study\" OR \"double blind procedure\" OR \"single blind procedure\" OR \"crossover procedure\" OR \"clinical trial\" OR \"controlled study\" OR \"randomization\" OR \"placebo\" ) OR TITLE-ABS-KEY ( \"clinical trials\" OR \"clinical trials as a topic\" OR \"randomized controlled trial\" OR \"Randomized Controlled Trials as Topic\" OR \"controlled clinical trial\" OR \"Controlled Clinical Trials as Topic\" OR \"random allocation\" OR \"randomly allocated\" OR \"allocated randomly\" OR \"Double-Blind Method\" OR \"Single-Blind Method\" OR \"Cross-Over Studies\" OR \"Placebos\" OR \"cross-over trial\" OR \"single blind\" OR \"double blind\" OR \"factorial design\" OR \"factorial trial\" ) OR TITLE ( clinical trial OR trial OR rct* OR random* OR blind* ))"
+    },
+    quasi:{
+      embase_com:"((pretest* OR posttest* OR \"pre test\" OR \"post test*\" OR \"quasi experiment*\" OR quasiexperiment* OR \"repeated measure*\" OR \"time series\"):ti,ab,kw OR \"pretest posttest design\"/exp OR \"pretest posttest control group design\"/exp OR \"quasi experimental study\"/exp OR \"time series analysis \"/exp)",
+      medline_ovid:"(pretest* OR posttest* OR \"pre test\" OR \"post test*\" OR \"quasi experiment*\" OR quasiexperiment* OR \"repeated measure*\" OR \"time series\").mp",
+      pubmed:"(pretest*[tw] OR posttest*[tw] OR \"pre test\"[tw] OR \"post test*\"[tw] OR \"quasi experiment*\"[tw] OR quasiexperiment*[tw] OR \"repeated measure*\"[tw] OR \"time series\"[tw])",
+      cinahl_ebsco:"((pretest* OR posttest* OR \"pre test\" OR \"post test*\" OR \"quasi experiment*\" OR quasiexperiment* OR \"repeated measure*\" OR \"time series\") OR MH (\"pretest-posttest design+\" OR \"pretest-posttest control group design+\" OR \"quasi-experimental studies+\"))",
+      wos:"TS = (pretest* OR posttest* OR \"pre test\" OR \"post test*\" OR \"quasi experiment*\" OR quasiexperiment* OR \"repeated measure*\" OR \"time series\")"
+    },
+    cohort:{},
+    casecontrol:{},
+    crosssectional:{},
+    qualitative:{
+      embase_com:"('qualitative research'/exp OR 'interview'/exp OR (qualitative OR interview* OR themes OR experience*):ti,ab,kw",
+      medline_ovid:"(exp \"Qualitative Research\"/ OR interview.pt OR (qualitative OR interview* OR themes OR experience*).ti,ab,kf)",
+      pubmed:"(\"Qualitative Research\"[mh] OR interview[pt] OR qualitative[tiab] OR interview*[tiab] OR themes[tiab] OR experience*[tiab])",
+      cinahl_ebsco:"(MH (\"Qualitative Studies+\" OR \"Interview+\") OR TI (qualitative OR interview* OR themes OR experience*) OR AB (qualitative OR interview* OR themes OR experience*))",
+      wos:"TS = (qualitative OR interview* OR themes OR experience*)"
+    },
+    sr:{
+      embase_com:"(((\"review\"/exp OR (literature NEAR/3 review*):ti,ab) AND ((medline or medlars or embase or pubmed or cinahl or amed or psychlit or psyclit or psychinfo or psycinfo or scisearch or cochrane):ti,ab OR \"RETRACTED ARTICLE\"/de)) OR ((systematic* NEAR/2 (review* or overview)) OR meta$anal* or \"meta anal*\" or \"meta-anal*\" or metaanal* or metanal*):ti,ab OR \"meta analysis\"/exp OR \"systematic review\"/exp)",
+      medline_ovid:"((review.pt. AND ((medline or medlars or embase or pubmed or cochrane or scisearch or psychinfo or psycinfo or psychlit or psyclit or cinahl or (hand adj2 search$) or (manual$ adj2 search$) or \"electronic database$\" or \"bibliographic database$\" or \"computeri?ed database$\" or \"online database$\" or pooling or pooled or \"mantel haenszel\" or peto or dersimonian or \"der simonian\" or \"fixed effect\").tw,sh. or \"retraction of publication\".pt or \"retracted publication\".pt)) OR \"meta-analysis\".pt. or \"meta-analysis\".sh. OR (meta-analys$ or \"meta analys$\" or metaanalys$ or (systematic$ adj5 review$) or (systematic$ adj5 overview$) or (quantitativ$ adj5 review$) or (quantitativ$ adj5 overview$) or (quantitativ$ adj5 synthesis$) or (methodologic$ adj5 review$) or (methodologic$ adj5 overview$)).tw,sh OR \"integrative research review$\".tw or \"research integration\".tw)",
+      pubmed:"((review[pt] AND (medline OR medlars OR embase OR pubmed OR cochrane OR scisearch OR psychinfo OR psycinfo OR psychlit OR psyclit OR cinahl OR (hand AND search*) OR (manual* AND search*) OR \"electronic database*\" OR \"bibliographic database*\" OR \"computerised database*\" OR \"computerized database*\" OR \"online database*\" OR pooling OR pooled OR \"mantel haenszel\" OR peto OR dersimonian OR \"der simonian\" OR \"fixed effect\" OR \"retraction of publication\"[pt] OR \"retracted publication\"[pt])) OR \"meta-analysis\"[pt] OR meta-analys* OR \"meta analys*\" OR metaanalys* OR ((systematic* OR quantitative* OR methodologic*) AND (review* OR overview*)) OR \"integrative research review*\" OR \"research integration\")",
+      cinahl_ebsco:"((TI (systematic* N3 review*)) OR (AB (systematic* N3 review*)) OR (TI (systematic* N3 bibliographic*)) OR (AB (systematic* N3 bibliographic*)) OR (TI (systematic* N3 literature)) OR (AB (systematic* N3 literature)) OR (TI (comprehensive* N3 literature)) OR (AB (comprehensive* N3 literature)) OR (TI (comprehensive* N3 bibliographic*)) OR (AB (comprehensive* N3 bibliographic*)) OR (TI (integrative N3 review)) OR (AB (integrative N3 review)) OR (JN “Cochrane Database of Systematic Reviews\") OR (TI (information N2 synthesis)) OR (TI (data N2 synthesis)) OR (AB (information N2 synthesis)) OR (AB (data N2 synthesis)) OR (TI (data N2 extract*)) OR (AB (data N2 extract*)) OR (TI (medline OR pubmed OR psyclit OR cinahl OR (psycinfo NOT \"psycinfo database\") OR \"web of science\" OR scopus OR embase)) OR (AB (medline OR pubmed OR psyclit OR cinahl OR (psycinfo not \"psycinfo database\") OR \"web of science\" OR scopus OR embase)) OR (MH \"Systematic Review\") OR (MH \"Meta Analysis\") OR (TI (meta-analy* OR metaanaly*)) OR (AB (meta-analy* OR metaanaly*)))",
+      wos:"((DT=(Review) and (TS=(medline or medlars or embase or pubmed or cochrane or scisearch or psychinfo or psycinfo or psychlit or psyclit or cinahl or (hand NEAR/3 search*) or (manual* NEAR/3 search*) or \"electronic database*\" or \"bibliographic database*\" or \"computeri*ed database*\" or \"online database*\" or pooling or pooled or \"mantel haenszel\" or peto or dersimonian or \"der simonian\" or \"fixed effect\") or DT=(\"Retracted Publication\"))) OR TS=(meta-analys* or \"meta analys*\" or metaanalys* or (systematic* NEAR/4 review*) or (systematic* NEAR/4 overview*) or (quantitativ* NEAR/4 review*) or (quantitativ* NEAR/4 overview*) or (quantitativ* NEAR/4 synthesis*) or (methodologic* NEAR/4 review*) or (methodologic* NEAR/4 overview*)) OR TS=(\"integrative research review*\" or \"research integration\"))",
+      scopus:"((DOCTYPE(RE) AND (Title-Abs-Key (medline or medlars or embase or pubmed or cochrane or scisearch or psychinfo or psycinfo or psychlit or psyclit or cinahl or (hand w/3 search*) or (manual* w/3 search*) or \"electronic database*\" or \"bibliographic database*\" or \"computeri*ed database*\" or \"online database*\" or pooling or pooled or \"mantel haenszel\" or peto or dersimonian or \"der simonian\" or \"fixed effect\") or DOCTYPE(tb))) OR Title-Abs-Key (meta-analys* or \"meta analys*\" or metaanalys* or (systematic* w/4 review*) or (systematic* w/4 overview*) or (quantitativ* w/4 review*) or (quantitativ* w/4 overview*) or (quantitativ* w/4 synthesis*) or (methodologic* w/4 review*) or (methodologic* w/4 overview*)) OR Title-Abs-Key (\"integrative research review*\" or \"research integration\"))"
+    },
+    guideline:{
+      embase_com:"(\"practice guideline\"/exp OR (guideline* OR (consensus NEAR/3 (conference* OR congress* OR meeting* OR workshop* OR work-shop* OR proceeding* OR symposium* OR seminar* OR development*))):ti,ab,kw)",
+      medline_ovid:"(exp \"Guideline\"/ OR exp \"Practice Guidelines as Topic\"/ OR exp \"Consensus Development Conference\"/ OR (guideline* OR (consensus ADJ3 (conference* OR congress* OR meeting* OR workshop* OR work-shop* OR proceeding* OR symposium* OR seminar* OR development*))).ti,ab,kf)",
+      cinahl_ebsco:"(MH \"Practice Guidelines+\" OR PT \"Practice Guidelines\" OR MH \"Consensus+\" OR (guideline* OR (consensus N2 (conference* OR congress* OR meeting* OR workshop* OR work-shop* OR proceeding* OR symposium* OR seminar* OR development*))))",
+      wos:"TS = (guideline* OR (consensus NEAR/2 (conference* OR congress* OR meeting* OR workshop* OR work-shop* OR proceeding* OR symposium* OR seminar* OR development*)))",
+      scopus:"title-abs-key = (guideline* OR (consensus W/2 (conference* OR congress* OR meeting* OR workshop* OR work-shop* OR proceeding* OR symposium* OR seminar* OR development*)))"
+    }
+  };
+  var STUDY_FILTER_SRC={
+    rct:{
+      embase_com:"Box 3.e, Technical Supplement to Chapter 4: Searching for and Selecting Studies. Cochrane Handbook for Systematic Reviews of Interventions Version 6. (Syntax Translated from Ovid Embase to Elsevier Embase.com. 原出處Ovid Embase版，且為逐行檢索，此已由成大醫圖轉換並合併為一串) (若此語法找出總文章量過多，可以洽詢改用其他RCTs語法)",
+      embase_ovid:"Box 3.e, Technical Supplement to Chapter 4: Searching for and Selecting Studies. Cochrane Handbook for Systematic Reviews of Interventions Version 6. (原出處為逐行檢索，此已由成大醫圖合併為一串)",
+      medline_ovid:"Box 3.c, Technical Supplement to Chapter 4: Searching for and Selecting Studies. Cochrane Handbook for Systematic Reviews of Interventions Version 6. (Add: randomised.ab)",
+      pubmed:"Box 3.a, Technical Supplement to Chapter 4: Searching for and Selecting Studies. Cochrane Handbook for Systematic Reviews of Interventions Version 6. (Add: randomized[tiab])",
+      cinahl_ebsco:"Box 3.f., Technical Supplement to Chapter 4: Searching for and Selecting Studies. Cochrane Handbook for Systematic Reviews of Interventions Version 6.",
+      wos:"American University of Beirut",
+      scopus:"This filter is built by NUS Medical Library using MESH and EMTREE terms as Index terms and Keywords. Useful to search in Scopus for RCTs."
+    },
+    sr:{
+      embase_com:"modify SR filter from BMJ Best Practice https://bestpractice.bmj.com/info/toolkit/learn-ebm/study-design-search-filters/",
+      medline_ovid:"modify SR filter from BMJ Best Practice https://bestpractice.bmj.com/info/toolkit/learn-ebm/study-design-search-filters/",
+      pubmed:"modify SR filter from BMJ Best Practice https://bestpractice.bmj.com/info/toolkit/learn-ebm/study-design-search-filters/",
+      cinahl_ebsco:"SR filter from https://libguides.sph.uth.tmc.edu/search_filters/cinahl_filters",
+      wos:"modify SR filter from BMJ Best Practice https://bestpractice.bmj.com/info/toolkit/learn-ebm/study-design-search-filters/",
+      scopus:"modify SR filter from BMJ Best Practice https://bestpractice.bmj.com/info/toolkit/learn-ebm/study-design-search-filters/"
+    }
+  };
+  // PubMed 自動檢索網址：成大 LinkOut 版（otool＝機構圖示、myncbishare＝成大館藏），非成大使用者亦可正常使用（僅少了成大全文連結圖示）。
+  var PUBMED_NCKU_URL="https://www.ncbi.nlm.nih.gov/pubmed/?otool=itwxtailib&myncbishare=nckulib";
 
   function copyTextForPush(text){
     function legacy(){
@@ -2090,6 +2172,7 @@ if (typeof module !== "undefined" && module.exports) {
   $("#genBtn").onclick=function(){
     srCount('pico-generate','PICO-產生檢索策略');
     var startDB=srcSel.value, level=levelSel.value;
+    var FILTER_SEL=Array.prototype.map.call(document.querySelectorAll('input[name=sdfilter]:checked'), function(c){return c.value;}).filter(Boolean);   // 研究設計篩選（可複選）
     var rows=[]; Array.prototype.forEach.call(picoBody.querySelectorAll("tr"), function(tr){ rows.push(tr._get()); });  // 全部列（含空列，維持 C1/C2… 對位）
     outs.innerHTML=""; lastGen=null; if($("#wordBtn")) $("#wordBtn").disabled=true;
     if(!rows.some(function(r){return r.ft||r.zh||r.mesh||r.emtree||r.cinahl;})){ outs.innerHTML='<div class="panel" style="color:var(--warn)">'+(isEn()?"Please fill at least one concept.":"請至少填入一個概念的詞彙。")+'</div>'; return; }
@@ -2104,10 +2187,11 @@ if (typeof module !== "undefined" && module.exports) {
       if(msgs.length){ picoWarn.innerHTML="\u26A0 "+msgs.join("<br>\u26A0 "); picoWarn.style.display="block"; } else picoWarn.style.display="none";
     }
     var lvlLabel = level+"　"+(isEn()?({L1:"Comprehensive",L2:"Balanced",L3:"Precise"}[level]):({L1:"完整",L2:"平衡",L3:"精準"}[level]));
-    var exportData=[];
+    var exportData=[]; RECORD_FILL={};
     checked.forEach(function(tid){
       var b=buildForTarget(rows, startDB, tid, level);
       var tg=TARGET_BY_ID[tid];
+      (function(){ var sl={}; b.qlines.forEach(function(q){ if(q.label&&q.kind){ (sl[q.label]=sl[q.label]||{})[q.kind]=q.text; } }); RECORD_FILL[tid]={label:tg.label, engine:tg.engine, slots:sl}; })();
       var card=document.createElement("div"); card.className="out";
       var h=document.createElement("h3");
       var nm=document.createElement("span"); nm.innerHTML=esc(tg.label)+(tid===startDB?' <span style="font-size:11px;background:var(--brand);color:#fff;border-radius:10px;padding:2px 8px;margin-left:6px">'+(isEn()?"start":"起始")+'</span>':'');
@@ -2135,14 +2219,32 @@ if (typeof module !== "undefined" && module.exports) {
       } else {
         allRows = baseRows;
       }
-      exportData.push({label:tg.label, engine:tg.engine, vocab:tg.vocab, isStart:(tid===startDB), rows:allRows});
+      allRows = _appendFilter(allRows, FILTER_SEL, tid);   // 研究設計篩選（可複選）
+      exportData.push({tid:tid, label:tg.label, engine:tg.engine, vocab:tg.vocab, isStart:(tid===startDB), rows:allRows});
       var copyText = allRows.map(function(x){return x.text;}).join("\n");
       cp.onclick=function(){ navigator.clipboard.writeText(copyText); cp.textContent="✓"; cp.classList.add("done"); setTimeout(function(){cp.innerHTML=COPYSVG;cp.classList.remove("done");},1400); };
       // 右側按鈕群：複製圖示 ＋（非 PubMed）「複製最終策略並開啟資料庫」——移到複製圖示右側
       var hr=document.createElement("span"); hr.style.cssText="display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end";
       hr.appendChild(cp);
+      var OPENSVG='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>';
+      if(tg.engine==="pubmed"){   // PubMed：右上角自動檢索圖示（成大 LinkOut 網址，帶入檢索式直接執行）
+        var pmOpen=document.createElement("button"); pmOpen.className="copy copyicon"; pmOpen.innerHTML=OPENSVG;
+        var _pmTitle=(isEn()?"Run in PubMed (auto-search) ↗\nUses NCKU LinkOut URL; anyone can use it.":"在 PubMed 執行檢索（自動帶入檢索式並執行）↗\n採成大 LinkOut 網址，非成大使用者亦可使用");
+        pmOpen.title=_pmTitle;
+        pmOpen.onclick=function(){
+          try{
+            var finalRow=allRows[allRows.length-1];
+            if(!finalRow) throw new Error(isEn()?"No strategy to send":"沒有可傳送的檢索策略");
+            var full=expandNumberedQuery(finalRow,allRows);
+            var url=PUBMED_NCKU_URL+"&term="+encodeURIComponent(full);
+            var link=document.createElement("a");link.href=url;link.target="_blank";link.rel="noopener noreferrer";document.body.appendChild(link);link.click();link.remove();
+            srCount('pico-pubmed-run','PICO-在PubMed執行最終策略');
+            pmOpen.innerHTML="✓"; pmOpen.classList.add("done"); pmOpen.title=isEn()?"Opened in PubMed":"已開啟 PubMed"; setTimeout(function(){pmOpen.innerHTML=OPENSVG;pmOpen.classList.remove("done");pmOpen.title=_pmTitle;},1600);
+          }catch(err){ pmOpen.title=String(err&&err.message||err); }
+        };
+        hr.appendChild(pmOpen);
+      }
       if(tg.engine!=="pubmed" && DB_OPEN_URLS[tid]){
-        var OPENSVG='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>';
         var openBtn=document.createElement("button"); openBtn.className="copy copyicon"; openBtn.innerHTML=OPENSVG;
         var _openTitle=(isEn()?"Copy final strategy & open ":"複製最終策略並開啟 ")+tg.label+" ↗";
         if(/ncku\.edu\.tw/i.test(DB_OPEN_URLS[tid]||"")) _openTitle+=(isEn()?"\nNon-NCKU users: please open the database yourself.":"\n非成大使用者，請自行開啟資料庫");
@@ -2187,14 +2289,14 @@ if (typeof module !== "undefined" && module.exports) {
         var sendBtn=document.createElement("button"); sendBtn.className="btn ghost"; sendBtn.type="button"; sendBtn.textContent=isEn()?"Run final strategy in PubMed ↗":"在 PubMed 執行最終策略 ↗";
         var estBtn=document.createElement("button"); estBtn.className="btn ghost"; estBtn.type="button"; estBtn.textContent=isEn()?"Estimate PubMed counts":"估算 PubMed 文章數";
         var st=document.createElement("span"); st.className="pmstatus";
-        var nt=document.createElement("div"); nt.className="pmestimate-note"; nt.textContent=isEn()?"Queries are sent one at a time to NCBI ESearch (no API key; ≤3 requests/second). Counts reflect PubMed at query time and may change.":"逐筆送至 NCBI ESearch（未使用 API key，每秒不超過 3 次）。數量以查詢當下的 PubMed 為準，之後可能變動。";
+        var nt=document.createElement("div"); nt.className="pmestimate-note"; nt.textContent=isEn()?"Queries are sent one at a time to NCBI ESearch (no API key; ≤3 requests/second). Counts reflect PubMed at query time and may change. The Run buttons use the NCKU LinkOut URL — anyone can use it (non-NCKU users simply won't see the NCKU full-text icon).":"逐筆送至 NCBI ESearch（未使用 API key，每秒不超過 3 次）。數量以查詢當下的 PubMed 為準，之後可能變動。「執行檢索」採成大 LinkOut 網址，非成大使用者亦可使用（僅少了成大全文連結圖示）。";
         est.appendChild(sendBtn);est.appendChild(estBtn);est.appendChild(st);est.appendChild(nt);card.appendChild(est);
         sendBtn.onclick=function(){
           try{
             var finalRow=allRows[allRows.length-1];
             if(!finalRow) throw new Error(isEn()?"No strategy to send":"沒有可傳送的檢索策略");
             var full=expandNumberedQuery(finalRow,allRows);
-            var url="https://pubmed.ncbi.nlm.nih.gov/?term="+encodeURIComponent(full);
+            var url=PUBMED_NCKU_URL+"&term="+encodeURIComponent(full);
             var link=document.createElement("a");link.href=url;link.target="_blank";link.rel="noopener noreferrer";document.body.appendChild(link);link.click();link.remove();
             srCount('pico-pubmed-run','PICO-在PubMed執行最終策略');
             st.className="pmstatus";st.textContent=isEn()?"Opened in PubMed":"已開啟 PubMed";
@@ -2252,6 +2354,7 @@ if (typeof module !== "undefined" && module.exports) {
           var tail = (combos && combos.length) ? combos : (bb.finalRow ? [bb.finalRow] : []);
           var baseR = bb.qlines.concat(tail), allR;
           if(cbFlat && cbFlat.checked && baseR.length){ var qmap={}; baseR.forEach(function(q){ if(q.n!=null) qmap[q.n]=q.text; }); var ft=baseR[baseR.length-1].text,g=0; while(/#\d+/.test(ft)&&g++<50){ ft=ft.replace(/#(\d+)/g,function(_,k){ return "("+(qmap[k]!=null?qmap[k]:("#"+k))+")"; }); } allR=[{n:null,text:ft}]; } else { allR=baseR; }
+          allR=_appendFilter(allR, FILTER_SEL, tid);   // 研究設計篩選（可複選）
           return allR;
         };
         var pmPaint=function(allR){
@@ -2286,8 +2389,9 @@ if (typeof module !== "undefined" && module.exports) {
       }
       outs.appendChild(card);
     });
-    lastGen={data:exportData, level:lvlLabel};
+    lastGen={data:exportData, level:lvlLabel, filters:FILTER_SEL};
     if($("#wordBtn")) $("#wordBtn").disabled = !exportData.length;
+    if(typeof updateRecordBtn==="function") updateRecordBtn();
   };
   $("#wordBtn").onclick=function(){
     if(!lastGen || !lastGen.data.length){ outs.scrollIntoView&&outs.scrollIntoView(); return; }
@@ -2318,9 +2422,165 @@ if (typeof module !== "undefined" && module.exports) {
     var title=en?"PICO Search Strategy":"PICO 檢索策略";
     var subline=(en?"Field level: ":"欄位完整度：")+wesc(lastGen.level);
     var cite=(en?"Cite this tool: ":"工具引用：")+"Fang CJ (2026). SR Search Toolkit: PICO Strategy Builder, Search Syntax Converter, and Proximity Builder. Zenodo. https://doi.org/10.5281/zenodo.21960702";
-    var html="<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body style=\""+msoF+"\"><h2>"+fspan(title)+"</h2><p>"+fspan(subline)+"</p><table border='1' cellspacing='0' style='border-collapse:collapse;width:100%;border:1px solid #999;mso-padding-alt:0.1cm 0.2cm 0.1cm 0.2cm'><tr><td style='"+th+"'>"+fspan(en?"Database":"資料庫 Database")+"</td><td style='"+th+";text-align:center'>"+fspan("#")+"</td><td style='"+th+"'>"+fspan(en?"Search syntax":"搜尋語法 Search syntax")+"</td></tr>"+rows+"</table><p style='margin-top:14px;font-size:9pt;color:#555'>"+fspan(wesc(cite))+"</p></body></html>";
+    // 研究設計篩選語法出處：依已套用的設計×資料庫列出（相同出處合併）
+    var srcHtml="";
+    if(lastGen.filters && lastGen.filters.length){
+      var DL={rct:"RCT",quasi:(en?"Quasi-experimental":"類實驗 Quasi"),cohort:"Cohort",casecontrol:"Case-control",crosssectional:"Cross-sectional",qualitative:(en?"Qualitative":"質性 Qualitative"),sr:"SR",guideline:(en?"Guideline":"指引 Guideline")};
+      var blocks=[];
+      lastGen.filters.forEach(function(dz){
+        if(!STUDY_FILTER_SRC[dz]) return;
+        var g={}, ord=[];
+        lastGen.data.forEach(function(c){ var s=STUDY_FILTER_SRC[dz][c.tid]; if(s){ if(!g[s]){g[s]=[]; ord.push(s);} g[s].push(c.label); } });
+        if(!ord.length) return;
+        var parts=ord.map(function(s){ return wesc(g[s].join("、")+" — "+s); });
+        blocks.push("<li>"+fspan("<b>"+wesc(DL[dz]||dz)+"</b>："+parts.join("；"))+"</li>");
+      });
+      if(blocks.length) srcHtml="<p style='margin-top:14px;font-size:10pt'>"+fspan("<b>"+(en?"Study-design filter sources":"研究設計篩選語法出處")+"</b>")+"</p><ul style='font-size:9pt;color:#444;margin-top:2px'>"+blocks.join("")+"</ul>";
+    }
+    var html="<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body style=\""+msoF+"\"><h2>"+fspan(title)+"</h2><p>"+fspan(subline)+"</p><table border='1' cellspacing='0' style='border-collapse:collapse;width:100%;border:1px solid #999;mso-padding-alt:0.1cm 0.2cm 0.1cm 0.2cm'><tr><td style='"+th+"'>"+fspan(en?"Database":"資料庫 Database")+"</td><td style='"+th+";text-align:center'>"+fspan("#")+"</td><td style='"+th+"'>"+fspan(en?"Search syntax":"搜尋語法 Search syntax")+"</td></tr>"+rows+"</table>"+srcHtml+"<p style='margin-top:14px;font-size:9pt;color:#555'>"+fspan(wesc(cite))+"</p></body></html>";
     var blob=new Blob(["\ufeff"+html],{type:"application/msword"});
     var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="pico_strategy.doc"; document.body.appendChild(a); a.click(); a.remove();
+  };
+
+  // ===== \u56de\u586b\u6aa2\u7d22\u7d00\u9304\u8868\uff1a\u628a\u751f\u6210\u7684\u6aa2\u7d22\u7b56\u7565\u5beb\u56de\u4f7f\u7528\u8005\u4e0a\u50b3\u7684 Word\uff08\u5c31\u5730\u7de8\u8f2f word/document.xml\uff0c\u539f\u751f zip \u8b80\u5beb\uff0c\u53ef\u96e2\u7dda\uff09 =====
+  function updateRecordBtn(){ var b=$("#recordBtn"); if(!b) return; b.style.display=(recordDocx && lastGen && lastGen.data && lastGen.data.length)?"":"none"; }
+  // 研究設計篩選（可複選）：每個選到且該庫有語法的設計＝獨立一行「最終組合 AND (篩選)」；
+  // 選超過一個時，再加一行聯集 = 各篩選行以 OR 合併（例：#6、#7、#8 → #9 = #6 OR #7 OR #8）。不支援的資料庫略過。
+  function _appendFilter(allRows, sels, tid){
+    if(!sels || !sels.length || !allRows.length) return allRows;
+    var fx=[]; sels.forEach(function(s){ if(STUDY_FILTERS[s] && STUDY_FILTERS[s][tid]) fx.push(STUDY_FILTERS[s][tid]); });
+    if(!fx.length) return allRows;
+    var last=allRows[allRows.length-1], hasN=(last && last.n!=null);
+    var baseRef=hasN?("#"+last.n):("("+(last?last.text:"")+")"), startN=hasN?last.n:null;
+    var add=[], refs=[];
+    fx.forEach(function(f,i){
+      var n=hasN?(startN+1+i):null, txt=baseRef+" AND ("+f+")";
+      add.push({n:n, text:txt, kind:"filter"}); refs.push(hasN?("#"+n):("("+txt+")"));
+    });
+    if(fx.length>1) add.push({n:hasN?(startN+1+fx.length):null, text:refs.join(" OR "), kind:"filter"});
+    return allRows.concat(add);
+  }
+  var _WNS="http://schemas.openxmlformats.org/wordprocessingml/2006/main", _XMLNS="http://www.w3.org/XML/1998/namespace";
+  var _crcT=null;
+  function _crc32(u8){ if(!_crcT){ _crcT=[]; for(var n=0;n<256;n++){ var c=n; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); _crcT[n]=c>>>0; } } var crc=0xFFFFFFFF; for(var i=0;i<u8.length;i++) crc=(_crcT[(crc^u8[i])&0xFF]^(crc>>>8))>>>0; return (crc^0xFFFFFFFF)>>>0; }
+  function _z16(a,o){return a[o]|(a[o+1]<<8);}
+  function _z32(a,o){return (a[o]|(a[o+1]<<8)|(a[o+2]<<16)|(a[o+3]<<24))>>>0;}
+  function _zipEntries(buf){   // \u4f9d\u4e2d\u592e\u76ee\u9304\u89e3\u6790\u6240\u6709\u6a94\u6848\uff08\u542b\u58d3\u7e2e\u65b9\u5f0f\u8207\u539f\u59cb\u58d3\u7e2e\u4f4d\u5143\u7d44\uff09
+    var eocd=-1; for(var i=buf.length-22;i>=0;i--){ if(_z32(buf,i)===0x06054b50){ eocd=i; break; } }
+    if(eocd<0) throw new Error("EOCD not found");
+    var cnt=_z16(buf,eocd+10), off=_z32(buf,eocd+16), p=off, out=[];
+    for(var c=0;c<cnt;c++){
+      if(_z32(buf,p)!==0x02014b50) throw new Error("bad central dir");
+      var method=_z16(buf,p+10), crc=_z32(buf,p+16), csize=_z32(buf,p+20), usize=_z32(buf,p+24);
+      var fnlen=_z16(buf,p+28), exlen=_z16(buf,p+30), cmlen=_z16(buf,p+32), lho=_z32(buf,p+42);
+      var name=new TextDecoder().decode(buf.slice(p+46,p+46+fnlen));
+      var lfn=_z16(buf,lho+26), lex=_z16(buf,lho+28), ds=lho+30+lfn+lex;
+      out.push({name:name, method:method, crc:crc, csize:csize, usize:usize, data:buf.slice(ds,ds+csize)});
+      p=p+46+fnlen+exlen+cmlen;
+    }
+    return out;
+  }
+  function _zipBuild(entries){
+    var enc=new TextEncoder(), parts=[], central=[], offset=0;
+    function w16(a,o,v){ a[o]=v&0xFF; a[o+1]=(v>>>8)&0xFF; }
+    function w32(a,o,v){ a[o]=v&0xFF; a[o+1]=(v>>>8)&0xFF; a[o+2]=(v>>>16)&0xFF; a[o+3]=(v>>>24)&0xFF; }
+    function push(arr){ parts.push(arr); offset+=arr.length; }
+    entries.forEach(function(e){
+      var nameB=enc.encode(e.name), lh=new Uint8Array(30+nameB.length);
+      w32(lh,0,0x04034b50); w16(lh,4,20); w16(lh,6,0); w16(lh,8,e.method); w16(lh,10,0); w16(lh,12,0);
+      w32(lh,14,e.crc); w32(lh,18,e.csize); w32(lh,22,e.usize); w16(lh,26,nameB.length); w16(lh,28,0); lh.set(nameB,30);
+      var localOff=offset; push(lh); push(e.data);
+      var ch=new Uint8Array(46+nameB.length);
+      w32(ch,0,0x02014b50); w16(ch,4,20); w16(ch,6,20); w16(ch,8,0); w16(ch,10,e.method); w16(ch,12,0); w16(ch,14,0);
+      w32(ch,16,e.crc); w32(ch,20,e.csize); w32(ch,24,e.usize); w16(ch,28,nameB.length); w16(ch,30,0); w16(ch,32,0); w16(ch,34,0); w16(ch,36,0); w32(ch,38,0); w32(ch,42,localOff); ch.set(nameB,46);
+      central.push(ch);
+    });
+    var cdOff=offset, cdSize=0; central.forEach(function(c){ cdSize+=c.length; });
+    central.forEach(push);
+    var eo=new Uint8Array(22); w32(eo,0,0x06054b50); w16(eo,8,central.length); w16(eo,10,central.length); w32(eo,12,cdSize); w32(eo,16,cdOff); push(eo);
+    var res=new Uint8Array(offset), pos=0; parts.forEach(function(a){ res.set(a,pos); pos+=a.length; }); return res;
+  }
+  async function _inflateRaw(u8){ var ds=new DecompressionStream("deflate-raw"); return new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(ds)).arrayBuffer()); }
+  async function _deflateRaw(u8){ var cs=new CompressionStream("deflate-raw"); return new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(cs)).arrayBuffer()); }
+  var _RECDBMAP=[["Embase.com","embase_com"],["Embase (Ovid)","embase_ovid"],["MEDLINE (Ovid)","medline_ovid"],["MEDLINE","medline_ovid"],["PubMed","pubmed"],["Cochrane","cochrane"],["CINAHL","cinahl_ebsco"],["Scopus","scopus"],["Web of Science","wos"],["Web of Science","wos"]];
+  function _recMapDB(t){ for(var i=0;i<_RECDBMAP.length;i++){ if(t.indexOf(_RECDBMAP[i][0])>=0) return _RECDBMAP[i][1]; } return null; }
+  function _wtag(el,name){ return el.getElementsByTagNameNS(_WNS,name); }
+  function _recCellText(tc){ var ts=_wtag(tc,"t"), s=""; for(var i=0;i<ts.length;i++) s+=(ts[i].textContent||""); return s; }
+  function _dchild(el,name){ var out=[], k=el.childNodes; for(var i=0;i<k.length;i++){ if(k[i].localName===name && k[i].namespaceURI===_WNS) out.push(k[i]); } return out; }
+  function _paraLabel(tc){ var ps=_dchild(tc,"p"); if(!ps.length) return ""; var rs=_dchild(ps[0],"r"), out=""; for(var i=0;i<rs.length;i++){ if(_wtag(rs[i],"br").length) break; var tt=_wtag(rs[i],"t"); for(var j=0;j<tt.length;j++) out+=(tt[j].textContent||""); } return out; }
+  // \u628a\u5132\u5b58\u683c\u5167\u5bb9\u6574\u500b\u63db\u6210\u55ae\u4e00\u6bb5\u843d\u3001\u9ed1\u8272\u5b57\uff08\u8986\u84cb\u539f\u672c\u7684\u63d0\u793a\u5b57\u5982\u300cP\u81ea\u7531\u8a5e\u5f59\u300d\uff09
+  function _cellSetText(doc, tc, text){
+    var ps=_dchild(tc,"p"); for(var i=0;i<ps.length;i++) tc.removeChild(ps[i]);
+    var p=doc.createElementNS(_WNS,"w:p");
+    var r=doc.createElementNS(_WNS,"w:r");
+    var rpr=doc.createElementNS(_WNS,"w:rPr");
+    var col=doc.createElementNS(_WNS,"w:color"); col.setAttributeNS(_WNS,"w:val","000000"); rpr.appendChild(col);
+    r.appendChild(rpr);
+    var t=doc.createElementNS(_WNS,"w:t"); t.setAttributeNS(_XMLNS,"xml:space","preserve"); t.textContent=(text==null?"":text); r.appendChild(t);
+    p.appendChild(r); tc.appendChild(p);
+  }
+  function _ensureVMergeCont(doc, tc){   // \u8b93\uff08\u65b0\u589e\u5217\u7684\uff09\u8cc7\u6599\u5eab\u6b04\u6210\u70ba\u5782\u76f4\u5408\u4f75\u7684\u5ef6\u7e8c\u683c\uff08\u7a7a\u767d\uff09
+    var tp=_dchild(tc,"tcPr"), tcPr=tp.length?tp[0]:null;
+    if(!tcPr){ tcPr=doc.createElementNS(_WNS,"w:tcPr"); tc.insertBefore(tcPr, tc.firstChild); }
+    var vm=tcPr.getElementsByTagNameNS(_WNS,"vMerge"); while(vm.length){ vm[0].parentNode.removeChild(vm[0]); }
+    tcPr.appendChild(doc.createElementNS(_WNS,"w:vMerge"));
+  }
+  function _cloneRowCont(doc, refTr){   // \u8907\u88fd\u4e00\u5217\u4f5c\u70ba\u540c\u4e00\u8cc7\u6599\u5eab\u7684\u65b0\u5217\uff1a\u6e05\u7a7a\u8cc7\u6599\u5eab\u6b04\u8207\u7b46\u6578\u6b04
+    var clone=refTr.cloneNode(true), tcs=_dchild(clone,"tc");
+    if(tcs.length){ _cellSetText(doc, tcs[0], ""); _ensureVMergeCont(doc, tcs[0]); }
+    if(tcs.length>=4){ _cellSetText(doc, tcs[3], ""); }
+    return clone;
+  }
+  // \u56de\u586b\uff1a\u53ea\u8986\u84cb\u300cX\u81ea\u7531\u8a5e\u5f59\uff0fX\u63a7\u5236\u8a5e\u5f59\u300d\u9019\u985e\u6982\u5ff5\u63d0\u793a\u683c\uff08\u4f9d\u6982\u5ff5\u00d7\u81ea\u7531/\u63a7\u5236\u5c0d\u61c9\uff09\uff0c\u9ed1\u5b57\u8986\u84cb\u539f\u63d0\u793a\uff1b
+  // \u7d44\u5408\u884c\u3001Filter \u884c\u3001\u64cd\u4f5c\u8aaa\u660e\u5217\u4e00\u5f8b\u8df3\u904e\u4e0d\u52d5\uff08\u4fdd\u7559\u4f7f\u7528\u8005\u6a23\u677f\uff09\u3002
+  function fillRecordForm(xml){
+    var doc=new DOMParser().parseFromString(xml,"application/xml");
+    if(doc.getElementsByTagName("parsererror").length) throw new Error("XML parse error");
+    var tbls=doc.getElementsByTagNameNS(_WNS,"tbl"), target=null;
+    for(var i=0;i<tbls.length;i++){ var tr0=_wtag(tbls[i],"tr")[0]; if(tr0 && /\u641c\u5c0b\u8a9e\u6cd5|Search syntax/.test(_recCellText(tr0))){ target=tbls[i]; break; } }
+    if(!target) return {ok:false, reason:"noTable"};
+    var trs=_dchild(target,"tr"), curTid=null, filled=0, dbHit={};
+    for(var ri=1; ri<trs.length; ri++){
+      var tcs=_dchild(trs[ri],"tc"); if(tcs.length<3) continue;
+      var t0=_recCellText(tcs[0]).replace(/\s+/g," ").trim(); if(t0) curTid=_recMapDB(t0);
+      if(!curTid || !RECORD_FILL[curTid]) continue;
+      var label=_paraLabel(tcs[2]).replace(/\s+/g,"").trim();
+      var kind=/\u81ea\u7531\u8a5e/.test(label)?"ft":(/\u63a7\u5236\u8a5e/.test(label)?"cv":null);   // \u50c5\u8a8d\u6982\u5ff5\u63d0\u793a\u683c\uff1b\u5176\u9918\uff08\u7d44\u5408\u3001Filter\u3001\u64cd\u4f5c\u8aaa\u660e\uff09\u8df3\u904e
+      if(!kind) continue;
+      var cm=label.match(/[PICO]/i); if(!cm) continue;
+      var concept=cm[0].toUpperCase(), slots=RECORD_FILL[curTid].slots, syntax=null;
+      for(var key in slots){ if(key && key.charAt(0).toUpperCase()===concept && slots[key][kind]){ syntax=slots[key][kind]; break; } }
+      if(syntax==null || syntax==="") continue;
+      _cellSetText(doc, tcs[2], syntax); filled++; dbHit[curTid]=1;   // \u9ed1\u5b57\u8986\u84cb\u6574\u683c
+    }
+    var out=new XMLSerializer().serializeToString(doc);
+    if(!/^\s*<\?xml/i.test(out)) out='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n'+out;
+    return {ok:true, filled:filled, dbs:Object.keys(dbHit).length, xml:out};
+  }
+  if($("#recordBtn")) $("#recordBtn").onclick=async function(){
+    if(!recordDocx || !lastGen || !lastGen.data.length){ return; }
+    var en=isEn(), btn=$("#recordBtn"), old=btn.innerHTML;
+    try{
+      btn.disabled=true;
+      var entries=_zipEntries(recordDocx.buf);
+      var de=null; for(var i=0;i<entries.length;i++){ if(entries[i].name==="word/document.xml"){ de=entries[i]; break; } }
+      if(!de) throw new Error(en?"document.xml not found":"\u627e\u4e0d\u5230 document.xml");
+      var xml = de.method===0 ? new TextDecoder().decode(de.data) : new TextDecoder().decode(await _inflateRaw(de.data));
+      var res=fillRecordForm(xml);
+      if(!res.ok){ alert(en?"This file has no \u201c\u641c\u5c0b\u7b56\u7565\uff0fSearch syntax\u201d table to fill into.":"\u9019\u4efd\u6a94\u6848\u6c92\u6709\u53ef\u56de\u586b\u7684\u300c\u641c\u5c0b\u7b56\u7565\u300d\u8868\u683c\uff08\u8acb\u4e0a\u50b3\u542b\u641c\u5c0b\u7b56\u7565\u8868\u7684\u7d00\u9304\u8868\uff09\u3002"); btn.disabled=false; return; }
+      if(!res.filled){ alert(en?"No matching rows were filled \u2014 check that the databases you generated match those listed in the form.":"\u6c92\u6709\u53ef\u5c0d\u61c9\u56de\u586b\u7684\u5217 \u2014\u2014 \u8acb\u78ba\u8a8d\u751f\u6210\u7684\u8cc7\u6599\u5eab\u8207\u7d00\u9304\u8868\u4e2d\u5217\u51fa\u7684\u8cc7\u6599\u5eab\u4e00\u81f4\u3002"); btn.disabled=false; return; }
+      var bytes=new TextEncoder().encode(res.xml);
+      var crc=_crc32(bytes), comp;
+      try{ comp=await _deflateRaw(bytes); }catch(_e){ comp=null; }
+      if(comp){ de.method=8; de.data=comp; de.usize=bytes.length; de.csize=comp.length; de.crc=crc; }
+      else { de.method=0; de.data=bytes; de.usize=bytes.length; de.csize=bytes.length; de.crc=crc; }   // 無 CompressionStream 時退回不壓縮
+      var outBuf=_zipBuild(entries);
+      var blob=new Blob([outBuf],{type:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
+      var nm=(recordDocx.name||"SR\u6aa2\u7d22\u7d00\u9304\u8868.docx").replace(/\.docx$/i,"")+(en?"_filled.docx":"_\u5df2\u56de\u586b.docx");
+      var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=nm; document.body.appendChild(a); a.click(); setTimeout(function(){URL.revokeObjectURL(a.href); a.remove();},1500);
+      srCount('pico-record-fill','PICO-\u56de\u586b\u7d00\u9304\u8868');
+      btn.innerHTML=en?"\u2713 Downloaded":"\u2713 \u5df2\u4e0b\u8f09"; setTimeout(function(){btn.innerHTML=old; btn.disabled=false;},1600);
+    }catch(e){ alert((en?"Fill failed: ":"\u56de\u586b\u5931\u6557\uff1a")+(e&&e.message||e)); btn.disabled=false; }
   };
 
   function setLangPlaceholders(){ if(pasteZone) pasteZone.placeholder = isEn() ? "Press Ctrl+V here…" : "在此按 Ctrl+V 貼上表格…"; }
@@ -2335,6 +2595,7 @@ if (typeof module !== "undefined" && module.exports) {
 
   // 已生成策略時：切換輸出資料庫、增刪／編輯檢索詞 → 自動更新
   if(dbchecks) dbchecks.addEventListener("change", autoRegen);
+  var _fo=$("#filterOpt"); if(_fo) _fo.addEventListener("change", autoRegen);   // 研究設計篩選變更 → 自動重生成
   if(picoBody) picoBody.addEventListener("input", autoRegenDebounced);
   if(cbColor) cbColor.addEventListener("change", function(){ if(outs.children.length) $("#genBtn").click(); });
   if(cbBracket) cbBracket.addEventListener("change", function(){ if(outs.children.length) $("#genBtn").click(); });
