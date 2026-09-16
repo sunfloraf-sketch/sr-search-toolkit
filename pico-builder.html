@@ -309,6 +309,19 @@
         </div>
         <textarea id="pasteZone" spellcheck="false" rows="3" style="width:100%;border:1px dashed var(--brand);border-radius:8px;padding:9px 11px;font-size:13px" placeholder="在此按 Ctrl+V 貼上表格…"></textarea>
         <div id="pasteMsg" style="font-size:12.5px;margin-top:6px"></div>
+        <details id="pasteDiagBox" style="margin-top:10px;border-top:1px dashed var(--line);padding-top:8px">
+          <summary style="cursor:pointer;font-size:12px;color:var(--mut)"><span data-zh>🔧 貼上後沒被正確辨識？點此開啟「貼上診斷」</span><span data-en>🔧 Paste not recognized correctly? Open “Paste diagnostics”</span></summary>
+          <div style="font-size:12px;color:var(--mut);margin:6px 0;line-height:1.6">
+            <span data-zh>把同一份表格貼進下方框，工具會顯示剪貼簿的原始內容（HTML／純文字）與解析後的欄位網格，方便自行檢查、或連同回報一起提供給作者。此區<b>僅供診斷、不會更動上方 PICO 表</b>。</span>
+            <span data-en>Paste the same table into the box below to see the raw clipboard content (HTML / plain text) and the parsed column grid — handy for self-checking or for reporting to the author. This is <b>diagnostics only and does not change the PICO table above</b>.</span>
+          </div>
+          <textarea id="diagZone" spellcheck="false" rows="2" style="width:100%;border:1px dashed var(--line);border-radius:8px;padding:8px 10px;font-size:12px" placeholder="在此按 Ctrl+V 貼上表格（僅診斷，不會填入）…"></textarea>
+          <div style="margin-top:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button type="button" id="diagCopy" class="btn ghost" style="font-size:12px;padding:5px 10px" disabled><span data-zh>複製診斷結果</span><span data-en>Copy diagnostics</span></button>
+            <span id="diagMsg" style="font-size:12px;color:var(--mut)"></span>
+          </div>
+          <textarea id="diagOut" spellcheck="false" rows="12" readonly style="width:100%;margin-top:6px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:11.5px;font-family:'SF Mono',Consolas,monospace;white-space:pre;display:none"></textarea>
+        </details>
       </div>
     </details>
     <details class="ccbox" id="fillHelp" style="margin:0 0 12px">
@@ -1656,6 +1669,39 @@ if (typeof module !== "undefined" && module.exports) {
       if(html||text){ e.preventDefault(); srCount('pico-paste-table','PICO-貼上表格'); doPasteFill(html,text); }
     });
   }
+  // ===== 貼上診斷：顯示剪貼簿原始內容（HTML／純文字）與解析網格＋欄位對應，僅供除錯、不動 PICO 表 =====
+  var diagZone=$("#diagZone"), diagOut=$("#diagOut"), diagMsg=$("#diagMsg"), diagCopy=$("#diagCopy");
+  function _diagReport(html,text){
+    var L=[];
+    L.push("=== text/html ("+(html?html.length:0)+" chars) ===");
+    L.push(html?html:"(none)");
+    L.push("");
+    L.push("=== text/plain ("+(text?text.length:0)+" chars) ===");
+    L.push(text?text:"(none)");
+    L.push("");
+    var rows=[]; try{ rows=parsePaste(html,text); }catch(e){ L.push("parsePaste error: "+(e&&e.message||e)); }
+    L.push("=== parsed grid ("+rows.length+" row(s)) ===");
+    rows.forEach(function(r,i){ L.push("row"+i+" ["+r.length+" col]: "+r.map(function(c){return String(c==null?"":c).replace(/\n/g,"⏎");}).join(" | ")); });
+    L.push("");
+    var hrow=-1; for(var hr=0;hr<Math.min(rows.length,5);hr++){ var rl=rows[hr]; if(rl.some(function(c){return /mesh/i.test(String(c||""));})&&rl.some(function(c){return /cinahl/i.test(String(c||""));})){ hrow=hr; break; } }
+    var hdr=(hrow>=0)?mapCols(rows[hrow]):(rows.length?mapCols(rows[0]):null);
+    L.push("=== header mapping ("+(hrow>=0?("row"+hrow):(rows.length?"row0 (no MeSH+CINAHL header row found)":"n/a"))+") ===");
+    L.push(hdr?Object.keys(hdr).map(function(k){return k+"="+hdr[k];}).join(", "):"(no rows)");
+    return L.join("\n");
+  }
+  if(diagZone){
+    diagZone.addEventListener("paste", function(e){
+      var cd=e.clipboardData||window.clipboardData; if(!cd) return;
+      var html=cd.getData&&cd.getData("text/html"), text=cd.getData&&cd.getData("text/plain");
+      if(html||text){ e.preventDefault();
+        diagOut.value=_diagReport(html,text); diagOut.style.display="block"; if(diagCopy) diagCopy.disabled=false;
+        if(diagMsg){ diagMsg.style.color="#166534"; diagMsg.textContent=isEn()?"Captured — review or copy the report below.":"已擷取，請於下方檢視或複製診斷結果。"; }
+        srCount('pico-paste-diag','PICO-貼上診斷');
+        setTimeout(function(){ diagZone.value=""; },30);
+      }
+    });
+    if(diagCopy) diagCopy.onclick=function(){ try{ navigator.clipboard.writeText(diagOut.value); }catch(e){ try{ diagOut.select(); document.execCommand&&document.execCommand("copy"); }catch(_e){} } if(diagMsg){ diagMsg.style.color="#166534"; diagMsg.textContent=isEn()?"Copied.":"已複製診斷結果。"; } };
+  }
   $("#clearBtn").onclick=function(){ if(!confirm(isEn()?"This can't be undone. Clear the whole table?":"動作無法復原，確認徹底清空嗎？")) return; picoBody.innerHTML=""; ["P","I","C","O"].forEach(function(l){ addRow(l); }); outs.innerHTML=""; if(picoWarn)picoWarn.style.display="none"; lastGen=null; if($("#wordBtn")) $("#wordBtn").disabled=true; try{ localStorage.removeItem("sr_pico_inbox"); }catch(e){} clearPersist(); if(restoreBtn) restoreBtn.style.display="none"; if(typeof updateRecordBtn==="function") updateRecordBtn(); };
 
   // ---- 上傳 Word 讀取檢索詞（純瀏覽器解析 .docx，使用原生 DecompressionStream，可離線）----
@@ -2710,7 +2756,7 @@ if (typeof module !== "undefined" && module.exports) {
     }catch(e){ alert((en?"Fill failed: ":"\u56de\u586b\u5931\u6557\uff1a")+(e&&e.message||e)); btn.disabled=false; }
   };
 
-  function setLangPlaceholders(){ if(pasteZone) pasteZone.placeholder = isEn() ? "Press Ctrl+V here…" : "在此按 Ctrl+V 貼上表格…"; }
+  function setLangPlaceholders(){ if(pasteZone) pasteZone.placeholder = isEn() ? "Press Ctrl+V here…" : "在此按 Ctrl+V 貼上表格…"; if(diagZone) diagZone.placeholder = isEn() ? "Press Ctrl+V here (diagnostics only; won’t fill in)…" : "在此按 Ctrl+V 貼上表格（僅診斷，不會填入）…"; }
   window.toggleLang=function(){
     document.body.classList.toggle("en");
     $("#langBtn").textContent = isEn() ? "中文" : "English";
