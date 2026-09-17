@@ -6,13 +6,15 @@
 <title>PICO 檢索策略產生器 · PICO Strategy Builder</title>
 <style>
   :root{
-    --bg:#F2F4F6; --card:#FFFFFF; --ink:#23282D; --mut:#66717A; --line:#D5DCE2;
+    --bg:#F2F4F6; --card:#FFFFFF; --ink:#23282D; --mut:#3a434b; --line:#D5DCE2;
     --brand:#DDE3E7; --brand2:#8E99A1; --accent:#EEF2F5; --warn:#7B6840; --warnbg:#F3F1E6;
     --code:#1E2327; --codebg:#FAFBFC; --ok:#4E6065; --deco:#7E9994; --deco2:#617B76;
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:-apple-system,"Segoe UI","Noto Sans TC",Roboto,Helvetica,Arial,sans-serif;
        background:var(--bg);color:var(--ink);line-height:1.5;font-size:15px}
+  a{color:#2563eb}  /* 全站預設超連結藍（不影響有自訂顏色的連結，如控制詞彙查核連結、導覽鈕、頁尾等） */
+  a:hover{color:#1d4ed8}
   header{background:linear-gradient(135deg,#1D2328 0%, #374047 45%, #606B74 100%);color:#fff;padding:20px 24px;font-family:-apple-system,"Segoe UI","PingFang TC","Microsoft JhengHei","Noto Sans TC",Roboto,Arial,sans-serif;box-shadow:inset 0 1px 0 rgba(255,255,255,.10), inset 0 -1px 0 rgba(255,255,255,.06)}
   header .row{max-width:1280px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
   header h1{margin:0;font-size:20px;font-weight:650;letter-spacing:.2px}
@@ -141,7 +143,7 @@
   .cvvhint{font-size:11.5px;color:#b45309;line-height:1.4;margin-top:6px}
   .cvvall{margin-top:8px;font-size:11.5px;padding:3px 10px;border:1px solid #C8D1D7;background:#DCE3E7;color:#25292D;border-radius:6px;cursor:pointer;font-weight:600}
   .cvvall:hover{background:#CDD6DC}
-  .foot{font-size:12px;color:var(--mut);margin-top:26px;text-align:center;line-height:1.7}
+  .foot{font-size:12px;color:#66717A;margin-top:26px;text-align:center;line-height:1.7}
   .note{font-size:12.5px;color:var(--mut);background:linear-gradient(180deg,#FCFDFD,#F6F8F9);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-top:4px}
   .note b{color:var(--ink)}
   details{margin-top:6px} summary{cursor:pointer;font-weight:600;color:#454D54;font-size:14px;padding:6px 0}
@@ -301,31 +303,33 @@
       </div>
     </div>
     <details class="ccbox" id="pasteBox" style="margin:0 0 12px">
-      <summary style="cursor:pointer;font-weight:600;font-size:13px;color:var(--brand2)"><span data-zh>貼上 AI 整理的表格（提示詞範例）</span><span data-en>Paste an AI-made table (prompt example)</span></summary>
+      <summary style="cursor:pointer;font-weight:700;font-size:13px;color:#0f766e"><span data-zh>貼上 AI 整理的表格（提示詞範例）</span><span data-en>Paste an AI-made table (prompt example)</span></summary>
       <div style="margin-top:8px">
         <div class="sub" style="font-size:12px;color:var(--mut);margin-bottom:6px">
-          <span data-zh><div>‧ <a href="https://chatgpt.com/share/69e09cc1-e6b8-83e8-a2fb-95dd223ff3ab" target="_blank" rel="noopener">開啟 ChatGPT 提示詞範例 ↗</a>（優先使用 ChatGPT 或 Claude，登入帳號效果較佳）</div><div>‧ 從 ChatGPT 等複製整個表格後，於下方框按 <b>Ctrl+V</b> 貼上，工具會依欄位標題自動對應，並填入下方 PICO 表（亦可從 Word／Excel 複製後貼上）</div><div>‧ 表格請含一列標題（概念／中文／English／Emtree／MeSH／CINAHL。不需要的欄位可不提供；順序不拘）</div><div style="color:var(--mut)">（不同複製方式，填入效果可能有差異）</div></span>
-          <span data-en><div>‧ <a href="https://chatgpt.com/share/69e09cc1-e6b8-83e8-a2fb-95dd223ff3ab" target="_blank" rel="noopener">Open ChatGPT prompt example ↗</a> (ChatGPT or Claude works best; signing in helps)</div><div>‧ Copy the whole table from ChatGPT etc., click the box below and press <b>Ctrl+V</b>; columns are auto-mapped by header and fill the PICO table below (Word / Excel also work)</div><div>‧ Include a header row (Concept / Chinese / English / Emtree / MeSH / CINAHL; omit columns you don't need; any order)</div><div style="color:var(--mut)">(Results may vary with different copy methods.)</div></span>
+          <span data-zh><div>‧ <a href="https://chatgpt.com/share/69e09cc1-e6b8-83e8-a2fb-95dd223ff3ab" target="_blank" rel="noopener">開啟 ChatGPT 提示詞範例 ↗</a>（優先使用 ChatGPT 或 Claude，登入帳號效果較佳）</div><div>‧ 從 ChatGPT 等複製整個表格後，於下方框按 <b>Ctrl+V</b> 貼上，工具會依欄位標題自動對應，並填入下方 PICO 表（亦可從 Word／Excel 複製後貼上）</div><div>‧ 表格請含一列標題（概念／中文／English／Emtree／MeSH／CINAHL。不需要的欄位可不提供；順序不拘）</div><div style="color:var(--mut);padding-left:1.2em">（不同複製方式填入效果可能有差異；含合併／巢狀儲存格的複雜表格，貼上後請檢查並自行調整）</div></span>
+          <span data-en><div>‧ <a href="https://chatgpt.com/share/69e09cc1-e6b8-83e8-a2fb-95dd223ff3ab" target="_blank" rel="noopener">Open ChatGPT prompt example ↗</a> (ChatGPT or Claude works best; signing in helps)</div><div>‧ Copy the whole table from ChatGPT etc., click the box below and press <b>Ctrl+V</b>; columns are auto-mapped by header and fill the PICO table below (Word / Excel also work)</div><div>‧ Include a header row (Concept / Chinese / English / Emtree / MeSH / CINAHL; omit columns you don't need; any order)</div><div style="color:var(--mut);padding-left:1.2em">(Results may vary with different copy methods; for complex tables with merged/nested cells, check the filled result and adjust as needed.)</div></span>
         </div>
-        <textarea id="pasteZone" spellcheck="false" rows="3" style="width:100%;border:1px dashed var(--brand);border-radius:8px;padding:9px 11px;font-size:13px" placeholder="在此按 Ctrl+V 貼上表格…"></textarea>
+        <textarea id="pasteZone" spellcheck="false" rows="3" style="width:100%;border:1px dashed var(--brand);border-radius:8px;padding:9px 11px;font-size:13px" placeholder="在此按 Ctrl+V 貼上表格"></textarea>
         <div id="pasteMsg" style="font-size:12.5px;margin-top:6px"></div>
         <details id="pasteDiagBox" style="margin-top:10px;border-top:1px dashed var(--line);padding-top:8px">
           <summary style="cursor:pointer;font-size:12px;color:var(--mut)"><span data-zh>貼上後沒被正確辨識？點此開啟「貼上診斷」</span><span data-en>Paste not recognized correctly? Open “Paste diagnostics”</span></summary>
+          <div style="padding-left:1.4em">
           <div style="font-size:12px;color:var(--mut);margin:6px 0;line-height:1.6">
-            <span data-zh>把同一份表格貼進下方框，工具會顯示剪貼簿的原始內容與解析後的欄位，您可將結果來信回報給製作者 <a href="mailto:flora@ncku.edu.tw">flora@ncku.edu.tw</a>。此區<b>僅供診斷、不會更動上方 PICO 表</b>。</span>
-            <span data-en>Paste the same table into the box below to see the raw clipboard content and the parsed columns; you can email the result to the author at <a href="mailto:flora@ncku.edu.tw">flora@ncku.edu.tw</a>. This is <b>diagnostics only and does not change the PICO table above</b>.</span>
+            <span data-zh>把同一份表格貼進下方框，工具會顯示剪貼簿的原始內容與解析後的欄位，您可將結果來信回報給製作者 <a href="mailto:flora@ncku.edu.tw">flora@ncku.edu.tw</a>。此區僅供診斷、不會更動上方 PICO 表。</span>
+            <span data-en>Paste the same table into the box below to see the raw clipboard content and the parsed columns; you can email the result to the author at <a href="mailto:flora@ncku.edu.tw">flora@ncku.edu.tw</a>. This is diagnostics only and does not change the PICO table above.</span>
           </div>
-          <textarea id="diagZone" spellcheck="false" rows="2" style="width:100%;border:1px dashed var(--line);border-radius:8px;padding:8px 10px;font-size:12px" placeholder="在此按 Ctrl+V 貼上表格（僅診斷，不會填入）…"></textarea>
+          <textarea id="diagZone" spellcheck="false" rows="2" style="width:100%;border:1px dashed var(--line);border-radius:8px;padding:8px 10px;font-size:12px" placeholder="在此按 Ctrl+V 貼上表格（僅診斷，不會填入）"></textarea>
           <div style="margin-top:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <button type="button" id="diagCopy" class="btn ghost" style="font-size:12px;padding:5px 10px" disabled><span data-zh>複製診斷結果</span><span data-en>Copy diagnostics</span></button>
             <span id="diagMsg" style="font-size:12px;color:var(--mut)"></span>
           </div>
           <textarea id="diagOut" spellcheck="false" rows="12" readonly style="width:100%;margin-top:6px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:11.5px;font-family:'SF Mono',Consolas,monospace;white-space:pre;display:none"></textarea>
+          </div>
         </details>
       </div>
     </details>
     <details class="ccbox" id="fillHelp" style="margin:0 0 12px">
-      <summary style="cursor:pointer;font-weight:600;font-size:13px;color:var(--brand2)"><span data-zh>填寫說明</span><span data-en>How to fill in</span></summary>
+      <summary style="cursor:pointer;font-weight:700;font-size:13px;color:#0f766e"><span data-zh>填寫說明</span><span data-en>How to fill in</span></summary>
       <div class="hint" style="margin:8px 0 0;line-height:1.75">
         <div data-zh>
           <div>．<b>儲存格內：</b>一詞一行（預設布林邏輯關係為 OR，不需標示）</div>
@@ -340,7 +344,8 @@ AND
 (Ultrasonography
 Optical Imaging)</pre>
           <div style="padding-left:1.4em;margin-top:4px">‧ 主標題若附加副標題（subheading）：<span style="color:#3a434b">語法需自行查各資料庫</span></div>
-          <div style="padding-left:2.4em">例 Ovid MEDLINE（dg 表示 Diagnostic Imaging）：<code>Optic Nerve/dg</code></div>
+          <div style="padding-left:2.4em">例 Ovid MEDLINE（dg 表示 Diagnostic Imaging）：</div>
+          <pre style="margin:2px 0 6px 2.4em;padding:8px 10px;background:var(--codebg);border:1px solid var(--line);border-radius:6px;font-family:'SF Mono',Consolas,monospace;font-size:12px;line-height:1.5;white-space:pre;width:fit-content;max-width:100%">Optic Nerve/dg</pre>
         </div>
         <div data-en>
           <div>• <b>Within a cell:</b> one term per line (the default Boolean is OR; no need to mark it).</div>
@@ -355,11 +360,16 @@ AND
 (Ultrasonography
 Optical Imaging)</pre>
           <div style="padding-left:1.4em;margin-top:4px">‧ To attach a subheading to a main heading: <span style="color:#3a434b">check each database for its own syntax</span></div>
-          <div style="padding-left:2.4em">e.g. Ovid MEDLINE (dg = Diagnostic Imaging): <code>Optic Nerve/dg</code></div>
+          <div style="padding-left:2.4em">e.g. Ovid MEDLINE (dg = Diagnostic Imaging):</div>
+          <pre style="margin:2px 0 6px 2.4em;padding:8px 10px;background:var(--codebg);border:1px solid var(--line);border-radius:6px;font-family:'SF Mono',Consolas,monospace;font-size:12px;line-height:1.5;white-space:pre;width:fit-content;max-width:100%">Optic Nerve/dg</pre>
         </div>
       </div>
     </details>
-    <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:4px">
+    <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
+      <span style="flex:1 1 auto;min-width:0;text-align:right;font-size:13px;line-height:1.5;color:#c0392b">
+        <span data-zh>⚠ 提醒您！請自行評估同義詞與控制詞彙的適用性，尤其確實查核控制詞彙，工具僅提供詞表超連結，並未進行查驗。</span>
+        <span data-en>⚠ Reminder: please assess the suitability of the synonyms and controlled vocabulary yourself, and be sure to verify the controlled terms — the tool only links to the thesauri and does not verify them.</span>
+      </span>
       <span class="infotip">ⓘ<span class="tip"><span data-zh>復原框內文字編輯：想還原剛才在某一格輸入框打的字，直接按 Ctrl+Z 即可。</span><span data-en>Undo in-cell text edits: to revert what you just typed in a cell, press Ctrl+Z. “Load last save” rolls the whole table back to its previous content.</span></span></span>
     </div>
     <table class="pico">
@@ -380,12 +390,12 @@ Optical Imaging)</pre>
       <button class="btn ghost" id="addRow" title="新增概念 / Add concept" style="font-size:18px;font-weight:700;line-height:1;padding:5px 15px">＋</button>
     </div>
     <div id="cvVerifyPanel" style="display:none"></div>
-    <details class="ccbox combo" style="margin:14px 0 0">
-      <summary style="cursor:pointer;font-weight:600;font-size:13px;color:var(--brand2)"><span data-zh>自訂組合策略（選填）</span><span data-en>Custom combination (optional)</span></summary>
-      <div style="margin-top:8px">
+    <details class="ccbox" style="margin:14px 0 0">
+      <summary style="cursor:pointer;font-weight:700;font-size:13px;color:#0f766e"><span data-zh>自訂組合策略（選填）</span><span data-en>Custom combination (optional)</span></summary>
+      <div style="margin-top:8px;padding-left:1.4em">
         <div class="sub" style="font-size:12px;color:var(--mut);margin-bottom:6px">
-          <span data-zh>每行一條組合。用 <b>C1、C2…</b> 代表下方概念表各列（依順序，列首已標示代號），用 <b>L1、L2…</b> 引用上方已寫的組合行。留空則用預設（所有概念以 AND 串接）。例如：<br><code>C1 AND C2 AND C3</code><br><code>C1 AND C4</code><br><code>L1 OR L2</code></span>
-          <span data-en>One combination per line. Use <b>C1, C2…</b> for the concept rows below (in order; each row shows its code), and <b>L1, L2…</b> to reference an earlier combination line above. Leave blank for the default (all concepts AND-ed). e.g.:<br><code>C1 AND C2 AND C3</code><br><code>C1 AND C4</code><br><code>L1 OR L2</code></span>
+          <span data-zh>預設跨行為 <b>AND</b> 關係；如有自訂組合，請輸入：<br>　<b>C1、C2…</b>：代表每個主題概念列<br>　<b>L1、L2…</b>：引用上方已寫的組合行<br>例如：<br><code>C1 AND C2 AND C3</code><br><code>C1 AND C4</code><br><code>L1 OR L2</code></span>
+          <span data-en>Rows are <b>AND</b>-ed by default; for a custom combination, enter:<br>　<b>C1, C2…</b>: each concept row<br>　<b>L1, L2…</b>: reference a combination line above<br>e.g.:<br><code>C1 AND C2 AND C3</code><br><code>C1 AND C4</code><br><code>L1 OR L2</code></span>
         </div>
         <textarea id="customCombo" spellcheck="false" rows="4" style="width:100%;font-family:'SF Mono',Consolas,monospace;font-size:13px;line-height:1.7;border:1px solid var(--line);border-radius:8px;padding:9px 11px" placeholder="C1 AND C2 AND C3&#10;C1 AND C4&#10;L1 OR L2"></textarea>
       </div>
@@ -1537,7 +1547,11 @@ if (typeof module !== "undefined" && module.exports) {
   function cellClean(s){ return String(s||"").replace(/ /g," ").replace(/[\u2028\u2029\u0085\u000B\u000C]/g,"\n").replace(/[⁠⁡⁢⁣⁤​‌﻿]/g,"\n").replace(/<br\s*\/?>/gi,"\n").replace(/<\/?(p|div|li|tr|ul|ol|h[1-6]|blockquote)\b[^>]*>/gi,"\n").replace(/<\/?[a-z][^>]*>/gi,"").replace(/[↗↪⧉➚🔗⇱]/g,"").split(/\r?\n/).map(function(x){return x.replace(/[ \t]+/g," ").trim();}).filter(function(x){return x!=="";}).join("\n").trim(); }
   function labClean(s){ var f=String(s||"").split("\n")[0].trim(); var m=f.match(/^[PICOSET]\b/i); if(m) return m[0].toUpperCase(); return f.split(/[\s(（:：]/)[0].slice(0,4); }
   // 同義詞／控制詞彙一格多個 → 拆成「一行一個」。keepComma=true 時保留詞內半形逗號（如 Diabetes, Gestational），只以 、；;／換行 斷行；同義詞欄則連半形逗號也斷。
-  function toLines(s, keepComma){ var t=cellClean(s); if(keepComma) t=t.replace(/,[ \t]*\n[ \t]*/g, ", "); var re = keepComma ? /[、；;\n]+/ : /[、，,；;\n]+/; var parts=t.split(re).map(function(x){return x.trim();}).filter(Boolean);
+  function toLines(s, keepComma){ var t=cellClean(s); if(keepComma) t=t.replace(/,[ \t]*\n[ \t]*/g, ", ");
+    // 保護引號內的內容（如 'child, preschool'）：整段引號先換成佔位符，斷詞後再還原，避免引號內的逗號／頓號被當成斷詞
+    var _prot=[]; t=t.replace(/(['"“”‘’])([\s\S]*?)\1/g, function(m){ var i=_prot.length; _prot.push(m); return ""+i+""; });
+    var _restore=function(x){ return x.replace(/(\d+)/g, function(_,i){ return _prot[+i]||""; }); };
+    var re = keepComma ? /[、；;\n]+/ : /[、，,；;\n]+/; var parts=t.split(re).map(function(x){return _restore(x).trim();}).filter(Boolean);
     if(keepComma){   // 控制詞彙：部分 AI（如 Gemini）複製時會把多個 Title Case 標目「無分隔」黏成一串；標目邊界＝小寫/數字/中日韓字 緊接 大寫（詞內以空白分隔，故不會誤切），於該處補斷詞。全小寫黏詞（如 Emtree 小寫）無邊界線索，無法自動拆分。
       var out=[]; parts.forEach(function(term){ term.replace(/([a-z0-9一-鿿])([A-Z])/g,"$1\n$2").split("\n").forEach(function(x){ x=x.trim(); if(x) out.push(x); }); }); parts=out;
     }
@@ -2431,7 +2445,7 @@ if (typeof module !== "undefined" && module.exports) {
         var varPanel=document.createElement("div"); varPanel.className="pmvar"; varPanel.style.display="none"; card.appendChild(varPanel);
         var varState={};
         var suffixCands=function(stem){ var c=[stem,stem+"s",stem+"es",stem+"al",stem+"ic",stem+"ing",stem+"ed",stem+"a"]; return c.filter(function(v,i){return c.indexOf(v)===i;}); };
-        var collectVars=function(){ var V={}; Object.keys(varState).forEach(function(r){ V[r]=Array.prototype.slice.call(varState[r]); }); return V; };
+        var collectVars=function(){ var V={}; Object.keys(varState).forEach(function(r){ V[r]=Array.from(varState[r]); }); return V; };   // varState[r] 為 Set，須用 Array.from（slice.call 對 Set 無效，會得到空陣列，導致字尾候選失效）
         var pmAssemble=function(bb){
           var combos = (customCombo && customCombo.value.trim()) ? buildCombos(customCombo.value, bb.conceptRefs, bb.lastNum) : null;
           var tail = (combos && combos.length) ? combos : (bb.finalRow ? [bb.finalRow] : []);
@@ -2790,7 +2804,7 @@ if (typeof module !== "undefined" && module.exports) {
     }catch(e){ alert((en?"Fill failed: ":"\u56de\u586b\u5931\u6557\uff1a")+(e&&e.message||e)); btn.disabled=false; }
   };
 
-  function setLangPlaceholders(){ if(pasteZone) pasteZone.placeholder = isEn() ? "Press Ctrl+V here…" : "在此按 Ctrl+V 貼上表格…"; if(diagZone) diagZone.placeholder = isEn() ? "Press Ctrl+V here (diagnostics only; won’t fill in)…" : "在此按 Ctrl+V 貼上表格（僅診斷，不會填入）…"; }
+  function setLangPlaceholders(){ if(pasteZone) pasteZone.placeholder = isEn() ? "Press Ctrl+V here" : "在此按 Ctrl+V 貼上表格"; if(diagZone) diagZone.placeholder = isEn() ? "Press Ctrl+V here (diagnostics only; won’t fill in)" : "在此按 Ctrl+V 貼上表格（僅診斷，不會填入）"; }
   window.toggleLang=function(){
     document.body.classList.toggle("en");
     $("#langBtn").textContent = isEn() ? "中文" : "English";
