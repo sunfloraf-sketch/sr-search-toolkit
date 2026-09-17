@@ -1534,10 +1534,14 @@ if (typeof module !== "undefined" && module.exports) {
 
   // ===== 貼上 AI 表格：解析剪貼簿的 HTML 表格（或 Tab 分隔文字），依標題自動對欄填入 =====
   var pasteZone=$("#pasteZone"), pasteMsg=$("#pasteMsg");
-  function cellClean(s){ return String(s||"").replace(/ /g," ").replace(/[\u2028\u2029\u0085\u000B\u000C]/g,"\n").replace(/<br\s*\/?>/gi,"\n").replace(/<\/?(p|div|li|tr|ul|ol|h[1-6]|blockquote)\b[^>]*>/gi,"\n").replace(/<\/?[a-z][^>]*>/gi,"").replace(/[↗↪⧉➚🔗⇱]/g,"").split(/\r?\n/).map(function(x){return x.replace(/[ \t]+/g," ").trim();}).filter(function(x){return x!=="";}).join("\n").trim(); }
+  function cellClean(s){ return String(s||"").replace(/ /g," ").replace(/[\u2028\u2029\u0085\u000B\u000C]/g,"\n").replace(/[⁠⁡⁢⁣⁤​‌﻿]/g,"\n").replace(/<br\s*\/?>/gi,"\n").replace(/<\/?(p|div|li|tr|ul|ol|h[1-6]|blockquote)\b[^>]*>/gi,"\n").replace(/<\/?[a-z][^>]*>/gi,"").replace(/[↗↪⧉➚🔗⇱]/g,"").split(/\r?\n/).map(function(x){return x.replace(/[ \t]+/g," ").trim();}).filter(function(x){return x!=="";}).join("\n").trim(); }
   function labClean(s){ var f=String(s||"").split("\n")[0].trim(); var m=f.match(/^[PICOSET]\b/i); if(m) return m[0].toUpperCase(); return f.split(/[\s(（:：]/)[0].slice(0,4); }
   // 同義詞／控制詞彙一格多個 → 拆成「一行一個」。keepComma=true 時保留詞內半形逗號（如 Diabetes, Gestational），只以 、；;／換行 斷行；同義詞欄則連半形逗號也斷。
-  function toLines(s, keepComma){ var t=cellClean(s); if(keepComma) t=t.replace(/,[ \t]*\n[ \t]*/g, ", "); var re = keepComma ? /[、；;\n]+/ : /[、，,；;\n]+/; return t.split(re).map(function(x){return x.trim();}).filter(Boolean).join("\n"); }
+  function toLines(s, keepComma){ var t=cellClean(s); if(keepComma) t=t.replace(/,[ \t]*\n[ \t]*/g, ", "); var re = keepComma ? /[、；;\n]+/ : /[、，,；;\n]+/; var parts=t.split(re).map(function(x){return x.trim();}).filter(Boolean);
+    if(keepComma){   // 控制詞彙：部分 AI（如 Gemini）複製時會把多個 Title Case 標目「無分隔」黏成一串；標目邊界＝小寫/數字/中日韓字 緊接 大寫（詞內以空白分隔，故不會誤切），於該處補斷詞。全小寫黏詞（如 Emtree 小寫）無邊界線索，無法自動拆分。
+      var out=[]; parts.forEach(function(term){ term.replace(/([a-z0-9一-鿿])([A-Z])/g,"$1\n$2").split("\n").forEach(function(x){ x=x.trim(); if(x) out.push(x); }); }); parts=out;
+    }
+    return parts.join("\n"); }
   function _tdText(td){
     // 區塊界線（<br>、</p>…）與「Unicode 換行」(U+2028/2029/0085) 才算真正換行；
     // ASCII 排版空白（原始碼折行、縮排）一律收攏為空白，避免單一詞（Diabetes, Gestational）被原始碼折行誤拆，
@@ -1552,6 +1556,7 @@ if (typeof module !== "undefined" && module.exports) {
     var t=tmp.textContent
       .replace(/[\u2028\u2029\u0085]/g,BR)
       .replace(/[ \t\r\n\u00a0\u000b\u000c]+/g," ")
+      .replace(/[⁠⁡⁢⁣⁤​‌﻿]/g,BR)
       .split(BR).join("\n");
     return cellClean(t);
   }
@@ -1602,6 +1607,30 @@ if (typeof module !== "undefined" && module.exports) {
         }
         if(row.length) rows.push(row);
       });
+    }
+    // Gemini（iPad）「不含表格」的扁平複製：無 <table>，但每格帶 data-path-to-node="0,列,欄,…"，依此重建網格
+    if(!rows.length && html && /data-path-to-node/.test(html)){
+      try{
+        var docg=new DOMParser().parseFromString(html,"text/html");
+        var grid={}, maxC=0, leaves=docg.querySelectorAll("[data-path-to-node]");
+        Array.prototype.forEach.call(leaves, function(el){
+          if(el.querySelector("[data-path-to-node]")) return;   // 只取葉節點，避免父子節點重複
+          var seg=(el.getAttribute("data-path-to-node")||"").split(","); if(seg.length<3) return;
+          var r=parseInt(seg[1],10), c=parseInt(seg[2],10); if(isNaN(r)||isNaN(c)) return;
+          var tx=_tdText(el); if(tx==="") return;
+          if(!grid[r]) grid[r]={}; grid[r][c]=(grid[r][c]!=null? grid[r][c]+"\n":"")+tx;   // 同格多個葉節點（如標籤格 P／說明／概念）以換行併入
+          if(c>maxC) maxC=c;
+        });
+        var rkeys=Object.keys(grid).map(Number).sort(function(a,b){return a-b;});
+        if(rkeys.length){
+          var g2=[];
+          var strongs=docg.querySelectorAll("strong"), hd=[];   // 表頭：最前面連續的 <strong>（Gemini 扁平複製把表頭放成 <strong>，PICO 欄常為空）
+          for(var si=0; si<strongs.length && hd.length<=maxC; si++){ if(strongs[si].querySelector("[data-path-to-node]")) continue; hd.push(_tdText(strongs[si])); }
+          if(hd.length && hd.some(function(x){return /mesh|cinahl|emtree|中文|english|free text/i.test(x);})){ while(hd.length<=maxC) hd.push(""); g2.push(hd); }
+          rkeys.forEach(function(r){ var row=[]; for(var c=0;c<=maxC;c++) row.push(grid[r][c]!=null?grid[r][c]:""); if(row.some(function(x){return x;})) g2.push(row); });
+          if(g2.length>=2) rows=g2;
+        }
+      }catch(_e){}
     }
     if(!rows.length && text){ var mg0=_mdGrid(text); if(mg0){ rows=mg0; } else text.split(/\r?\n/).forEach(function(l){ if(l.trim()==="")return; rows.push(l.split("\t").map(cellClean)); }); }
     // ChatGPT 複製鈕的 text/html 會把同格內多個「純文字詞」的 <br> 全部去掉（詞黏成一串、連空白都沒有），
