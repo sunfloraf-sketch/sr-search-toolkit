@@ -1586,9 +1586,15 @@ if (typeof module !== "undefined" && module.exports) {
       var doc=new DOMParser().parseFromString(html,"text/html");
       // 依 colspan／rowspan 展開為對齊的網格（Word 表頭常把「主題概念」設 rowspan、群組標題設 colspan，
       // 不展開會導致表頭列比資料列少一欄、整列右移錯位）
+      // 選「主表格」：不被其他表格包住、且儲存格最多者（Word 常在某格內放巢狀小表格，需排除其列與儲存格）
+      var outer=Array.prototype.filter.call(doc.querySelectorAll("table"), function(t){ return !(t.parentElement && t.parentElement.closest("table")); });
+      var mainTbl=null, _best=-1; outer.forEach(function(t){ var n=t.querySelectorAll("td,th").length; if(n>_best){_best=n; mainTbl=t;} });
+      var _scope=mainTbl||doc;
       var pending={};   // key=起始欄 → {text, colspan, rowsLeft}
-      Array.prototype.forEach.call(doc.querySelectorAll("tr"), function(tr){
-        var cells=tr.querySelectorAll("th,td"); if(!cells.length) return;
+      Array.prototype.forEach.call(_scope.querySelectorAll("tr"), function(tr){
+        if(mainTbl && tr.closest("table")!==mainTbl) return;   // 跳過巢狀表格的列
+        var cells=Array.prototype.filter.call(tr.querySelectorAll("th,td"), function(c){ return c.closest("tr")===tr; });   // 只取本列的直接儲存格（排除巢狀表格）
+        if(!cells.length) return;
         var row=[], col=0, ci=0;
         while(true){
           if(pending[col] && pending[col].rowsLeft>0){                 // 上一列 rowspan 佔用此欄
@@ -1651,7 +1657,7 @@ if (typeof module !== "undefined" && module.exports) {
     idx.ft=find(/after|處理後|處理過/i);
     if(idx.ft<0) idx.ft=find(/english|英文|自由詞|同義詞|synonym|free-?text|keyword|term/i, /before|處理前|中文|chinese/i);
     if(idx.ft<0){ var b=find(/before|處理前/i); if(b>=0 && b+1<hdr.length) idx.ft=b+1; }
-    idx.label=find(/pico|主題概念|概念|切出|類別|category|element|欄位/i);
+    idx.label=find(/pico|主題概念|概念|theme concept|\bconcept\b|切出|cut it out|類別|category|element|欄位/i);
     if(idx.label<0 && idx.zh>0) idx.label=0;   // 概念欄常因表頭垂直合併在此列留空 → 取最左欄
     return idx;
   }
