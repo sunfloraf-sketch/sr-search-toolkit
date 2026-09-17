@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
-title: "SR Search Toolkit: Proximity Builder, PICO Strategy Builder, and Search Syntax Converter"
+title: "SR / EBM Search Toolkit: Proximity Builder, PICO Strategy Builder, and Search Syntax Converter"
 abstract: >-
   A set of three browser-based tools for systematic-review literature searching:
   a Proximity Builder that assembles adjacency/near fragments from synonym stacks,

@@ -1,4 +1,4 @@
-# SR Search Toolkit · 系統性文獻回顧檢索工具組
+# SR / EBM Search Toolkit · SR / EBM 搜尋工具包
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21960702.svg)](https://doi.org/10.5281/zenodo.21960702)
 
@@ -37,7 +37,7 @@ If you use this toolkit in your work, please cite it using the DOI below, or use
 
 如果你在研究中使用本工具，請以下列 DOI 引用，或使用 [`CITATION.cff`](CITATION.cff) 內的資訊。此 DOI 永遠指向最新版本。
 
-> Fang, C.-J. (2026). *SR Search Toolkit: Proximity Builder, PICO Strategy Builder, and Search Syntax Converter*. Zenodo. https://doi.org/10.5281/zenodo.21960702
+> Fang, C.-J. (2026). *SR / EBM Search Toolkit: Proximity Builder, PICO Strategy Builder, and Search Syntax Converter*. Zenodo. https://doi.org/10.5281/zenodo.21960702
 
 ## License · 授權
 
