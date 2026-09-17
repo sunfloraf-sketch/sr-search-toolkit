@@ -2121,6 +2121,9 @@ if (typeof module !== "undefined" && module.exports) {
     return { qlines:qlines, finalRow:finalRow, reminders:reminders, conceptRefs:conceptRefs, lastNum:(lineNum-1) };
   }
 
+  // 各介面的檢索集（set）前綴：EBSCOhost=S1、Ovid=1（無前綴）、其餘=#1。內部一律以 #n 保存（供整併展開／PubMed 使用），僅在輸出（畫面／複製／Word／回填）時依資料庫換成正確前綴。
+  function _refPrefix(eng){ return eng==="ebsco"?"S":eng==="ovid"?"":"#"; }
+  function _dispRefs(text, eng){ var s=(text==null?"":String(text)); if(eng==="ebsco") return s.replace(/#(\d+)/g,"S$1"); if(eng==="ovid") return s.replace(/#(\d+)/g,"$1"); return s; }
   // 自訂組合：每行一條；C1/C2… → 對應概念的行號群組（依各庫），L1/L2… → 上方已寫的組合行
   function buildCombos(text, conceptRefs, lastNum){
     var lines=String(text).split(/\r?\n/).map(function(s){return s.trim();}).filter(Boolean);
@@ -2317,7 +2320,7 @@ if (typeof module !== "undefined" && module.exports) {
       allRows = _appendFilter(allRows, FILTER_SEL, tid);   // 研究設計篩選（可複選）
       var vfMiss=_designMiss(FILTER_SEL, tid);   // 尚未整理此資料庫語法的設計 → 標示「請自行確認 Filters」
       exportData.push({tid:tid, label:tg.label, engine:tg.engine, vocab:tg.vocab, isStart:(tid===startDB), rows:allRows, verify:vfMiss});
-      var copyText = allRows.map(function(x){return x.text;}).join("\n");
+      var copyText = allRows.map(function(x){return _dispRefs(x.text, tg.engine);}).join("\n");
       cp.onclick=function(){ navigator.clipboard.writeText(copyText); cp.textContent="✓"; cp.classList.add("done"); setTimeout(function(){cp.innerHTML=COPYSVG;cp.classList.remove("done");},1400); };
       // 右側按鈕群：複製圖示 ＋（非 PubMed）「複製最終策略並開啟資料庫」——移到複製圖示右側
       var hr=document.createElement("span"); hr.style.cssText="display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end";
@@ -2380,7 +2383,7 @@ if (typeof module !== "undefined" && module.exports) {
         acb.onchange=function(){ AIRITI_INC=acb.checked; $("#genBtn").click(); };
       }
       var countEls=[];
-      var pre=document.createElement("pre"); allRows.forEach(function(x){ var ln=document.createElement("div"); ln.className="qline"; var gn=document.createElement("span"); gn.className="qn"; gn.textContent=(x.n!=null?"#"+x.n:""); var gs=document.createElement("span"); gs.className="qs"; if((cbColor&&cbColor.checked)||(cbBracket&&cbBracket.checked)||(cbLinks&&cbLinks.checked)){ gs.innerHTML=hlHighlight(x.text, tg.engine, cbColor&&cbColor.checked, cbBracket&&cbBracket.checked, tg.vocab, cbLinks&&cbLinks.checked).html; } else { gs.textContent=x.text; } ln.appendChild(gn); ln.appendChild(gs); if(tg.engine==="pubmed"){var ct=document.createElement("span");ct.className="pmcount";ct.textContent="—";ln.appendChild(ct);countEls.push(ct);} pre.appendChild(ln); }); card.appendChild(pre);
+      var pre=document.createElement("pre"); allRows.forEach(function(x){ var ln=document.createElement("div"); ln.className="qline"; var gn=document.createElement("span"); gn.className="qn"; gn.textContent=(x.n!=null?_refPrefix(tg.engine)+x.n:""); var gs=document.createElement("span"); gs.className="qs"; var _tx=_dispRefs(x.text, tg.engine); if((cbColor&&cbColor.checked)||(cbBracket&&cbBracket.checked)||(cbLinks&&cbLinks.checked)){ gs.innerHTML=hlHighlight(_tx, tg.engine, cbColor&&cbColor.checked, cbBracket&&cbBracket.checked, tg.vocab, cbLinks&&cbLinks.checked).html; } else { gs.textContent=_tx; } ln.appendChild(gn); ln.appendChild(gs); if(tg.engine==="pubmed"){var ct=document.createElement("span");ct.className="pmcount";ct.textContent="—";ln.appendChild(ct);countEls.push(ct);} pre.appendChild(ln); }); card.appendChild(pre);
       if(tg.engine==="pubmed"){
         var est=document.createElement("div"); est.className="pmestimate";
         var sendBtn=document.createElement("button"); sendBtn.className="btn ghost"; sendBtn.type="button"; sendBtn.textContent=isEn()?"Run final strategy in PubMed ↗":"在 PubMed 執行最終策略 ↗";
@@ -2514,7 +2517,7 @@ if (typeof module !== "undefined" && module.exports) {
       var lab=wesc(c.label)+(c.isStart?(en?" (start)":"（起始）"):"");
       var vf=(c.verify||[]), span=c.rows.length+(vf.length?1:0);
       c.rows.forEach(function(x,i){
-        rows+="<tr>"+(i===0?("<td rowspan='"+span+"' style='"+tdb+"'>"+fspan(lab)+"</td>"):"")+"<td style='"+tnum+"'>"+fspan(x.n!=null?String(x.n):"")+"</td><td style='"+tsyn+"'>"+synCell(x.text, c.engine, c.vocab)+"</td></tr>";
+        rows+="<tr>"+(i===0?("<td rowspan='"+span+"' style='"+tdb+"'>"+fspan(lab)+"</td>"):"")+"<td style='"+tnum+"'>"+fspan(x.n!=null?(_refPrefix(c.engine)+x.n):"")+"</td><td style='"+tsyn+"'>"+synCell(_dispRefs(x.text,c.engine), c.engine, c.vocab)+"</td></tr>";
       });
       if(vf.length){ rows+="<tr><td style='"+tnum+"'></td><td style='"+tsyn+";color:#b45309'>"+fspan(wesc(_verifyNote(vf)))+"</td></tr>"; }   // 尚未整理語法的資料庫：標示「請自行確認 Filters」
     });
@@ -2662,10 +2665,10 @@ if (typeof module !== "undefined" && module.exports) {
       else if(cur){ cur.rows.push(trs[ri]); }
     }
     // \u6bcf\u500b\u8cc7\u6599\u5eab\u5728\u5de5\u5177\u751f\u6210\u7684\u6574\u4efd\u6aa2\u7d22\u5f0f\uff08\u542b\u6982\u5ff5\u884c\u3001\u7d44\u5408\u884c\u3001Filter \u884c\uff09\uff0c\u8207\u756b\u9762\u986f\u793a\u76f8\u540c
-    var LINES={}, VERIFY={}; ((lastGen&&lastGen.data)||[]).forEach(function(c){ if(c&&c.tid){ LINES[c.tid]=c.rows; VERIFY[c.tid]=(c.verify||[]); } });
+    var LINES={}, VERIFY={}, ENG={}; ((lastGen&&lastGen.data)||[]).forEach(function(c){ if(c&&c.tid){ LINES[c.tid]=c.rows; VERIFY[c.tid]=(c.verify||[]); ENG[c.tid]=c.engine; } });
     blocks.forEach(function(bk){
       var baseLines=LINES[bk.tid]; if(!bk.tid || !baseLines || !baseLines.length) return;
-      var _vf=VERIFY[bk.tid]||[];
+      var _eng=ENG[bk.tid], _vf=VERIFY[bk.tid]||[];
       var lines=_vf.length ? baseLines.concat([{n:null, text:_verifyNote(_vf)}]) : baseLines;   // 尚未整理語法的資料庫：多填一列「請自行確認 Filters」
       // \u4fdd\u7559\u64cd\u4f5c\u8aaa\u660e\u5217\uff1b\u5176\u9918\uff08\u6982\u5ff5\u63d0\u793a\u3001\u7d44\u5408\u3001Filter \u6a23\u677f\u683c\uff09\uff1d\u53ef\u586b\u5217\uff0c\u4f9d\u756b\u9762\u9806\u5e8f\uff08#\u8207\u8a9e\u6cd5\uff09\u9010\u5217\u9ed1\u5b57\u586b\u5165
       var fillable=[];
@@ -2676,8 +2679,8 @@ if (typeof module !== "undefined" && module.exports) {
         if(i<fillable.length){ tr=fillable[i]; }
         else { var anc=lastPlaced||(fillable.length?fillable[fillable.length-1]:bk.rows[bk.rows.length-1]); tr=_cloneRowCont(doc, anc); anc.parentNode.insertBefore(tr, anc.nextSibling); }
         var tcs=_dchild(tr,"tc"); if(tcs.length<3){ lastPlaced=tr; continue; }
-        _cellSetText(doc, tcs[1], lines[i].n!=null?String(lines[i].n):"");
-        _cellSetText(doc, tcs[2], lines[i].text);
+        _cellSetText(doc, tcs[1], lines[i].n!=null?(_refPrefix(_eng)+lines[i].n):"");
+        _cellSetText(doc, tcs[2], _dispRefs(lines[i].text, _eng));
         lastPlaced=tr; filled++;
       }
       for(var j=fillable.length-1;j>=M;j--){ fillable[j].parentNode.removeChild(fillable[j]); }   // \u79fb\u9664\u591a\u9918\u7684\u53ef\u586b\u6a23\u677f\u5217\uff08\u4fdd\u7559\u64cd\u4f5c\u8aaa\u660e\u5217\uff09
@@ -2743,8 +2746,8 @@ if (typeof module !== "undefined" && module.exports) {
       rws.forEach(function(x,idx){
         var tr=doc.createElementNS(_WNS,"w:tr");
         tr.appendChild(_mkTc(doc,[{text:(idx===0?(c.label+(c.isStart?(en?" (start)":"（起始）"):"")):""),bold:true}],{vmerge:(idx===0?"restart":"cont"),w:1500}));
-        tr.appendChild(_mkTc(doc,[{text:(x.n!=null?String(x.n):"")}],{w:600}));
-        tr.appendChild(_mkTc(doc,[{text:x.text}],{w:7200}));
+        tr.appendChild(_mkTc(doc,[{text:(x.n!=null?(_refPrefix(c.engine)+x.n):"")}],{w:600}));
+        tr.appendChild(_mkTc(doc,[{text:_dispRefs(x.text,c.engine)}],{w:7200}));
         tbl.appendChild(tr); cnt++;
       });
       if(vf.length){   // 尚未整理語法的資料庫：多加一列「請自行確認 Filters」
