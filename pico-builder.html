@@ -304,16 +304,16 @@
       <summary style="cursor:pointer;font-weight:600;font-size:13px;color:var(--brand2)"><span data-zh>貼上 AI 整理的表格（提示詞範例）</span><span data-en>Paste an AI-made table (prompt example)</span></summary>
       <div style="margin-top:8px">
         <div class="sub" style="font-size:12px;color:var(--mut);margin-bottom:6px">
-          <span data-zh><div>‧ 從 ChatGPT／Word／Excel 等複製<b>整個表格</b>後，點進下方框按 <b>Ctrl+V</b> 貼上，工具會依欄位標題自動對應，並填入下方 PICO 表</div><div>‧ 表格請含一列標題（概念／中文／English／Emtree／MeSH／CINAHL。順序不拘）</div><div>‧ 點擊「↩ 載入上次暫存」可復原為上次表格內容</div><div>‧ <a href="https://chatgpt.com/share/69e09cc1-e6b8-83e8-a2fb-95dd223ff3ab" target="_blank" rel="noopener">開啟 ChatGPT 提示詞範例 ↗</a></div></span>
-          <span data-en><div>‧ Copy the <b>whole table</b> from ChatGPT/Word/Excel, click the box below and press <b>Ctrl+V</b>; columns are auto-mapped by header and fill the PICO table below</div><div>‧ Include a header row (Concept / Chinese / English / Emtree / MeSH / CINAHL; any order)</div><div>‧ Click “↩ Load last save” to restore the previous table</div><div>‧ <a href="https://chatgpt.com/share/69e09cc1-e6b8-83e8-a2fb-95dd223ff3ab" target="_blank" rel="noopener">Open ChatGPT prompt example ↗</a></div></span>
+          <span data-zh><div>‧ <a href="https://chatgpt.com/share/69e09cc1-e6b8-83e8-a2fb-95dd223ff3ab" target="_blank" rel="noopener">開啟 ChatGPT 提示詞範例 ↗</a>（優先使用 ChatGPT 或 Claude，登入帳號效果較佳）</div><div>‧ 從 ChatGPT 等複製整個表格後，於下方框按 <b>Ctrl+V</b> 貼上，工具會依欄位標題自動對應，並填入下方 PICO 表（亦可從 Word／Excel 複製後貼上）</div><div>‧ 表格請含一列標題（概念／中文／English／Emtree／MeSH／CINAHL。不需要的欄位可不提供；順序不拘）</div><div style="color:var(--mut)">（不同複製方式，填入效果可能有差異）</div></span>
+          <span data-en><div>‧ <a href="https://chatgpt.com/share/69e09cc1-e6b8-83e8-a2fb-95dd223ff3ab" target="_blank" rel="noopener">Open ChatGPT prompt example ↗</a> (ChatGPT or Claude works best; signing in helps)</div><div>‧ Copy the whole table from ChatGPT etc., click the box below and press <b>Ctrl+V</b>; columns are auto-mapped by header and fill the PICO table below (Word / Excel also work)</div><div>‧ Include a header row (Concept / Chinese / English / Emtree / MeSH / CINAHL; omit columns you don't need; any order)</div><div style="color:var(--mut)">(Results may vary with different copy methods.)</div></span>
         </div>
         <textarea id="pasteZone" spellcheck="false" rows="3" style="width:100%;border:1px dashed var(--brand);border-radius:8px;padding:9px 11px;font-size:13px" placeholder="在此按 Ctrl+V 貼上表格…"></textarea>
         <div id="pasteMsg" style="font-size:12.5px;margin-top:6px"></div>
         <details id="pasteDiagBox" style="margin-top:10px;border-top:1px dashed var(--line);padding-top:8px">
-          <summary style="cursor:pointer;font-size:12px;color:var(--mut)"><span data-zh>🔧 貼上後沒被正確辨識？點此開啟「貼上診斷」</span><span data-en>🔧 Paste not recognized correctly? Open “Paste diagnostics”</span></summary>
+          <summary style="cursor:pointer;font-size:12px;color:var(--mut)"><span data-zh>貼上後沒被正確辨識？點此開啟「貼上診斷」</span><span data-en>Paste not recognized correctly? Open “Paste diagnostics”</span></summary>
           <div style="font-size:12px;color:var(--mut);margin:6px 0;line-height:1.6">
-            <span data-zh>把同一份表格貼進下方框，工具會顯示剪貼簿的原始內容（HTML／純文字）與解析後的欄位網格，方便自行檢查、或連同回報一起提供給作者。此區<b>僅供診斷、不會更動上方 PICO 表</b>。</span>
-            <span data-en>Paste the same table into the box below to see the raw clipboard content (HTML / plain text) and the parsed column grid — handy for self-checking or for reporting to the author. This is <b>diagnostics only and does not change the PICO table above</b>.</span>
+            <span data-zh>把同一份表格貼進下方框，工具會顯示剪貼簿的原始內容與解析後的欄位，您可將結果來信回報給製作者 <a href="mailto:flora@ncku.edu.tw">flora@ncku.edu.tw</a>。此區<b>僅供診斷、不會更動上方 PICO 表</b>。</span>
+            <span data-en>Paste the same table into the box below to see the raw clipboard content and the parsed columns; you can email the result to the author at <a href="mailto:flora@ncku.edu.tw">flora@ncku.edu.tw</a>. This is <b>diagnostics only and does not change the PICO table above</b>.</span>
           </div>
           <textarea id="diagZone" spellcheck="false" rows="2" style="width:100%;border:1px dashed var(--line);border-radius:8px;padding:8px 10px;font-size:12px" placeholder="在此按 Ctrl+V 貼上表格（僅診斷，不會填入）…"></textarea>
           <div style="margin-top:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -328,34 +328,34 @@
       <summary style="cursor:pointer;font-weight:600;font-size:13px;color:var(--brand2)"><span data-zh>填寫說明</span><span data-en>How to fill in</span></summary>
       <div class="hint" style="margin:8px 0 0;line-height:1.75">
         <div data-zh>
-          <div>．同義詞與控制詞彙（Emtree、MeSH、CINAHL Heading）建議一詞一行</div>
-          <div>．英文同義詞建議先用「鄰近字組合器」整理好再載入</div>
-          <div>．控制詞彙：</div>
-          <div style="padding-left:1.4em">‧ 主標題若附加副標題（subheading）：<span style="color:var(--mut)">（副標題寫法需自行查各資料庫之控制詞彙表）</span></div>
-          <div style="padding-left:2.4em">例：<code>Optic Nerve/dg</code></div>
-          <div style="padding-left:1.4em;margin-top:4px">‧ 單一儲存格內預設布林邏輯為 <b>OR</b>；如有特殊處理，請用 <code>AND</code> 或括號組合</div>
+          <div>．<b>儲存格內：</b>一詞一行（預設布林邏輯關係為 OR，不需標示）</div>
+          <div>．<b>英文同義詞，請自行調整：</b>(1) 單字切截 <code>*</code>；(2) 移除冗贅字詞（exercise 能找到 exercise therapy，不需列後者）；(3) 搭配鄰近字運算（參考載入範例寫法，或使用「鄰近字組合器」整理）</div>
+          <div>．<b>控制詞彙：</b></div>
+          <div style="padding-left:1.4em">‧ 不欲包含狹義詞時：請標註「不含狹義詞」、「不狹」、「noexp」或「no exp」</div>
+          <div style="padding-left:2.4em">例：<code>diabetes (不含狹義詞)</code>、<code>diabetes (noexp)</code></div>
+          <div style="padding-left:1.4em;margin-top:4px">‧ 單一儲存格內預設布林邏輯為 <b>OR</b>；如有特殊處理，請用 <code>AND</code> 及括號組合</div>
           <div style="padding-left:2.4em">例：</div>
           <pre style="margin:2px 0 6px 2.4em;padding:8px 10px;background:var(--codebg);border:1px solid var(--line);border-radius:6px;font-family:'SF Mono',Consolas,monospace;font-size:12px;line-height:1.5;white-space:pre;width:fit-content;max-width:100%">Optic Nerve
 AND
 (Ultrasonography
 Optical Imaging)</pre>
-          <div style="padding-left:1.4em;margin-top:4px">‧ 不欲包含狹義詞時，請標註「不含狹義詞」、「不狹」、「noexp」或「no exp」</div>
-          <div style="padding-left:2.4em">例：<code>Algorithms (不含狹義詞)</code>、<code>Algorithms (不狹)</code>、<code>Algorithms (noexp)</code></div>
+          <div style="padding-left:1.4em;margin-top:4px">‧ 主標題若附加副標題（subheading）：<span style="color:var(--mut)">語法需自行查各資料庫</span></div>
+          <div style="padding-left:2.4em">例 Ovid MEDLINE（dg 表示 Diagnostic Imaging）：<code>Optic Nerve/dg</code></div>
         </div>
         <div data-en>
-          <div>• Synonyms & controlled terms (Emtree, MeSH, CINAHL Heading): one term per line.</div>
-          <div>• Tidy English synonyms in the Proximity Builder first, then load them in.</div>
-          <div>• Controlled vocabulary:</div>
-          <div style="padding-left:1.4em">‧ To attach a subheading to a main heading <span style="color:var(--mut)">(check each database's own thesaurus for the exact form)</span></div>
-          <div style="padding-left:2.4em">e.g. <code>Optic Nerve/dg</code></div>
-          <div style="padding-left:1.4em;margin-top:4px">‧ The default Boolean within one cell is <b>OR</b>; for anything else, use <code>AND</code> or parentheses.</div>
+          <div>• <b>Within a cell:</b> one term per line (the default Boolean is OR; no need to mark it).</div>
+          <div>• <b>English synonyms — refine them yourself:</b> (1) truncate word stems with <code>*</code>; (2) drop redundant terms (exercise already retrieves exercise therapy, so the latter isn't needed); (3) add proximity operators (see the loaded example, or tidy them in the Proximity Builder).</div>
+          <div>• <b>Controlled vocabulary:</b></div>
+          <div style="padding-left:1.4em">‧ To exclude narrower terms: mark it as non-exploded — 「不含狹義詞」, 「不狹」, <code>noexp</code> or <code>no exp</code>.</div>
+          <div style="padding-left:2.4em">e.g. <code>diabetes (不含狹義詞)</code>, <code>diabetes (noexp)</code></div>
+          <div style="padding-left:1.4em;margin-top:4px">‧ The default Boolean within one cell is <b>OR</b>; for anything else, use <code>AND</code> and parentheses.</div>
           <div style="padding-left:2.4em">e.g.</div>
           <pre style="margin:2px 0 6px 2.4em;padding:8px 10px;background:var(--codebg);border:1px solid var(--line);border-radius:6px;font-family:'SF Mono',Consolas,monospace;font-size:12px;line-height:1.5;white-space:pre;width:fit-content;max-width:100%">Optic Nerve
 AND
 (Ultrasonography
 Optical Imaging)</pre>
-          <div style="padding-left:1.4em;margin-top:4px">‧ To exclude narrower terms, mark it as non-exploded — <code>(不含狹義詞)</code>, <code>(不狹)</code>, <code>(noexp)</code> or <code>(no exp)</code>.</div>
-          <div style="padding-left:2.4em">e.g. <code>Algorithms (noexp)</code></div>
+          <div style="padding-left:1.4em;margin-top:4px">‧ To attach a subheading to a main heading: <span style="color:var(--mut)">check each database for its own syntax</span></div>
+          <div style="padding-left:2.4em">e.g. Ovid MEDLINE (dg = Diagnostic Imaging): <code>Optic Nerve/dg</code></div>
         </div>
       </div>
     </details>
@@ -2138,7 +2138,6 @@ if (typeof module !== "undefined" && module.exports) {
 
   var DB_OPEN_URLS={
     embase_com:"https://www.embase.com/results",
-    embase_ovid:"https://research.lib.ncku.edu.tw/er/geter/DB000000228",
     medline_ovid:"https://research.lib.ncku.edu.tw/er/geter/DB000000228",
     medline_ebsco:"https://search.ebscohost.com/",
     cochrane:"https://www.cochranelibrary.com/advanced-search/search-manager",
