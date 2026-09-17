@@ -101,7 +101,13 @@
     document.getElementById("langBtn").textContent=en?"English":"中文";
     try{ localStorage.setItem("sr_lang", en?"zh":"en"); }catch(e){}
   }
-  try{ if(localStorage.getItem("sr_lang")==="en") toggleLang(); }catch(e){}
+  // 語言決定順序：網址 ?lang=en／?lang=zh（或 #en／#zh）＞ 本機記憶。提供英文版專屬網址：index.html?lang=en
+  (function(){
+    var q=((location.search.match(/[?&]lang=(en|zh)/i)||[])[1]||(location.hash.match(/^#(en|zh)\b/i)||[])[1]||"").toLowerCase();
+    var want=q||(function(){ try{ return localStorage.getItem("sr_lang"); }catch(e){ return null; } })();
+    if(want==="en") toggleLang();
+    if(q){ try{ localStorage.setItem("sr_lang", q); }catch(e){} }   // 由網址指定時，一併記住，讓子頁面（PICO／轉換器…）也以該語言開啟
+  })();
   // 統計介面語言使用（等 GoatCounter 載入後送出 lang-en／lang-zh 事件）
   (function countLang(){ var lang=document.documentElement.getAttribute("lang")==="en"?"en":"zh"; var n=0;(function f(){ if(window.goatcounter&&window.goatcounter.count){window.goatcounter.count({path:"lang-"+lang,title:"介面語言-"+lang,event:true});}else if(n++<40){setTimeout(f,250);} })(); })();
 </script>
