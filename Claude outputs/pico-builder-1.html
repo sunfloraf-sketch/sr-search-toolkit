@@ -2847,7 +2847,7 @@ if (typeof module !== "undefined" && module.exports) {
     cinahlInst.addEventListener("change", function(){ if(outs.children.length && (!cbLinks||cbLinks.checked)) $("#genBtn").click(); }); }
 
   // ---- 由「鄰近字組合器」帶入（localStorage 佇列，可累加多個概念）----
-  function srCount(p,t){ try{ if(window.goatcounter&&window.goatcounter.count) window.goatcounter.count({path:p,title:t||p,event:true}); }catch(e){} }
+  function srCount(p,t){ var n=0;(function f(){ try{ if(window.goatcounter&&window.goatcounter.count){ window.goatcounter.count({path:p,title:t||p,event:true}); return; } }catch(e){ return; } if(n++<40) setTimeout(f,250); })(); }
   function importFromProximity(){
     var box=[]; try{ box=JSON.parse(localStorage.getItem("sr_pico_inbox")||"[]")||[]; }catch(e){ box=[]; }
     if(!box.length) return false;
@@ -2884,6 +2884,7 @@ if (typeof module !== "undefined" && module.exports) {
   (function countLang(){ var lang=document.body.classList.contains("en")?"en":"zh"; var n=0;(function f(){ if(window.goatcounter&&window.goatcounter.count){window.goatcounter.count({path:"lang-"+lang,title:"介面語言-"+lang,event:true});}else if(n++<40){setTimeout(f,250);} })(); })();
 })();
 </script>
+<script>/* 頁面瀏覽路徑正規化：去除 ?lang 等 query，避免同頁被拆成多筆（不影響功能事件的顯式 path） */window.goatcounter={path:function(p){try{return location.pathname;}catch(e){return p;}}};</script>
 <script data-goatcounter="https://sr-toolkit.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>
