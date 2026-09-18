@@ -1292,8 +1292,8 @@ if (typeof module !== "undefined" && module.exports) {
         var _enF=document.body.classList.contains("en");
         _flatW.style.display="block";
         _flatW.innerHTML=_enF
-          ? '⚠ <b>“One combined query” is on, but no combination line was found.</b> Add a final line that combines your sets — e.g. <code>#1 AND #2 AND #3</code> — so the tool knows how to merge them. Without it, each set is shown separately and nothing is combined.'
-          : '⚠ <b>你勾了「整併為單一長式」,但偵測不到組合行。</b>請在最後一行加入各組的組合指示,例如 <code>#1 AND #2 AND #3</code>,系統才知道要怎麼整併;否則各檢索組會分別輸出,不會合併成單一長式。';
+          ? '⚠ <b>“One combined query” is on, but no combination line was detected.</b> Add a combination line as the last line — e.g. <code>#1 AND #2 AND #3</code> — so the tool will combine them into one query as instructed.'
+          : '⚠ <b>您勾選了「整併為單一長式」,但系統偵測不到組合行。</b>請在最後一行加入組合指示,例如 <code>#1 AND #2 AND #3</code>,系統才會依指示整併為一式。';
       }
       input=_flat;   // 整併為單一長式（在來源端展開 #行號）；無組合行時 flattenInput 原樣返回
     }
