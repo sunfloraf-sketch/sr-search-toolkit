@@ -109,8 +109,9 @@
     if(q){ try{ localStorage.setItem("sr_lang", q); }catch(e){} }   // 由網址指定時，一併記住，讓子頁面（PICO／轉換器…）也以該語言開啟
   })();
   // 統計介面語言使用（等 GoatCounter 載入後送出 lang-en／lang-zh 事件）
-  (function countLang(){ var lang=document.documentElement.getAttribute("lang")==="en"?"en":"zh"; var n=0;(function f(){ if(window.goatcounter&&window.goatcounter.count){window.goatcounter.count({path:"lang-"+lang,title:"介面語言-"+lang,event:true});}else if(n++<40){setTimeout(f,250);} })(); })();
+  (function countLang(){ var lang=document.documentElement.getAttribute("lang")==="en"?"en":"zh"; var n=0;(function f(){ if(window.goatcounter&&window.goatcounter.count){window.goatcounter.count({path:"lang-"+lang,title:"介面語言-"+lang,event:true});window.goatcounter.count({path:"lang-"+lang+"-all",title:"介面語言-"+lang+"（累計）",event:true,no_session:true});}else if(n++<40){setTimeout(f,250);} })(); })();
 </script>
+<script>/* 頁面瀏覽路徑正規化：去除 ?lang 等 query，避免同頁被拆成多筆（不影響功能事件的顯式 path） */window.goatcounter={path:function(p){try{return location.pathname;}catch(e){return p;}}};</script>
 <script data-goatcounter="https://sr-toolkit.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>

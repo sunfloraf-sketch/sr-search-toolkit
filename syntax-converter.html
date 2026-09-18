@@ -849,7 +849,7 @@ function parseQuery(input, src) {
    scoped=true 代表目前在某欄位範圍內，裸 term 只輸出詞本身。
    ===================================================================== */
 function _EN(){return document.body.classList.contains("en");}
-function srCount(p,t){ try{ if(window.goatcounter&&window.goatcounter.count) window.goatcounter.count({path:p,title:t||p,event:true}); }catch(e){} }
+function srCount(p,t){ var c=function(o){ var n=0;(function f(){ try{ if(window.goatcounter&&window.goatcounter.count){ window.goatcounter.count(o); return; } }catch(e){ return; } if(n++<40) setTimeout(f,250); })(); }; c({path:p,title:t||p,event:true}); c({path:p+'-all',title:(t||p)+'（累計）',event:true,no_session:true}); }  /* 雙軌：p=去重(不重複使用階段)、p-all=no_session(每次都算) */
 // 整併為單一長式：在「來源語法」層先把最後一個 #行號組合展開成一條內嵌長檢索式，
 // 再交給轉換引擎（各庫的行號寫法不同，故在來源端展開最穩健）。無組合行時原樣返回。
 function flattenInput(raw){
@@ -1609,8 +1609,9 @@ window.toggleLang=function(){
 };
 (function(){ var q=((location.search.match(/[?&]lang=(en|zh)/i)||[])[1]||(location.hash.match(/^#(en|zh)\b/i)||[])[1]||"").toLowerCase(); var want=q||(function(){try{return localStorage.getItem("sr_lang");}catch(e){return null;}})(); try{ if(want==="en" && !document.body.classList.contains("en")) window.toggleLang(); }catch(e){} if(q){ try{ localStorage.setItem("sr_lang", q); }catch(e){} } })();  /* 網址 ?lang=en／?lang=zh（或 #en／#zh）＞ 本機記憶 */
 // 統計介面語言使用（等 GoatCounter 載入後送出 lang-en／lang-zh 事件）
-(function countLang(){ var lang=document.body.classList.contains("en")?"en":"zh"; var n=0;(function f(){ if(window.goatcounter&&window.goatcounter.count){window.goatcounter.count({path:"lang-"+lang,title:"介面語言-"+lang,event:true});}else if(n++<40){setTimeout(f,250);} })(); })();
+(function countLang(){ var lang=document.body.classList.contains("en")?"en":"zh"; var n=0;(function f(){ if(window.goatcounter&&window.goatcounter.count){window.goatcounter.count({path:"lang-"+lang,title:"介面語言-"+lang,event:true});window.goatcounter.count({path:"lang-"+lang+"-all",title:"介面語言-"+lang+"（累計）",event:true,no_session:true});}else if(n++<40){setTimeout(f,250);} })(); })();
 </script>
+<script>/* 頁面瀏覽路徑正規化：去除 ?lang 等 query，避免同頁被拆成多筆（不影響功能事件的顯式 path） */window.goatcounter={path:function(p){try{return location.pathname;}catch(e){return p;}}};</script>
 <script data-goatcounter="https://sr-toolkit.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>
