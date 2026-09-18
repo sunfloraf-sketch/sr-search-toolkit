@@ -183,6 +183,7 @@
     </div>
     <button class="wordbtn" onclick="downloadWord()"><span data-zh>⬇ 下載 Word</span><span data-en>⬇ Download Word</span></button>
   </div>
+  <div class="quotewarn" id="flatWarn" style="display:none"></div>
   <div class="grid" id="outs"></div>
 
   <div style="margin-top:26px">
@@ -1283,7 +1284,19 @@ if (typeof module !== "undefined" && module.exports) {
   function run(){
     const srcTarget=srcSel.value, src=TARGET_BY_ID[srcTarget].engine;
     let input=inp.value.trim();
-    if(cbFlat && cbFlat.checked) input=flattenInput(input);   // 整併為單一長式（在來源端展開 #行號）
+    var _flatW=document.getElementById("flatWarn"); if(_flatW) _flatW.style.display="none";   // 防呆：每次先隱藏
+    if(cbFlat && cbFlat.checked){
+      var _raw=input, _flat=flattenInput(_raw);
+      var _nLines=_raw.split(/\r?\n/).filter(function(l){ return l.trim().length; }).length;
+      if(_flat===_raw && _nLines>=2 && _flatW){   // 勾了整併、有多行，但偵測不到組合行（最後一行無 #行號引用）
+        var _enF=document.body.classList.contains("en");
+        _flatW.style.display="block";
+        _flatW.innerHTML=_enF
+          ? '⚠ <b>“One combined query” is on, but no combination line was found.</b> Add a final line that combines your sets — e.g. <code>#1 AND #2 AND #3</code> — so the tool knows how to merge them. Without it, each set is shown separately and nothing is combined.'
+          : '⚠ <b>你勾了「整併為單一長式」,但偵測不到組合行。</b>請在最後一行加入各組的組合指示,例如 <code>#1 AND #2 AND #3</code>,系統才知道要怎麼整併;否則各檢索組會分別輸出,不會合併成單一長式。';
+      }
+      input=_flat;   // 整併為單一長式（在來源端展開 #行號）；無組合行時 flattenInput 原樣返回
+    }
     const checkedSet = new Set(Array.prototype.filter.call(dbchecks.querySelectorAll("input"), function(c){return c.checked;}).map(function(c){return c.value;}));
     outs.innerHTML="";
     var _qw0=document.getElementById("quoteWarn"); if(_qw0) _qw0.style.display="none";
