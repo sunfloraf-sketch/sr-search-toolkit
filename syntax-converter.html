@@ -850,7 +850,14 @@ function parseQuery(input, src) {
    scoped=true 代表目前在某欄位範圍內，裸 term 只輸出詞本身。
    ===================================================================== */
 function _EN(){return document.body.classList.contains("en");}
-function srCount(p,t){ var c=function(o){ var n=0;(function f(){ try{ if(window.goatcounter&&window.goatcounter.count){ window.goatcounter.count(o); return; } }catch(e){ return; } if(n++<40) setTimeout(f,250); })(); }; c({path:p,title:t||p,event:true}); c({path:p+'-all',title:(t||p)+'（累計）',event:true,no_session:true}); }  /* 雙軌：p=去重(不重複使用階段)、p-all=no_session(每次都算) */
+function srCount(p,t){ try{ var _e=window.event; if(_e&&(_e.type==="click"||_e.type==="change")&&_e.target&&_e.target.closest){ var _b=_e.target.closest("button,[role=button],.btn,a,input,select,th,label"); if(_b) _b.__srExplicit=_e.timeStamp; } }catch(_x){} var c=function(o){ var n=0;(function f(){ try{ if(window.goatcounter&&window.goatcounter.count){ window.goatcounter.count(o); return; } }catch(e){ return; } if(n++<40) setTimeout(f,250); })(); }; c({path:p,title:t||p,event:true}); c({path:p+'-all',title:(t||p)+'（累計）',event:true,no_session:true}); }  /* 雙軌：p=去重(不重複使用階段)、p-all=no_session(每次都算) */
+/* 自動事件統計：委派監聽 document，未來新增/動態產生的元件自動涵蓋。命名 <頁>-chk/sel/btn-<id或文字>；同一次點擊已被具名事件回報(__srExplicit)或標了 data-noauto 者略過 */
+(function autoTrack(){ var P="conv";
+  function nm(el){ return el.getAttribute("data-ev")||el.id||el.getAttribute("name")||el.value||(el.textContent||"").trim().slice(0,24)||el.tagName.toLowerCase(); }
+  function slug(s){ return (String(s).toLowerCase().replace(/\s+/g,"-").replace(/[^a-z0-9一-鿿_-]+/g,"").replace(/^-+|-+$/g,"").slice(0,40))||"x"; }
+  document.addEventListener("change", function(e){ var el=e.target; if(!el||!el.matches||el.hasAttribute("data-noauto")) return; if(el.matches("input[type=checkbox],input[type=radio]")) srCount(P+"-chk-"+slug(nm(el))+(el.checked?"-on":"-off")); else if(el.matches("select")) srCount(P+"-sel-"+slug(nm(el))+"-"+slug(el.value)); }, false);
+  document.addEventListener("click", function(e){ var el=e.target&&e.target.closest?e.target.closest("button,[role=button],.btn,a.toolbtn,a.sendbtn"):null; if(!el||el.hasAttribute("data-noauto")||el.__srExplicit===e.timeStamp) return; srCount(P+"-btn-"+slug(nm(el))); }, false);
+})();
 // 整併為單一長式：在「來源語法」層先把最後一個 #行號組合展開成一條內嵌長檢索式，
 // 再交給轉換引擎（各庫的行號寫法不同，故在來源端展開最穩健）。無組合行時原樣返回。
 function flattenInput(raw){

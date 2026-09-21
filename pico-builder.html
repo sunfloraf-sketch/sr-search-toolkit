@@ -2270,6 +2270,7 @@ if (typeof module !== "undefined" && module.exports) {
   var lastGen=null;
   $("#genBtn").onclick=function(){
     srCount('pico-generate','PICO-產生檢索策略');
+    if(customCombo && customCombo.value.trim()) srCount('pico-custom-combo','PICO-使用自訂組合策略');
     var startDB=srcSel.value, level=levelSel.value;
     var FILTER_SEL=Array.prototype.map.call(document.querySelectorAll('input[name=sdfilter]:checked'), function(c){return c.value;}).filter(Boolean);   // 研究設計篩選（可複選）
     var rows=[]; Array.prototype.forEach.call(picoBody.querySelectorAll("tr"), function(tr){ rows.push(tr._get()); });  // 全部列（含空列，維持 C1/C2… 對位）
@@ -2338,7 +2339,7 @@ if (typeof module !== "undefined" && module.exports) {
             var full=expandNumberedQuery(finalRow,allRows);
             var url=PUBMED_NCKU_URL+"&term="+encodeURIComponent(full);
             var link=document.createElement("a");link.href=url;link.target="_blank";link.rel="noopener noreferrer";document.body.appendChild(link);link.click();link.remove();
-            srCount('pico-pubmed-run','PICO-在PubMed執行最終策略');
+            srCount('pico-pubmed-run-ncku','PICO-執行PubMed最終檢索(成大)');
             pmOpen.innerHTML="✓"; pmOpen.classList.add("done"); pmOpen.title=isEn()?"Opened in PubMed":"已開啟 PubMed"; setTimeout(function(){pmOpen.innerHTML=OPENSVG;pmOpen.classList.remove("done");pmOpen.title=_pmTitle;},1600);
           }catch(err){ pmOpen.title=String(err&&err.message||err); }
         };
@@ -2387,22 +2388,24 @@ if (typeof module !== "undefined" && module.exports) {
       var pre=document.createElement("pre"); allRows.forEach(function(x){ var ln=document.createElement("div"); ln.className="qline"; var gn=document.createElement("span"); gn.className="qn"; gn.textContent=(x.n!=null?_refPrefix(tg.engine)+x.n:""); var gs=document.createElement("span"); gs.className="qs"; var _tx=_dispRefs(x.text, tg.engine); if((cbColor&&cbColor.checked)||(cbBracket&&cbBracket.checked)||(cbLinks&&cbLinks.checked)){ gs.innerHTML=hlHighlight(_tx, tg.engine, cbColor&&cbColor.checked, cbBracket&&cbBracket.checked, tg.vocab, cbLinks&&cbLinks.checked).html; } else { gs.textContent=_tx; } ln.appendChild(gn); ln.appendChild(gs); if(tg.engine==="pubmed"){var ct=document.createElement("span");ct.className="pmcount";ct.textContent="—";ln.appendChild(ct);countEls.push(ct);} pre.appendChild(ln); }); card.appendChild(pre);
       if(tg.engine==="pubmed"){
         var est=document.createElement("div"); est.className="pmestimate";
-        var sendBtn=document.createElement("button"); sendBtn.className="btn ghost"; sendBtn.type="button"; sendBtn.textContent=isEn()?"Run final strategy in PubMed ↗":"在 PubMed 執行最終策略 ↗";
         var estBtn=document.createElement("button"); estBtn.className="btn ghost"; estBtn.type="button"; estBtn.textContent=isEn()?"Estimate PubMed counts":"估算 PubMed 文章數";
+        var sendBtnG=document.createElement("button"); sendBtnG.className="btn ghost"; sendBtnG.type="button"; sendBtnG.textContent=isEn()?"Run final strategy in PubMed ↗":"執行 PubMed 最終檢索 ↗";
+        var sendBtn=document.createElement("button"); sendBtn.className="btn ghost"; sendBtn.type="button"; sendBtn.textContent=isEn()?"Run final strategy in PubMed (NCKU) ↗":"執行 PubMed 最終檢索（成大）↗";
         var st=document.createElement("span"); st.className="pmstatus";
-        var nt=document.createElement("div"); nt.className="pmestimate-note"; nt.textContent=isEn()?"Queries are sent one at a time to NCBI ESearch (no API key; ≤3 requests/second). Counts reflect PubMed at query time and may change. The Run buttons use the NCKU LinkOut URL — anyone can use it (non-NCKU users simply won't see the NCKU full-text icon).":"逐筆送至 NCBI ESearch（未使用 API key，每秒不超過 3 次）。數量以查詢當下的 PubMed 為準，之後可能變動。「執行檢索」採成大 LinkOut 網址，非成大使用者亦可使用（僅少了成大全文連結圖示）。";
-        est.appendChild(sendBtn);est.appendChild(estBtn);est.appendChild(st);est.appendChild(nt);card.appendChild(est);
-        sendBtn.onclick=function(){
+        var nt=document.createElement("div"); nt.className="pmestimate-note"; nt.textContent=isEn()?"Queries are sent one at a time to NCBI ESearch (no API key; ≤3 requests/second). Counts reflect PubMed at query time and may change. “Run final strategy in PubMed” uses the standard PubMed URL; the “(NCKU)” button uses the NCKU LinkOut URL (adds the NCKU full-text icon; anyone can still use it).":"逐筆送至 NCBI ESearch（未使用 API key，每秒不超過 3 次）。數量以查詢當下的 PubMed 為準，之後可能變動。「執行 PubMed 最終檢索」採 PubMed 通用網址；「（成大）」按鈕採成大 LinkOut 網址（多了成大全文連結圖示，非成大使用者亦可使用）。";
+        est.appendChild(estBtn);est.appendChild(sendBtnG);est.appendChild(sendBtn);est.appendChild(st);est.appendChild(nt);card.appendChild(est);
+        function _pmRun(urlBase, evName, evTitle){
           try{
             var finalRow=allRows[allRows.length-1];
             if(!finalRow) throw new Error(isEn()?"No strategy to send":"沒有可傳送的檢索策略");
             var full=expandNumberedQuery(finalRow,allRows);
-            var url=PUBMED_NCKU_URL+"&term="+encodeURIComponent(full);
-            var link=document.createElement("a");link.href=url;link.target="_blank";link.rel="noopener noreferrer";document.body.appendChild(link);link.click();link.remove();
-            srCount('pico-pubmed-run','PICO-在PubMed執行最終策略');
+            var link=document.createElement("a");link.href=urlBase+encodeURIComponent(full);link.target="_blank";link.rel="noopener noreferrer";document.body.appendChild(link);link.click();link.remove();
+            srCount(evName, evTitle);
             st.className="pmstatus";st.textContent=isEn()?"Opened in PubMed":"已開啟 PubMed";
           }catch(err){st.className="pmstatus err";st.textContent=String(err&&err.message||err);}
-        };
+        }
+        sendBtnG.onclick=function(){ _pmRun("https://pubmed.ncbi.nlm.nih.gov/?term=", 'pico-pubmed-run', 'PICO-執行PubMed最終檢索(通用)'); };
+        sendBtn.onclick=function(){ _pmRun(PUBMED_NCKU_URL+"&term=", 'pico-pubmed-run-ncku', 'PICO-執行PubMed最終檢索(成大)'); };
         estBtn.onclick=async function(){
           srCount('pico-pubmed-count','PICO-PubMed估算文章數');
           estBtn.disabled=true;st.className="pmstatus";var failures=0;
@@ -2847,7 +2850,14 @@ if (typeof module !== "undefined" && module.exports) {
     cinahlInst.addEventListener("change", function(){ if(outs.children.length && (!cbLinks||cbLinks.checked)) $("#genBtn").click(); }); }
 
   // ---- 由「鄰近字組合器」帶入（localStorage 佇列，可累加多個概念）----
-  function srCount(p,t){ var c=function(o){ var n=0;(function f(){ try{ if(window.goatcounter&&window.goatcounter.count){ window.goatcounter.count(o); return; } }catch(e){ return; } if(n++<40) setTimeout(f,250); })(); }; c({path:p,title:t||p,event:true}); c({path:p+'-all',title:(t||p)+'（累計）',event:true,no_session:true}); }  /* 雙軌：p=去重(不重複使用階段)、p-all=no_session(每次都算) */
+  function srCount(p,t){ try{ var _e=window.event; if(_e&&(_e.type==="click"||_e.type==="change")&&_e.target&&_e.target.closest){ var _b=_e.target.closest("button,[role=button],.btn,a,input,select,th,label"); if(_b) _b.__srExplicit=_e.timeStamp; } }catch(_x){} var c=function(o){ var n=0;(function f(){ try{ if(window.goatcounter&&window.goatcounter.count){ window.goatcounter.count(o); return; } }catch(e){ return; } if(n++<40) setTimeout(f,250); })(); }; c({path:p,title:t||p,event:true}); c({path:p+'-all',title:(t||p)+'（累計）',event:true,no_session:true}); }  /* 雙軌：p=去重(不重複使用階段)、p-all=no_session(每次都算) */
+  /* 自動事件統計：委派監聽 document，未來新增/動態產生的元件自動涵蓋。命名 <頁>-chk/sel/btn-<id或文字>；同一次點擊已被具名事件回報(__srExplicit)或標了 data-noauto 者略過，避免重複 */
+  (function autoTrack(){ var P="pico";
+    function nm(el){ return el.getAttribute("data-ev")||el.id||el.getAttribute("name")||el.value||(el.textContent||"").trim().slice(0,24)||el.tagName.toLowerCase(); }
+    function slug(s){ return (String(s).toLowerCase().replace(/\s+/g,"-").replace(/[^a-z0-9一-鿿_-]+/g,"").replace(/^-+|-+$/g,"").slice(0,40))||"x"; }
+    document.addEventListener("change", function(e){ var el=e.target; if(!el||!el.matches||el.hasAttribute("data-noauto")) return; if(el.matches("input[type=checkbox],input[type=radio]")) srCount(P+"-chk-"+slug(nm(el))+(el.checked?"-on":"-off")); else if(el.matches("select")) srCount(P+"-sel-"+slug(nm(el))+"-"+slug(el.value)); }, false);
+    document.addEventListener("click", function(e){ var el=e.target&&e.target.closest?e.target.closest("button,[role=button],.btn,a.toolbtn,a.sendbtn"):null; if(!el||el.hasAttribute("data-noauto")||el.__srExplicit===e.timeStamp) return; srCount(P+"-btn-"+slug(nm(el))); }, false);
+  })();
   function importFromProximity(){
     var box=[]; try{ box=JSON.parse(localStorage.getItem("sr_pico_inbox")||"[]")||[]; }catch(e){ box=[]; }
     if(!box.length) return false;

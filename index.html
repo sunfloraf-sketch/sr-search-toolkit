@@ -108,6 +108,13 @@
     if(want==="en") toggleLang();
     if(q){ try{ localStorage.setItem("sr_lang", q); }catch(e){} }   // 由網址指定時，一併記住，讓子頁面（PICO／轉換器…）也以該語言開啟
   })();
+  // 事件統計（雙軌：p=去重、p-all=no_session 每次都算）；並自動追蹤按鈕與工具連結點擊
+  function srCount(p,t){ try{ var _e=window.event; if(_e&&(_e.type==="click"||_e.type==="change")&&_e.target&&_e.target.closest){ var _b=_e.target.closest("button,[role=button],.btn,a"); if(_b) _b.__srExplicit=_e.timeStamp; } }catch(_x){} var c=function(o){ var n=0;(function f(){ try{ if(window.goatcounter&&window.goatcounter.count){ window.goatcounter.count(o); return; } }catch(e){ return; } if(n++<40) setTimeout(f,250); })(); }; c({path:p,title:t||p,event:true}); c({path:p+'-all',title:(t||p)+'（累計）',event:true,no_session:true}); }
+  (function autoTrack(){ var P="index";
+    function nm(el){ return el.getAttribute("data-ev")||el.id||(el.getAttribute("href")||"").replace(/\.html.*$/,"")||(el.textContent||"").trim().slice(0,24)||el.tagName.toLowerCase(); }
+    function slug(s){ return (String(s).toLowerCase().replace(/\s+/g,"-").replace(/[^a-z0-9一-鿿_-]+/g,"").replace(/^-+|-+$/g,"").slice(0,40))||"x"; }
+    document.addEventListener("click", function(e){ var el=e.target&&e.target.closest?e.target.closest("button,[role=button],.btn,a.toolbtn,a[href$='.html'],.card"):null; if(!el||el.hasAttribute("data-noauto")||el.__srExplicit===e.timeStamp) return; srCount(P+"-btn-"+slug(nm(el))); }, false);
+  })();
   // 統計介面語言使用（等 GoatCounter 載入後送出 lang-en／lang-zh 事件）
   (function countLang(){ var lang=document.documentElement.getAttribute("lang")==="en"?"en":"zh"; var n=0;(function f(){ if(window.goatcounter&&window.goatcounter.count){window.goatcounter.count({path:"lang-"+lang,title:"介面語言-"+lang,event:true});window.goatcounter.count({path:"lang-"+lang+"-all",title:"介面語言-"+lang+"（累計）",event:true,no_session:true});}else if(n++<40){setTimeout(f,250);} })(); })();
 </script>
