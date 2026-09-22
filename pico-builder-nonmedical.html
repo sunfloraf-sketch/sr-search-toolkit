@@ -90,6 +90,17 @@
   .pmestimate input{width:210px;font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink)}
   .pmestimate .pmstatus{color:var(--mut);min-width:120px}.pmestimate .pmstatus.err{color:#A33A32}
   .pmestimate-note{width:100%;color:var(--mut);line-height:1.5}
+  /* IEEE 相容性檢查面板 */
+  .ieeediag{padding:10px 14px;border-top:1px dashed var(--line);background:#F7F8FA;font-size:12px;line-height:1.55}
+  .ieeediag .ttl{font-weight:700;color:#374151;margin-bottom:4px}
+  .ieeediag .ttl a{color:#2563eb;font-weight:600;font-size:11.5px;margin-left:6px}
+  .ieeediag .wc{display:inline-block;font-weight:700;padding:1px 8px;border-radius:10px;background:#E5EAF0;color:#374151}
+  .ieeediag .wc.over{background:#FDECEA;color:#A33A32}
+  .ieeediag ul{margin:5px 0 0;padding-left:18px}
+  .ieeediag li.err{color:#A33A32}.ieeediag li.warn{color:#B45309}
+  .ieeediag .wterms{margin-top:5px;color:var(--mut)}
+  .ieeediag .wterms code{background:#EEF1F4;border:1px solid var(--line);border-radius:4px;padding:0 5px;margin:0 3px 3px 0;display:inline-block;font-size:11.5px}
+  .ieeediag .wterms code.short{background:#FDECEA;color:#A33A32;border-color:#f2c9c4}
   .dbpush{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:9px 14px;border-top:1px dashed var(--line);background:#F7F9F9;font-size:12px}
   .dbpush-status{color:var(--mut)}.dbpush-status.err{color:#A33A32}
   .rem{padding:8px 14px;background:var(--warnbg);color:var(--warn);font-size:12px;border-bottom:1px dashed var(--line)}
@@ -2541,6 +2552,33 @@ if (typeof module !== "undefined" && module.exports) {
     var ta=document.createElement("textarea");ta.value=text;ta.setAttribute("readonly","");ta.style.position="fixed";ta.style.top="-1000px";ta.style.opacity="0";document.body.appendChild(ta);ta.focus();ta.select();try{ta.setSelectionRange(0,String(text).length);}catch(_e){}
     var ok=false;try{ok=document.execCommand("copy");}catch(_e){}ta.remove();return ok;
   }
+  // IEEE Xplore Command Search 相容性檢查（q = 已展開的完整檢索式）
+  var _IEEE_STOP="a an and are as at be but by for if in into is it no not of on or such that the their then there these they this to was will with".split(" ");
+  function ieeeDiagnostics(q){
+    q=String(q||""); var en=isEn(), errors=[], warnings=[];
+    // 去掉欄位標籤（"All Metadata": / "IEEE Terms": 等）與運算子後，取出「詞」
+    var plain=q.replace(/"[^"]*"\s*:/g," ");                 // 移除 "欄位":，避免把欄位名當詞
+    // 萬用字元統計與逐詞清單（* 或 ?）
+    var wildCount=(q.match(/[*?]/g)||[]).length;
+    var wildTerms=[], seenW={};
+    (plain.match(/[A-Za-z0-9][A-Za-z0-9?*\-]*/g)||[]).forEach(function(t){ if(/[*?]/.test(t) && !seenW[t.toLowerCase()]){ seenW[t.toLowerCase()]=1; wildTerms.push(t); } });
+    if(wildCount>10) errors.push((en?"Wildcards exceed IEEE's maximum of 10 — found ":"萬用字元（*／?）超過 IEEE 上限 10 個 —— 目前 ")+wildCount+(en?". Remove * from less-critical terms or spell out the variants.":" 個。請對次要詞移除 *，或改列出字尾變化。"));
+    // 含萬用字元的詞至少需 3 個明確字元
+    var shortW=[]; wildTerms.forEach(function(t){ if((t.replace(/[*?]/g,"").match(/[A-Za-z0-9]/g)||[]).length<3 && shortW.indexOf(t)<0) shortW.push(t); });
+    if(shortW.length) errors.push((en?"Wildcard terms need ≥3 explicit characters: ":"含萬用字元的詞至少需 3 個明確字元：")+shortW.join(", "));
+    // 每個子句（以布林／鄰近運算子切開）最多 25 詞
+    q.split(/\b(?:AND|OR|NOT|NEAR\/\d+|ONEAR\/\d+)\b/i).forEach(function(c,i){
+      var noField=c.replace(/"[^"]*"\s*:/g," "), parts=(noField.match(/"[^"]+"|[A-Za-z0-9?*\-]+/g)||[]), n=0;
+      parts.forEach(function(x){ n += x[0]==='"' ? (x.slice(1,-1).match(/[A-Za-z0-9?*]+/g)||[]).length : 1; });
+      if(n>25) errors.push((en?"A clause exceeds 25 terms (":"單一子句超過 25 詞（")+n+(en?") — split it into separate sets.":" 詞）—— 請拆成多個檢索集。"));
+    });
+    // 未加引號的停用詞會被忽略
+    var stopHit=[]; (plain.replace(/"[^"]*"/g," ").toLowerCase().match(/\b[a-z]+\b/g)||[]).forEach(function(w){ if(_IEEE_STOP.indexOf(w)>=0 && ["and","or","not"].indexOf(w)<0 && stopHit.indexOf(w)<0) stopHit.push(w); });
+    if(stopHit.length) warnings.push((en?"Unquoted stop words are ignored by IEEE: ":"未加引號的停用詞會被 IEEE 忽略：")+stopHit.join(", "));
+    // 含 & 的詞需加引號
+    if(q.replace(/"[^"]*"/g," ").indexOf("&")>=0) warnings.push(en?"Quote any term containing & (e.g. \"AT&T\").":"含 & 的詞請加引號（例：\"AT&T\"）。");
+    return { errors:errors, warnings:warnings, wildCount:wildCount, wildTerms:wildTerms, shortW:shortW };
+  }
 
   async function fetchPubmedCount(query, email){
     var params=new URLSearchParams({db:"pubmed",term:query,rettype:"count",retmode:"json",tool:"sr_search_toolkit"});
@@ -2567,7 +2605,7 @@ if (typeof module !== "undefined" && module.exports) {
     var rows=[]; Array.prototype.forEach.call(picoBody.querySelectorAll("tr"), function(tr){ rows.push(tr._get()); });  // 全部列（含空列，維持 C1/C2… 對位）
     outs.innerHTML=""; lastGen=null; if($("#wordBtn")) $("#wordBtn").disabled=true;
     if(!rows.some(_rf)){ outs.innerHTML='<div class="panel" style="color:var(--warn)">'+(isEn()?"Please fill at least one concept.":"請至少填入一個概念的詞彙。")+'</div>'; return; }
-    var checked = Array.prototype.filter.call(dbchecks.querySelectorAll("input"), function(c){return c.checked;}).map(function(c){return c.value;});
+    var checked = Array.prototype.filter.call(dbchecks.querySelectorAll("input[type=checkbox]"), function(c){return c.checked;}).map(function(c){return c.value;});
     if(!checked.length){ outs.innerHTML='<div class="panel" style="color:var(--warn)">'+(isEn()?"Please tick at least one output database.":"請至少勾選一個輸出資料庫。")+'</div>'; return; }
     Object.keys(TARGET_BY_ID).forEach(function(k){ if(/^ebc\d+$/.test(k)) delete TARGET_BY_ID[k]; });   // 清掉上次的動態自訂庫
     var _custNames=customNames();
@@ -2684,6 +2722,32 @@ if (typeof module !== "undefined" && module.exports) {
       }
       var countEls=[];
       var pre=document.createElement("pre"); allRows.forEach(function(x){ var ln=document.createElement("div"); ln.className="qline"; var gn=document.createElement("span"); gn.className="qn"; gn.textContent=(x.n!=null?_refPrefix(tg.engine)+x.n:""); var gs=document.createElement("span"); gs.className="qs"; var _tx=_dispRefs(x.text, tg.engine); if((cbColor&&cbColor.checked)||(cbBracket&&cbBracket.checked)||(cbLinks&&cbLinks.checked)){ gs.innerHTML=hlHighlight(_tx, tg.engine, cbColor&&cbColor.checked, cbBracket&&cbBracket.checked, tg.vocab, cbLinks&&cbLinks.checked).html; } else { gs.textContent=_tx; } ln.appendChild(gn); ln.appendChild(gs); if(tg.engine==="pubmed"){var ct=document.createElement("span");ct.className="pmcount";ct.textContent="—";ln.appendChild(ct);countEls.push(ct);} pre.appendChild(ln); }); card.appendChild(pre);
+      if(tg.engine==="ieee"){   // IEEE 相容性檢查面板（檢查展開後的完整檢索式）
+        var _iq=""; try{ _iq=expandNumberedQuery(allRows[allRows.length-1], allRows); }catch(_e){ _iq=allRows.map(function(r){return r.text;}).join(" AND "); }
+        var dg=ieeeDiagnostics(_iq), en_=isEn();
+        var box=document.createElement("div"); box.className="ieeediag";
+        var ttl=document.createElement("div"); ttl.className="ttl";
+        ttl.innerHTML=(en_?"IEEE Xplore compatibility check":"IEEE Xplore 相容性檢查")+' <a href="https://ieeexplore.ieee.org/Xplorehelp/searching-ieee-xplore/search-tips" target="_blank" rel="noopener">'+(en_?"official rules ↗":"官方規則 ↗")+'</a>';
+        box.appendChild(ttl);
+        var wc=document.createElement("div");
+        var chip=document.createElement("span"); chip.className="wc"+(dg.wildCount>10?" over":""); chip.textContent=(en_?"Wildcards ":"萬用字元 ")+dg.wildCount+" / 10";
+        wc.appendChild(chip); box.appendChild(wc);
+        if(dg.wildTerms.length){
+          var wt=document.createElement("div"); wt.className="wterms";
+          wt.appendChild(document.createTextNode(en_?"Wildcard terms (trim * from less-critical ones if over 10): ":"含 * 的詞（超過 10 個時，請對次要詞移除 *）："));
+          dg.wildTerms.forEach(function(t){ var c=document.createElement("code"); if(dg.shortW.indexOf(t)>=0) c.className="short"; c.textContent=t; wt.appendChild(c); });
+          box.appendChild(wt);
+        }
+        if(dg.errors.length||dg.warnings.length){
+          var ul=document.createElement("ul");
+          dg.errors.forEach(function(m){ var li=document.createElement("li"); li.className="err"; li.textContent="✕ "+m; ul.appendChild(li); });
+          dg.warnings.forEach(function(m){ var li=document.createElement("li"); li.className="warn"; li.textContent="⚠ "+m; ul.appendChild(li); });
+          box.appendChild(ul);
+        } else {
+          var okd=document.createElement("div"); okd.style.color="#166534"; okd.style.marginTop="4px"; okd.textContent=en_?"✓ No blocking issues detected.":"✓ 未偵測到會阻擋檢索的問題。"; box.appendChild(okd);
+        }
+        card.appendChild(box);
+      }
       if(tg.engine==="pubmed"){
         var est=document.createElement("div"); est.className="pmestimate";
         var estBtn=document.createElement("button"); estBtn.className="btn ghost"; estBtn.type="button"; estBtn.textContent=isEn()?"Estimate PubMed counts":"估算 PubMed 文章數";
