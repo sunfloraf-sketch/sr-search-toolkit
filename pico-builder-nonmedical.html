@@ -48,6 +48,8 @@
   table.pico td.lab{width:52px;text-align:center;vertical-align:middle;background:linear-gradient(180deg,#F7F8F9,#EEF1F3)}
   table.pico td.lab input{width:100%;padding:0;margin:0;box-sizing:border-box;text-align:center;font-weight:700;color:#2B2B2B;border:none;background:transparent;font-size:14px}
   table.pico td.lab .ccode{text-align:center}
+  table.pico td.lab .rowlvl{width:100%;margin-top:4px;font-size:11px;font-weight:700;text-align:center;text-align-last:center;padding:1px 0;border:1px solid #C7D0D6;border-radius:5px;background:#fff;color:#2B2B2B;cursor:pointer}
+  table.pico td.lab .rowlvl:focus{outline:1px solid var(--brand)}
   table.pico textarea{width:100%;min-height:116px;resize:vertical;border:1px solid #E1E6E9;border-radius:6px;padding:6px 7px;font-family:inherit;font-size:12.5px;line-height:1.45;color:var(--ink);background:#FFFFFF;box-shadow:inset 0 1px 2px rgba(20,28,34,.025)}
   table.pico td.free textarea{min-height:116px;font-family:"SF Mono","Cascadia Code",Consolas,monospace;font-size:12px}
   /* 控制詞彙欄：一詞一行、不自動斷詞（過長改水平捲動，避免單一詞彙被折成兩行看似兩詞） */
@@ -412,7 +414,7 @@ City blocks)</pre>
   <hr style="border:none;border-top:1px solid var(--line);margin:6px 0 16px">
   <div class="genbar" style="align-items:flex-start">
     <div style="display:flex;align-items:flex-start;gap:8px">
-      <label class="fld" style="margin:0;white-space:nowrap;padding-top:9px"><span data-zh>欄位完整度</span><span data-en>Field level</span></label>
+      <label class="fld" style="margin:0;white-space:nowrap;padding-top:9px"><span data-zh>欄位完整度<br><span style="font-weight:400;font-size:11px;color:var(--mut)">（套用到全部列）</span></span><span data-en>Field level<br><span style="font-weight:400;font-size:11px;color:var(--mut)">(apply to all rows)</span></span></label>
       <div>
         <select id="level">
           <option value="L1"></option>
@@ -420,6 +422,7 @@ City blocks)</pre>
           <option value="L3"></option>
         </select>
         <div class="lvlnote" id="lvlnote"></div>
+        <div class="lvlnote" style="margin-top:4px;color:var(--brand2)"><span data-zh>每列可各自調整（概念代號下方）：廣＝L1 完整、較精＝L2 平衡、精＝L3 精準</span><span data-en>Each row can be set individually (under the concept code): 廣/L1 comprehensive, 較精/L2 balanced, 精/L3 precise</span></div>
       </div>
     </div>
     <div class="hlopts">
@@ -986,13 +989,14 @@ function variantsOf(x) {
 // Ei Compendex：鄰近字(NEAR/PRE)不可「一字對多字」也不可含切截。
 // 把 prox(A群, B群) 展開成一組「個別詞對」以 OR 串接，並移除鄰近詞裡的切截（*?#$），
 // 讓輸出如：((a NEAR/n b) OR (a NEAR/n c) OR …)。展開出的 OR 會併入上層 OR（不多包一層括號）。
-function expandProxCV(node, warn){
+function expandProxCV(node, warn, stripTrunc){
+  if(stripTrunc===undefined) stripTrunc=true;   // Compendex 需移除切截；IEEE 傳 false 保留
   if(!node || typeof node!=="object") return node;
-  if(node.t==="field"){ node.child = expandProxCV(node.child, warn); return node; }
+  if(node.t==="field"){ node.child = expandProxCV(node.child, warn, stripTrunc); return node; }
   if(node.t==="bool"){
     var kids2=[];
     node.kids.forEach(function(k){
-      var e=expandProxCV(k, warn);
+      var e=expandProxCV(k, warn, stripTrunc);
       if(node.op==="OR" && e && e.t==="bool" && e.op==="OR" && e._fromProx){ kids2=kids2.concat(e.kids); }
       else kids2.push(e);
     });
@@ -1004,18 +1008,39 @@ function expandProxCV(node, warn){
       var pairs=[], stripped=false;
       for(var i=0;i<la.length;i++) for(var j=0;j<lb.length;j++){
         var av=la[i], bv=lb[j];
-        if(/[*?#$]/.test(av)){ av=av.replace(/[*?#$]/g,""); stripped=true; }
-        if(/[*?#$]/.test(bv)){ bv=bv.replace(/[*?#$]/g,""); stripped=true; }
+        if(stripTrunc){
+          if(/[*?#$]/.test(av)){ av=av.replace(/[*?#$]/g,""); stripped=true; }
+          if(/[*?#$]/.test(bv)){ bv=bv.replace(/[*?#$]/g,""); stripped=true; }
+        }
         pairs.push({t:"prox", dist:node.dist, ordered:node.ordered, a:{t:"term",value:av}, b:{t:"term",value:bv}});
       }
       if(stripped && warn && warn.indexOf("⚠CVTRUNC⚠")<0) warn.push("⚠CVTRUNC⚠");
       if(pairs.length===1) return pairs[0];
       return {t:"bool", op:"OR", kids:pairs, _fromProx:true};
     }
-    node.a=expandProxCV(node.a, warn); node.b=expandProxCV(node.b, warn);
+    node.a=expandProxCV(node.a, warn, stripTrunc); node.b=expandProxCV(node.b, warn, stripTrunc);
     return node;
   }
   return node;
+}
+// IEEE：把「A NEAR/n B」的運算式，於每個運算元前重複欄位（"F":A NEAR/n "F":B），並去除單一詞多餘括號
+function _stripParen1(s){ s=String(s||"").trim(); if(s.charAt(0)!=="("||s.charAt(s.length-1)!==")") return s; var d=0; for(var i=0;i<s.length;i++){ if(s[i]==="(")d++; else if(s[i]===")"){ d--; if(d===0) return (i===s.length-1)? s.slice(1,-1).trim() : s; } } return s; }
+function _ieeeScopeProx(expr, field){
+  var toks=[], depth=0, q="", cur="";
+  for(var i=0;i<expr.length;i++){ var c=expr[i];
+    if(q){ cur+=c; if(c===q)q=""; continue; }
+    if(c==='"'||c==="'"){ q=c; cur+=c; continue; }
+    if(c==="("){ depth++; cur+=c; continue; }
+    if(c===")"){ depth--; cur+=c; continue; }
+    if(c===" " && depth===0){ if(cur)toks.push(cur); cur=""; continue; }
+    cur+=c;
+  }
+  if(cur) toks.push(cur);
+  var out=toks.map(function(t){
+    if(/^(?:O?NEAR)\/\d+$/i.test(t) || /^(?:AND|OR|NOT)$/i.test(t)) return t;   // 運算子原樣
+    return '"'+field+'":'+t;                                                    // 運算元加欄位
+  });
+  return "("+out.join(" ")+")";
 }
 
 function matchFieldPrefix(word, src) {
@@ -1209,7 +1234,15 @@ function wrapField(inner, field, dst, paren, codes) {
     code.split("+").forEach(function (cc) {
       _terms.forEach(function (tm) {
         tm = tm.trim(); if (!tm) return;
-        var _tt = /^["'(]/.test(tm) ? tm : "(" + tm + ")";
+        var _bare = _stripParen1(tm);
+        if (/\s(?:O?NEAR)\/\d+\s/i.test(_bare)) {   // 鄰近字運算式 → 每個運算元各自重複欄位（IEEE 不可在單一欄位括號內放 OR）
+          _out.push(_ieeeScopeProx(_bare, cc));
+          return;
+        }
+        // IEEE：單一詞不加括號（"All Metadata":school，非 "All Metadata":(school)）；引號片語原樣帶入
+        var _single = /^"[^"]*"$/.test(tm) || /^'[^']*'$/.test(tm) || !/\s/.test(tm);
+        var _grouped = /^\(.*\)$/.test(tm);
+        var _tt = (_single || _grouped) ? tm : "(" + tm + ")";
         _out.push('"' + cc + '":' + _tt);
       });
     });
@@ -1410,6 +1443,11 @@ if (typeof module !== "undefined" && module.exports) {
     zh: { L1:"L1 完整（SR 適用）", L2:"L2 平衡（完整×精準）", L3:"L3 精準" },
     en: { L1:"L1 Comprehensive (SR)", L2:"L2 Balanced", L3:"L3 Precise" }
   };
+  // 每列（概念）完整度的精簡代號：廣=L1、較精=L2、精=L3
+  var LEVEL_CODE = {
+    zh: { L1:"廣", L2:"較精", L3:"精" },
+    en: { L1:"L1", L2:"L2", L3:"L3" }
+  };
   var srcSel = $("#src"), levelSel = $("#level"), dbchecks = $("#dbchecks"),
       picoBody = $("#picoBody"), outs = $("#outs"), lvlnote = $("#lvlnote"),
       cbColor = $("#cbColor"), cbBracket = $("#cbBracket"), cbFlat = $("#cbFlat"), customCombo = $("#customCombo"), picoWarn = $("#picoWarn"),
@@ -1531,13 +1569,13 @@ if (typeof module !== "undefined" && module.exports) {
   var PASTE_CV = {};   // AgeLine／ERIC 等「貼上即用」控制詞彙：PASTE_CV[targetId][概念列索引] = 使用者貼上的檢索式（原樣帶入）
   function autoRegen(){ if(outs && outs.children.length) $("#genBtn").click(); }   // 已生成策略時，異動即自動更新
   var _arT; function autoRegenDebounced(){ clearTimeout(_arT); _arT=setTimeout(autoRegen, 500); }
-  levelSel.onchange = function(){ refreshLvlNote(); autoRegen(); };
+  levelSel.onchange = function(){ refreshLvlNote(); Array.prototype.forEach.call(picoBody.querySelectorAll("tr"), function(tr){ if(tr._setLevel) tr._setLevel(levelSel.value); }); if(typeof saveDraftDebounced==="function") saveDraftDebounced(); autoRegen(); };   // 全域：套用到全部列（並作為新增列預設）
 
   // ---- PICO 列 ----
   // 範例資料（供「載入範例」與空白表格的灰字預覽共用）— 對應紀錄表示例：學齡童 × 增加身體活動 × 體重管理
   var GDM_EX = {
-    P:{ zh:"學齡童\n學童\n學生\n兒童\n幼童", ft:'schoolchild*\nschoolboy*\nschoolgirl*\npupil*\n((elementary OR primary) 相鄰3單字 (student* OR child*))', cv:{ asc:"SCHOOL children", eric:"Elementary School Students\nChildren", compendex:"Children\nStudents" } },
-    I:{ zh:"身體活動\n運動\n體能活動", ft:'(physical 相鄰3單字 (activit* OR movement*))\ntraining\nfitness\nexercise*\nkinesio*\nsport*\nwalk*\nrun*\nswim*', cv:{ asc:"PHYSICAL activity\nEXERCISE", eric:"Physical Activities\nExercise", compendex:"Exercise equipment\nSports" } },
+    P:{ zh:"學齡童\n學童\n學生\n兒童\n幼童", ft:'schoolchild*\nschoolboy*\nschoolgirl*\npupil*\n\n((elementary\nprimary) \n鄰3單字\n(student*\nchild*))', cv:{ asc:"SCHOOL children", eric:"Elementary School Students\nChildren", compendex:"Children\nStudents" } },
+    I:{ zh:"身體活動\n運動\n體能活動", ft:'(physical\n鄰3單字\n(activit*\nmovement*))\n\ntraining\nfitness\nexercise*\nkinesio*\nsport*\nwalk*\nrun*\nswim*', cv:{ asc:"PHYSICAL activity\nEXERCISE", eric:"Physical Activities\nExercise", compendex:"Exercise equipment\nSports" } },
     O:{ zh:"體重\n減重\n肥胖", ft:'"body weight"\nweight*\nobesit*\noverweight*', cv:{ asc:"BODY weight\nWEIGHT control\nOBESITY", eric:"Body Weight\nObesity", compendex:"Weight control\nObesity" } }
   };
   function mkCell(cls, ph){ var td=document.createElement("td"); if(cls)td.className=cls; var ta=document.createElement("textarea"); ta.spellcheck=false; if(cls&&/\bcv\b/.test(cls)) ta.wrap="off"; if(ph)ta.placeholder=ph; td.appendChild(ta); return {td:td, ta:ta}; }
@@ -1618,12 +1656,19 @@ if (typeof module !== "undefined" && module.exports) {
   // 點浮動選單以外處 / 按 Esc 關閉
   document.addEventListener("click", function(e){ var panel=$("#cvVerifyPanel"); if(panel.style.display==="none") return; if(panel.contains(e.target)) return; if(e.target.closest && e.target.closest("th.cvhead")) return; closeCvPanel(); });
   document.addEventListener("keydown", function(e){ if(e.key==="Escape") closeCvPanel(); });
-  function addRow(label, zh, ft, cv, phs){
+  function addRow(label, zh, ft, cv, phs, lvl){
     phs = phs || {}; cv = cv || {}; var pcv = phs.cv || {};
     var tr=document.createElement("tr");
     var labTd=document.createElement("td"); labTd.className="lab";
     var labIn=document.createElement("input"); labIn.value=label||""; labIn.maxLength=4; labTd.appendChild(labIn);
     var ccode=document.createElement("div"); ccode.className="ccode"; ccode.style.cssText="font-size:11px;color:#3f6f3f;font-weight:700;margin-top:3px"; labTd.appendChild(ccode);
+    // 每列完整度選單（廣／較精／精＝L1／L2／L3）；預設沿用上方全域值
+    var lvlSel=document.createElement("select"); lvlSel.className="rowlvl";
+    ["L1","L2","L3"].forEach(function(v){ var o=document.createElement("option"); o.value=v; o.textContent=LEVEL_CODE[isEn()?"en":"zh"][v]; lvlSel.appendChild(o); });
+    lvlSel.value=(lvl && /^L[123]$/.test(lvl)) ? lvl : ((levelSel&&levelSel.value)||"L1");
+    lvlSel.title=LVL_NOTE[isEn()?"en":"zh"][lvlSel.value];
+    lvlSel.onchange=function(){ lvlSel.title=LVL_NOTE[isEn()?"en":"zh"][lvlSel.value]; if(typeof saveDraftDebounced==="function") saveDraftDebounced(); if(typeof autoRegen==="function") autoRegen(); };
+    labTd.appendChild(lvlSel);
     var c0=mkCell("ref",phs.zh), c1=mkCell("free",phs.ft);
     c0.ta.value=zh||""; c1.ta.value=ft||"";
     var cvCells={};
@@ -1633,7 +1678,9 @@ if (typeof module !== "undefined" && module.exports) {
     CV_DBS.forEach(function(id){ tr.appendChild(cvCells[id].td); });
     tr.appendChild(rmTd);
     tr._cvCustom=[];
-    tr._get=function(){ var cvo={}; CV_DBS.forEach(function(id){ cvo[id]=cvCells[id].ta.value.trim(); }); (tr._cvCustom||[]).forEach(function(c,i){ cvo['ebc'+i]=c.ta.value.trim(); }); return { label:labIn.value.trim()||"?", zh:c0.ta.value.trim(), ft:c1.ta.value.trim(), cv:cvo }; };
+    tr._get=function(){ var cvo={}; CV_DBS.forEach(function(id){ cvo[id]=cvCells[id].ta.value.trim(); }); (tr._cvCustom||[]).forEach(function(c,i){ cvo['ebc'+i]=c.ta.value.trim(); }); return { label:labIn.value.trim()||"?", zh:c0.ta.value.trim(), ft:c1.ta.value.trim(), cv:cvo, level:lvlSel.value }; };
+    tr._setLevel=function(v){ if(/^L[123]$/.test(v)){ lvlSel.value=v; lvlSel.title=LVL_NOTE[isEn()?"en":"zh"][v]; } };
+    tr._refreshLvlLabel=function(){ var m=LEVEL_CODE[isEn()?"en":"zh"]; Array.prototype.forEach.call(lvlSel.options,function(o){o.textContent=m[o.value]||o.value;}); lvlSel.title=LVL_NOTE[isEn()?"en":"zh"][lvlSel.value]; };
     rm.onclick=function(){ tr.remove(); updateCodes(); if(typeof saveDraftDebounced==="function") saveDraftDebounced(); autoRegen(); };
     picoBody.appendChild(tr);
     updateCodes();
@@ -1705,7 +1752,7 @@ if (typeof module !== "undefined" && module.exports) {
     if(st.src && TARGET_BY_ID[st.src]) srcSel.value=st.src;
     if(customCombo) customCombo.value=st.combo||"";
     picoBody.innerHTML="";
-    st.rows.forEach(function(r){ addRow(r.label||"", r.zh||"", r.ft||"", r.cv||{}); });
+    st.rows.forEach(function(r){ addRow(r.label||"", r.zh||"", r.ft||"", r.cv||{}, undefined, r.level); });
     if(!picoBody.querySelector("tr")) seedEmpty();
     return true;
   }
@@ -2255,7 +2302,8 @@ if (typeof module !== "undefined" && module.exports) {
     var parsed = parseQuery(_joined, startDB);
     var node = { t:"field", field:level, child:parsed.ast };
     var warnArr=[];
-    if(db==="compendex") node = expandProxCV(node, warnArr);   // Ei Compendex：鄰近字拆成個別詞對、移除切截
+    if(db==="compendex") node = expandProxCV(node, warnArr);          // Ei Compendex：鄰近字拆成個別詞對、移除切截
+    else if(db==="ieee") node = expandProxCV(node, warnArr, false);   // IEEE：鄰近字拆成個別詞對（保留切截，欄位於各運算元重複）
     var out = render(node, db, warnArr, { scoped:false });
     if(warnOut){ warnArr.forEach(function(w){
       if(w.indexOf("⚠EMBCHAIN⚠")===0) warnOut.push(isEn() ? "This contains nested proximity (NEAR/NEXT) operators, which Embase.com does not support. Change the relationship between the phrase groups to parallel proximity, or split it into separate sets." : "此式含巢狀鄰近（NEAR／NEXT）運算，Embase.com 不支援，請將詞組間關係改為平行鄰近，或拆成多組處理");
@@ -2368,8 +2416,9 @@ if (typeof module !== "undefined" && module.exports) {
     var lineNum=1, qlines=[], finalParts=[], reminders=[], conceptRefs=[];
     rows.forEach(function(r, _ri){
       var refs=[];
+      var _lv=(r.level&&/^L[123]$/.test(r.level))?r.level:level;   // 每列完整度（未指定則沿用全域）
       if(eng==="airiti"||eng==="ndltd"){
-        var twLine = buildTaiwanLine(r.zh, r.ft, eng, level, reminders, tg.label, startEng);
+        var twLine = buildTaiwanLine(r.zh, r.ft, eng, _lv, reminders, tg.label, startEng);
         if(twLine){ qlines.push({n:lineNum, text:twLine}); refs.push("#"+lineNum); lineNum++; }
         var grp0 = refs.length ? refs[0] : null;
         conceptRefs.push(grp0);
@@ -2378,7 +2427,7 @@ if (typeof module !== "undefined" && module.exports) {
       }
       if(r.ft){
         var _w=[];
-        var ft = scopeFreetext(r.ft, startEng, eng, level, _w);
+        var ft = scopeFreetext(r.ft, startEng, eng, _lv, _w);
         qlines.push({n:lineNum, text:ft, label:r.label, kind:"ft"}); refs.push("#"+lineNum); lineNum++;
         _w.forEach(function(m){ if(reminders.indexOf(m)<0) reminders.push(m); });
       }
@@ -3192,6 +3241,7 @@ if (typeof module !== "undefined" && module.exports) {
     $("#langBtn").textContent = isEn() ? "中文" : "English";
     try{ localStorage.setItem("sr_lang", isEn()?"en":"zh"); }catch(e){}
     setLevelLabels();
+    Array.prototype.forEach.call(picoBody.querySelectorAll("tr"), function(tr){ if(tr._refreshLvlLabel) tr._refreshLvlLabel(); });
     refreshLvlNote();
     setLangPlaceholders();
   };

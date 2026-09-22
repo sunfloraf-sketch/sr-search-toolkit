@@ -48,6 +48,8 @@
   table.pico td.lab{width:52px;text-align:center;vertical-align:middle;background:linear-gradient(180deg,#F7F8F9,#EEF1F3)}
   table.pico td.lab input{width:100%;padding:0;margin:0;box-sizing:border-box;text-align:center;font-weight:700;color:#2B2B2B;border:none;background:transparent;font-size:14px}
   table.pico td.lab .ccode{text-align:center}
+  table.pico td.lab .rowlvl{width:100%;margin-top:4px;font-size:11px;font-weight:700;text-align:center;text-align-last:center;padding:1px 0;border:1px solid #C7D0D6;border-radius:5px;background:#fff;color:#2B2B2B;cursor:pointer}
+  table.pico td.lab .rowlvl:focus{outline:1px solid var(--brand)}
   table.pico textarea{width:100%;min-height:116px;resize:vertical;border:1px solid #E1E6E9;border-radius:6px;padding:6px 7px;font-family:inherit;font-size:12.5px;line-height:1.45;color:var(--ink);background:#FFFFFF;box-shadow:inset 0 1px 2px rgba(20,28,34,.025)}
   table.pico td.free textarea{min-height:116px;font-family:"SF Mono","Cascadia Code",Consolas,monospace;font-size:12px}
   /* 控制詞彙欄：一詞一行、不自動斷詞（過長改水平捲動，避免單一詞彙被折成兩行看似兩詞） */
@@ -405,7 +407,7 @@ Optical Imaging)</pre>
   <hr style="border:none;border-top:1px solid var(--line);margin:6px 0 16px">
   <div class="genbar" style="align-items:flex-start">
     <div style="display:flex;align-items:flex-start;gap:8px">
-      <label class="fld" style="margin:0;white-space:nowrap;padding-top:9px"><span data-zh>欄位完整度</span><span data-en>Field level</span></label>
+      <label class="fld" style="margin:0;white-space:nowrap;padding-top:9px"><span data-zh>欄位完整度<br><span style="font-weight:400;font-size:11px;color:var(--mut)">（套用到全部列）</span></span><span data-en>Field level<br><span style="font-weight:400;font-size:11px;color:var(--mut)">(apply to all rows)</span></span></label>
       <div>
         <select id="level">
           <option value="L1"></option>
@@ -413,6 +415,7 @@ Optical Imaging)</pre>
           <option value="L3"></option>
         </select>
         <div class="lvlnote" id="lvlnote"></div>
+        <div class="lvlnote" style="margin-top:4px;color:var(--brand2)"><span data-zh>每列可各自調整（概念代號下方）：廣＝L1 完整、較精＝L2 平衡、精＝L3 精準</span><span data-en>Each row can be set individually (under the concept code): 廣/L1 comprehensive, 較精/L2 balanced, 精/L3 precise</span></div>
       </div>
     </div>
     <div class="hlopts">
@@ -1311,6 +1314,11 @@ if (typeof module !== "undefined" && module.exports) {
     zh: { L1:"L1 完整（SR 適用）", L2:"L2 平衡（完整×精準）", L3:"L3 精準" },
     en: { L1:"L1 Comprehensive (SR)", L2:"L2 Balanced", L3:"L3 Precise" }
   };
+  // 每列（概念）完整度的精簡代號：廣=L1、較精=L2、精=L3
+  var LEVEL_CODE = {
+    zh: { L1:"廣", L2:"較精", L3:"精" },
+    en: { L1:"L1", L2:"L2", L3:"L3" }
+  };
   var srcSel = $("#src"), levelSel = $("#level"), dbchecks = $("#dbchecks"),
       picoBody = $("#picoBody"), outs = $("#outs"), lvlnote = $("#lvlnote"),
       cbColor = $("#cbColor"), cbBracket = $("#cbBracket"), cbFlat = $("#cbFlat"), customCombo = $("#customCombo"), picoWarn = $("#picoWarn"),
@@ -1401,7 +1409,7 @@ if (typeof module !== "undefined" && module.exports) {
   var PASTE_CV = {};   // AgeLine／ERIC 等「貼上即用」控制詞彙：PASTE_CV[targetId][概念列索引] = 使用者貼上的檢索式（原樣帶入）
   function autoRegen(){ if(outs && outs.children.length) $("#genBtn").click(); }   // 已生成策略時，異動即自動更新
   var _arT; function autoRegenDebounced(){ clearTimeout(_arT); _arT=setTimeout(autoRegen, 500); }
-  levelSel.onchange = function(){ refreshLvlNote(); autoRegen(); };
+  levelSel.onchange = function(){ refreshLvlNote(); Array.prototype.forEach.call(picoBody.querySelectorAll("tr"), function(tr){ if(tr._setLevel) tr._setLevel(levelSel.value); }); if(typeof saveDraftDebounced==="function") saveDraftDebounced(); autoRegen(); };   // 全域：套用到全部列（並作為新增列預設）
 
   // ---- PICO 列 ----
   // GDM 範例資料（供「載入 GDM 範例」與空白表格的灰字預覽共用）
@@ -1487,18 +1495,27 @@ if (typeof module !== "undefined" && module.exports) {
   // 點浮動選單以外處 / 按 Esc 關閉
   document.addEventListener("click", function(e){ var panel=$("#cvVerifyPanel"); if(panel.style.display==="none") return; if(panel.contains(e.target)) return; if(e.target.closest && e.target.closest("th.cvhead")) return; closeCvPanel(); });
   document.addEventListener("keydown", function(e){ if(e.key==="Escape") closeCvPanel(); });
-  function addRow(label, zh, ft, mesh, emtree, cinahl, phs){
+  function addRow(label, zh, ft, mesh, emtree, cinahl, phs, lvl){
     phs = phs || {};
     var tr=document.createElement("tr");
     var labTd=document.createElement("td"); labTd.className="lab";
     var labIn=document.createElement("input"); labIn.value=label||""; labIn.maxLength=4; labTd.appendChild(labIn);
     var ccode=document.createElement("div"); ccode.className="ccode"; ccode.style.cssText="font-size:11px;color:#3f6f3f;font-weight:700;margin-top:3px"; labTd.appendChild(ccode);
+    // 每列完整度選單（廣／較精／精＝L1／L2／L3）；預設沿用上方全域值
+    var lvlSel=document.createElement("select"); lvlSel.className="rowlvl";
+    ["L1","L2","L3"].forEach(function(v){ var o=document.createElement("option"); o.value=v; o.textContent=LEVEL_CODE[isEn()?"en":"zh"][v]; lvlSel.appendChild(o); });
+    lvlSel.value=(lvl && /^L[123]$/.test(lvl)) ? lvl : ((levelSel&&levelSel.value)||"L1");
+    lvlSel.title=LVL_NOTE[isEn()?"en":"zh"][lvlSel.value];
+    lvlSel.onchange=function(){ lvlSel.title=LVL_NOTE[isEn()?"en":"zh"][lvlSel.value]; if(typeof saveDraftDebounced==="function") saveDraftDebounced(); if(typeof autoRegen==="function") autoRegen(); };
+    labTd.appendChild(lvlSel);
     var c0=mkCell("ref",phs.zh), c1=mkCell("free",phs.ft), c2=mkCell("cv",phs.mesh), c3=mkCell("cv",phs.emtree), c4=mkCell("cv",phs.cinahl);
     c0.ta.value=zh||""; c1.ta.value=ft||""; c2.ta.value=mesh||""; c3.ta.value=emtree||""; c4.ta.value=cinahl||"";
     var rmTd=document.createElement("td"); var rm=document.createElement("button"); rm.className="rmrow"; rm.textContent="✕";
     rm.onclick=function(){ tr.remove(); }; rmTd.appendChild(rm);
     tr.appendChild(labTd); tr.appendChild(c0.td); tr.appendChild(c1.td); tr.appendChild(c3.td); tr.appendChild(c2.td); tr.appendChild(c4.td); tr.appendChild(rmTd);
-    tr._get=function(){ return { label:labIn.value.trim()||"?", zh:c0.ta.value.trim(), ft:c1.ta.value.trim(), mesh:c2.ta.value.trim(), emtree:c3.ta.value.trim(), cinahl:c4.ta.value.trim() }; };
+    tr._get=function(){ return { label:labIn.value.trim()||"?", zh:c0.ta.value.trim(), ft:c1.ta.value.trim(), mesh:c2.ta.value.trim(), emtree:c3.ta.value.trim(), cinahl:c4.ta.value.trim(), level:lvlSel.value }; };
+    tr._setLevel=function(v){ if(/^L[123]$/.test(v)){ lvlSel.value=v; lvlSel.title=LVL_NOTE[isEn()?"en":"zh"][v]; } };
+    tr._refreshLvlLabel=function(){ var m=LEVEL_CODE[isEn()?"en":"zh"]; Array.prototype.forEach.call(lvlSel.options,function(o){o.textContent=m[o.value]||o.value;}); lvlSel.title=LVL_NOTE[isEn()?"en":"zh"][lvlSel.value]; };
     rm.onclick=function(){ tr.remove(); updateCodes(); if(typeof saveDraftDebounced==="function") saveDraftDebounced(); autoRegen(); };
     picoBody.appendChild(tr);
     updateCodes();
@@ -1519,7 +1536,7 @@ if (typeof module !== "undefined" && module.exports) {
     if(st.src && TARGET_BY_ID[st.src]) srcSel.value=st.src;
     if(customCombo) customCombo.value=st.combo||"";
     picoBody.innerHTML="";
-    st.rows.forEach(function(r){ addRow(r.label||"", r.zh||"", r.ft||"", r.mesh||"", r.emtree||"", r.cinahl||""); });
+    st.rows.forEach(function(r){ addRow(r.label||"", r.zh||"", r.ft||"", r.mesh||"", r.emtree||"", r.cinahl||"", undefined, r.level); });
     if(!picoBody.querySelector("tr")) seedEmpty();
     return true;
   }
@@ -2073,8 +2090,9 @@ if (typeof module !== "undefined" && module.exports) {
     var lineNum=1, qlines=[], finalParts=[], reminders=[], conceptRefs=[];
     rows.forEach(function(r, _ri){
       var refs=[];
+      var _lv=(r.level&&/^L[123]$/.test(r.level))?r.level:level;   // 每列完整度（未指定則沿用全域）
       if(eng==="airiti"||eng==="ndltd"){
-        var twLine = buildTaiwanLine(r.zh, r.ft, eng, level, reminders, tg.label, startEng);
+        var twLine = buildTaiwanLine(r.zh, r.ft, eng, _lv, reminders, tg.label, startEng);
         if(twLine){ qlines.push({n:lineNum, text:twLine}); refs.push("#"+lineNum); lineNum++; }
         var grp0 = refs.length ? refs[0] : null;
         conceptRefs.push(grp0);
@@ -2083,14 +2101,14 @@ if (typeof module !== "undefined" && module.exports) {
       }
       if(r.ft){
         var _w=[];
-        var ft = scopeFreetext(r.ft, startEng, eng, level, _w);
+        var ft = scopeFreetext(r.ft, startEng, eng, _lv, _w);
         qlines.push({n:lineNum, text:ft, label:r.label, kind:"ft"}); refs.push("#"+lineNum); lineNum++;
         _w.forEach(function(m){ if(reminders.indexOf(m)<0) reminders.push(m); });
       }
       if(vocab){
         var terms = splitTerms(r[vocab]);
         if(terms.length){
-          var cvr = renderCVCell(r[vocab], eng, level);
+          var cvr = renderCVCell(r[vocab], eng, _lv);
           qlines.push({n:lineNum, text:cvr.text, label:r.label, kind:"cv"}); refs.push("#"+lineNum); lineNum++;
           if(cvr.hasSub){
             reminders.push(isEn()
@@ -2830,6 +2848,7 @@ if (typeof module !== "undefined" && module.exports) {
     $("#langBtn").textContent = isEn() ? "中文" : "English";
     try{ localStorage.setItem("sr_lang", isEn()?"en":"zh"); }catch(e){}
     setLevelLabels();
+    Array.prototype.forEach.call(picoBody.querySelectorAll("tr"), function(tr){ if(tr._refreshLvlLabel) tr._refreshLvlLabel(); });
     refreshLvlNote();
     setLangPlaceholders();
   };
