@@ -2387,7 +2387,8 @@ if (typeof module !== "undefined" && module.exports) {
           qlines.push({n:lineNum, text:_cv, label:r.label, kind:"cv"}); refs.push("#"+lineNum); lineNum++;
         }
       }
-      var grp = refs.length ? (refs.length>1 ? "("+refs.join(" OR ")+")" : refs[0]) : null;
+      var _orG=(SYNTAX_MAP.boolean[eng]&&SYNTAX_MAP.boolean[eng].OR)||"OR";
+      var grp = refs.length ? (refs.length>1 ? "("+refs.join(" "+_orG+" ")+")" : refs[0]) : null;
       conceptRefs.push(grp);                 // 對齊 rows 順序（空概念為 null），供 C1/C2… 自訂組合對應
       if(grp) finalParts.push(grp);
     });
@@ -2403,8 +2404,8 @@ if (typeof module !== "undefined" && module.exports) {
   }
 
   // 各介面的檢索集（set）前綴：EBSCOhost=S1、Ovid=1（無前綴）、其餘=#1。內部一律以 #n 保存（供整併展開／PubMed 使用），僅在輸出（畫面／複製／Word／回填）時依資料庫換成正確前綴。
-  function _refPrefix(eng){ return eng==="ebsco"?"S":eng==="ovid"?"":"#"; }
-  function _dispRefs(text, eng){ var s=(text==null?"":String(text)); if(eng==="ebsco") return s.replace(/#(\d+)/g,"S$1"); if(eng==="ovid") return s.replace(/#(\d+)/g,"$1"); return s; }
+  function _refPrefix(eng){ return (eng==="ebsco"||eng==="pqdt")?"S":eng==="ovid"?"":"#"; }
+  function _dispRefs(text, eng){ var s=(text==null?"":String(text)); if(eng==="ebsco") return s.replace(/#(\d+)/g,"S$1"); if(eng==="pqdt") return s.replace(/#(\d+)/g,"[s$1]"); if(eng==="ovid") return s.replace(/#(\d+)/g,"$1"); return s; }
   // 自訂組合：每行一條；C1/C2… → 對應概念的行號群組（依各庫），L1/L2… → 上方已寫的組合行
   function buildCombos(text, conceptRefs, lastNum){
     var lines=String(text).split(/\r?\n/).map(function(s){return s.trim();}).filter(Boolean);
@@ -2535,6 +2536,11 @@ if (typeof module !== "undefined" && module.exports) {
     if(navigator.clipboard&&navigator.clipboard.writeText) return navigator.clipboard.writeText(text).catch(function(){return legacy();});
     try{return Promise.resolve(legacy());}catch(e){return Promise.reject(e);}
   }
+  // 同步複製（開新分頁前用）：開分頁會使頁面失焦，非同步 clipboard API 可能因此失敗，故先用 execCommand 同步寫入
+  function _copySync(text){
+    var ta=document.createElement("textarea");ta.value=text;ta.setAttribute("readonly","");ta.style.position="fixed";ta.style.top="-1000px";ta.style.opacity="0";document.body.appendChild(ta);ta.focus();ta.select();try{ta.setSelectionRange(0,String(text).length);}catch(_e){}
+    var ok=false;try{ok=document.execCommand("copy");}catch(_e){}ta.remove();return ok;
+  }
 
   async function fetchPubmedCount(query, email){
     var params=new URLSearchParams({db:"pubmed",term:query,rettype:"count",retmode:"json",tool:"sr_search_toolkit"});
@@ -2643,11 +2649,14 @@ if (typeof module !== "undefined" && module.exports) {
           try{
             var finalRow=allRows[allRows.length-1];
             if(!finalRow) throw new Error(isEn()?"No strategy to send":"沒有可傳送的檢索策略");
-            var full=expandNumberedQuery(finalRow,allRows), url=DB_OPEN_URLS[tid];
+            var full=expandNumberedQuery(finalRow,allRows), url=DB_OPEN_URLS[tid];   // 展開行號 → 連成一條完整檢索式
+            var ok=false; try{ ok=_copySync(full); }catch(_e){}                       // 先同步複製（開分頁前，避免失焦導致複製失敗）
+            try{ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(full).then(function(){},function(){}); }catch(_e){}   // 再試 API（不阻塞）
             var link=document.createElement("a");link.href=url;link.target="_blank";link.rel="noopener noreferrer";document.body.appendChild(link);link.click();link.remove();
             srCount('pico-db-open-'+tid,'PICO-開啟資料庫-'+tid);
-            copyTextForPush(full).then(function(){ openBtn.innerHTML="✓"; openBtn.classList.add("done"); openBtn.title=isEn()?"Copied — paste into the search box":"已複製，請貼入搜尋框"; setTimeout(function(){openBtn.innerHTML=OPENSVG;openBtn.classList.remove("done");openBtn.title=_openTitle;},1600); })
-              .catch(function(){ openBtn.title=isEn()?"Opened, but automatic copy failed":"已開啟，但自動複製失敗"; });
+            openBtn.innerHTML="✓"; openBtn.classList.add("done");
+            openBtn.title=ok?(isEn()?"Copied the full one-line query — paste into the search box":"已複製完整檢索式（單一串），請貼入搜尋框"):(isEn()?"Opened, but automatic copy failed — copy the strategy manually":"已開啟，但自動複製失敗，請自行複製檢索式");
+            setTimeout(function(){openBtn.innerHTML=OPENSVG;openBtn.classList.remove("done");openBtn.title=_openTitle;},1800);
           }catch(err){ openBtn.title=String(err&&err.message||err); }
         };
         hr.appendChild(openBtn);
