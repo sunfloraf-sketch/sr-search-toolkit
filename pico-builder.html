@@ -415,7 +415,7 @@ Optical Imaging)</pre>
           <option value="L3"></option>
         </select>
         <div class="lvlnote" id="lvlnote"></div>
-        <div class="lvlnote" style="margin-top:4px;color:var(--brand2)"><span data-zh>每列可各自調整（概念代號下方）：廣＝L1 完整、較精＝L2 平衡、精＝L3 精準</span><span data-en>Each row can be set individually (under the concept code): 廣/L1 comprehensive, 較精/L2 balanced, 精/L3 precise</span></div>
+        <div class="lvlnote" style="margin-top:4px;color:var(--brand2)"><span data-zh>每列可各自調整（概念代號下方）：完整＝L1、平衡＝L2、精準＝L3</span><span data-en>Each row can be set individually (under the concept code): L1 comprehensive, L2 balanced, L3 precise</span></div>
       </div>
     </div>
     <div class="hlopts">
@@ -1316,7 +1316,7 @@ if (typeof module !== "undefined" && module.exports) {
   };
   // 每列（概念）完整度的精簡代號：廣=L1、較精=L2、精=L3
   var LEVEL_CODE = {
-    zh: { L1:"廣", L2:"較精", L3:"精" },
+    zh: { L1:"完整", L2:"平衡", L3:"精準" },
     en: { L1:"L1", L2:"L2", L3:"L3" }
   };
   var srcSel = $("#src"), levelSel = $("#level"), dbchecks = $("#dbchecks"),
