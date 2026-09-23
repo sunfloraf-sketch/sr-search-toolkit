@@ -882,7 +882,7 @@ function parseExpression(toks, src, warn) {
       if (!tk || tk.k === ")") break;
       if (tk.k === "term" && !tk.phrase) {
         var cl = classifyOp(tk.v);
-        if (cl && cl.op === "AND") { pos++; left = mkBool("AND", left, parseProx()); continue; }
+        if (cl && cl.op === "AND") { pos++; var _nx=peek(); if(_nx && _nx.k==="term" && !_nx.phrase){ var _cn=classifyOp(_nx.v); if(_cn && _cn.op==="NOT"){ pos++; left = mkBool("NOT", left, parseProx()); continue; } } left = mkBool("AND", left, parseProx()); continue; }   // 「AND NOT」（如 Scopus 排除）視為 NOT
         if (cl && cl.op === "NOT") { pos++; left = mkBool("NOT", left, parseProx()); continue; }
         if (cl && cl.op === "OR") break;
         if (cl && cl.prox) break;
@@ -1464,9 +1464,9 @@ if (typeof module !== "undefined" && module.exports) {
     var t=String(term||"").replace(/^["']+|["']+$/g,"").replace(/[+*]+$/,"").replace(/\s+/g," ").trim();
     if(!t) return null;
     var q=encodeURIComponent(t);
-    if(dbid==="asc")  return "https://research.ebsco.com/c/xti3bi/search/advanced/subjects/"+encodeURIComponent('DE "'+t+'"');   // 成大 ASC
-    if(dbid==="bsc")  return "https://research.ebsco.com/c/j7dc2x/search/advanced/subjects/"+encodeURIComponent('SU "'+t+'"');   // 成大 BSC
-    if(dbid==="eric") return "https://research.ebsco.com/c/shmie4/search/advanced/subjects/"+encodeURIComponent('SU "'+t+'"');   // 成大 ERIC
+    if(dbid==="asc")  return "https://research.ebsco.com/c/xti3bi/search/advanced/subjects?autocorrect=y&searchTerm="+q+"&selectedDb=a9hthes";   // 成大 ASC
+    if(dbid==="bsc")  return "https://research.ebsco.com/c/j7dc2x/search/advanced/subjects?autocorrect=y&searchTerm="+q+"&selectedDb=bthes";     // 成大 BSC
+    if(dbid==="eric") return "https://research.ebsco.com/c/shmie4/search/advanced/subjects?autocorrect=y&selectedDb=ericde&searchTerm="+q;       // 成大 ERIC
     if(dbid==="compendex") return "https://www.engineeringvillage.com/search/thesaurus.url?query="+q+"&database=1&type=browse";  // Ei Compendex（非成大專屬）
     if(dbid==="ieee") return "https://www.ieee.org/publications/services/thesaurus-thank-you";   // IEEE Thesaurus（單一頁，非逐詞）
     return null;   // PQDT／自訂庫：無對應查核網址

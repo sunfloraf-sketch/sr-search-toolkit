@@ -856,7 +856,7 @@ function parseExpression(toks, src, warn) {
       if (!tk || tk.k === ")") break;
       if (tk.k === "term" && !tk.phrase) {
         var cl = classifyOp(tk.v);
-        if (cl && cl.op === "AND") { pos++; left = mkBool("AND", left, parseProx()); continue; }
+        if (cl && cl.op === "AND") { pos++; var _nx=peek(); if(_nx && _nx.k==="term" && !_nx.phrase){ var _cn=classifyOp(_nx.v); if(_cn && _cn.op==="NOT"){ pos++; left = mkBool("NOT", left, parseProx()); continue; } } left = mkBool("AND", left, parseProx()); continue; }   // 「AND NOT」（如 Scopus 排除）視為 NOT
         if (cl && cl.op === "NOT") { pos++; left = mkBool("NOT", left, parseProx()); continue; }
         if (cl && cl.op === "OR") break;
         if (cl && cl.prox) break;
